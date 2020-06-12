@@ -7,6 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
 
 import org.junit.Test;
@@ -52,6 +53,20 @@ public class EngineTest {
 		int limitDiffPerGroup = 3;
 		reader.navigateMegaDiff(rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
 
+	}
+
+	@Test
+	public void testTimeout() {
+
+		File s = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
+		File t = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
+
+		TuningEngine reader = new TuningEngine();
+		boolean parallel = false;
+		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, parallel, new HashMap<>(),
+				new HashMap<String, Object>(), reader.getMatchers());
 	}
 
 	@Test
