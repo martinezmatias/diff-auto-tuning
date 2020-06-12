@@ -1,4 +1,4 @@
-package fr.uphf.reader;
+package fr.uphf.autotuning;
 
 import java.io.File;
 import java.io.FileWriter;
