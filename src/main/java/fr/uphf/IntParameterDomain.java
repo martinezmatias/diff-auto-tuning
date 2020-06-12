@@ -19,9 +19,9 @@ public class IntParameterDomain extends ParameterDomain<Integer> {
 
 	}
 
-	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer min, Integer max,
-			Integer[] interval) {
-		super(id, type, defaultValue, min, max, interval);
+	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer[] interval) {
+
+		super(id, type, defaultValue, interval[0], interval[interval.length - 1], interval);
 
 	}
 

@@ -17,9 +17,8 @@ public class DoubleParameterDomain extends ParameterDomain<Double> {
 		super(id, type, defaultValue, min, max, delta);
 	}
 
-	public DoubleParameterDomain(ConfigurationOptions id, Class type, Double defaultValue, Double min, Double max,
-			Double[] interval) {
-		super(id, type, defaultValue, min, max, interval);
+	public DoubleParameterDomain(ConfigurationOptions id, Class type, Double defaultValue, Double[] interval) {
+		super(id, type, defaultValue, interval[0], interval[interval.length - 1], interval);
 	}
 
 	@Override
