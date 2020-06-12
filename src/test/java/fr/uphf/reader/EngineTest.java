@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,13 +21,36 @@ import fr.uphf.ParameterDomain;
 public class EngineTest {
 
 	@Test
-	public void testNavigate() {
-		File root = new File("/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
-		assertTrue(root.exists());
+	public void testNavigate() throws IOException {
+		File rootMegadiff = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+		assertTrue(rootMegadiff.exists());
 
-		Engine reader = new Engine();
+		TuningEngine reader = new TuningEngine();
 
-		reader.navigate(root, new int[] { 20, 1, 2 }, 2);
+		boolean parallel = true;
+		// Let's try with sets between 1 and 20
+		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
+		// let's simply try 1 diff per group
+		int limitDiffPerGroup = 1;
+		reader.navigateMegaDiff(rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
+
+	}
+
+	@Test
+	public void testNavigate_Single() throws IOException {
+		File rootMegadiff = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+
+		boolean parallel = true;
+		// Let's try with set 1
+		int[] megadiff_ids = new int[] { 1 };
+		// let's simply try 1 diff per group
+		int limitDiffPerGroup = 3;
+		reader.navigateMegaDiff(rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
 
 	}
 
@@ -64,9 +88,9 @@ public class EngineTest {
 
 		// Cartesian
 
-		Engine reader = new Engine();
+		TuningEngine engine = new TuningEngine();
 
-		List<GumTreeProperties> combinations = reader.computeCartesianProduct(domains);
+		List<GumTreeProperties> combinations = engine.computeCartesianProduct(domains);
 
 		int expectedCombinations = intervalInt.length * intervalD.length * intervalIntMH.length;
 

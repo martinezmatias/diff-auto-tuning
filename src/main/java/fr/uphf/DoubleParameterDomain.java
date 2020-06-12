@@ -42,6 +42,7 @@ public class DoubleParameterDomain extends ParameterDomain<Double> {
 
 		List<Double> dlist = new ArrayList<>();
 		for (Double i = from; i <= limit; i += step) {
+			i = Math.floor(i * 1000) / 1000;
 			dlist.add(i);
 		}
 		return dlist;
