@@ -1,4 +1,4 @@
-package fr.uphf.gpgt.example;
+package fr.gumtree.gpgt.example;
 
 import io.jenetics.BitChromosome;
 import io.jenetics.BitGene;

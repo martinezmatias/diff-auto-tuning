@@ -1,4 +1,4 @@
-package fr.uphf.autotuning;
+package fr.gumtree.autotuning;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -27,8 +27,6 @@ import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
-import fr.uphf.ParameterDomain;
-import fr.uphf.ParametersResolvers;
 import gumtree.spoon.AstComparator;
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import gumtree.spoon.diff.Diff;

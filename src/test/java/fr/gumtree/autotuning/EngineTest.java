@@ -1,4 +1,4 @@
-package fr.uphf.autotuning;
+package fr.gumtree.autotuning;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -15,10 +15,7 @@ import org.junit.Test;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 
-import fr.uphf.DoubleParameterDomain;
-import fr.uphf.IntParameterDomain;
-import fr.uphf.ParameterDomain;
-import fr.uphf.autotuning.TuningEngine;
+import fr.gumtree.autotuning.TuningEngine;
 
 public class EngineTest {
 

@@ -1,4 +1,4 @@
-package fr.uphf;
+package fr.gumtree.autotuning;
 
 import java.util.List;
 import java.util.stream.Collectors;
