@@ -80,7 +80,7 @@ public class TuningEngine {
 	 * @param stop    max numbers of diff to analyze per subset
 	 * @throws IOException
 	 */
-	public void navigateMegaDiff(File path, int[] subsets, int stop, boolean parallel) throws IOException {
+	public void navigateMegaDiff(String out, File path, int[] subsets, int stop, boolean parallel) throws IOException {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -128,14 +128,14 @@ public class TuningEngine {
 					analyzeDiff(diffId, previousVersion, postVersion, parallel, treeProperties, fileResult,
 							this.matchers);
 
-					File outResults = new File("./out/" + diffId + ".csv");
+					File outResults = new File(out + diffId + ".csv");
 
 					executionResultToCSV(outResults, fileResult);
 
 				}
 			}
 		}
-		treeInfoToCSV(new File("./out/tree_info_" + Arrays.toString(subsets) + ".csv"), treeProperties);
+		treeInfoToCSV(new File(out + "/tree_info_" + Arrays.toString(subsets) + ".csv"), treeProperties);
 
 		long endTime = (new Date()).getTime();
 
@@ -406,13 +406,15 @@ public class TuningEngine {
 		List<Map<String, Object>> matchers = (List<Map<String, Object>>) fileresult.get(MATCHERS);
 		String row = "";
 		boolean first = true;
+		FileWriter fw = new FileWriter(out);
 		for (Map<String, Object> map : matchers) {
 
 			String xmatcher = map.get(MATCHER).toString();
 
 			List<Map<String, Object>> configs = (List<Map<String, Object>>) map.get(CONFIGS);
 			for (Map<String, Object> config : configs) {
-				row += xmatcher + sep;
+				// re-init the row
+				row = xmatcher + sep;
 
 				row += config.get(NRACTIONS) + sep;
 
@@ -445,20 +447,18 @@ public class TuningEngine {
 				if (first) {
 					header += endline;
 					first = false;
+					fw.write(header);
 				}
 
 				row += endline;
+				fw.write(row);
+				fw.flush();
 			}
 
 		}
 
-		String all = header;
-		all += row;
-
-		FileWriter fw = new FileWriter(out);
-		fw.write(all);
-		fw.flush();
 		fw.close();
+		System.out.println("Save file " + out);
 
 	}
 

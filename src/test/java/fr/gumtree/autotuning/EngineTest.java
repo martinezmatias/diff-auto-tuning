@@ -15,8 +15,6 @@ import org.junit.Test;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 
-import fr.gumtree.autotuning.TuningEngine;
-
 public class EngineTest {
 
 	@Test
@@ -32,7 +30,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff(rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
 
 	}
 
@@ -44,12 +42,12 @@ public class EngineTest {
 
 		TuningEngine reader = new TuningEngine();
 
-		boolean parallel = true;
+		boolean parallel = false;
 		// Let's try with set 1
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
-		int limitDiffPerGroup = 3;
-		reader.navigateMegaDiff(rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
+		int limitDiffPerGroup = 1;
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
 
 	}
 
