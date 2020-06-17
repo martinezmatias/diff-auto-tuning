@@ -4,6 +4,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -26,6 +27,7 @@ import com.github.gumtreediff.actions.model.Move;
 import com.github.gumtreediff.actions.model.TreeDelete;
 import com.github.gumtreediff.actions.model.TreeInsert;
 import com.github.gumtreediff.actions.model.Update;
+import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
@@ -165,14 +167,16 @@ public class TuningEngine {
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
 
-					File outResults = new File(out + diffId + ".csv");
+					File outResults = new File(out + diffId + "_" + astmodel.name() + ".csv");
 
 					executionResultToCSV(outResults, fileResult);
 
 				}
 			}
 		}
-		File treeFile = new File(out + "/tree_info_" + Arrays.toString(subsets) + ".csv");
+		File treeFile = new File(
+				out + "/tree_info_" + Arrays.toString(subsets).replace("[", "").replace("]", "").replace(",", "-") + "_"
+						+ astmodel.name() + "_" + begin + "_" + stop + ".csv");
 		treeInfoToCSV(treeFile, treeProperties);
 		System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
 
@@ -246,6 +250,11 @@ public class TuningEngine {
 				tl = scanner.getTree(diff.getCtType(previousVersion));
 				tr = scanner.getTree(diff.getCtType(postVersion));
 			} else if (ASTMODE.JDT.equals(model)) {
+				String lc = new String(Files.readAllBytes(previousVersion.toPath()));
+				tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+				String lr = new String(Files.readAllBytes(postVersion.toPath()));
+				tr = new JdtTreeGenerator().generateFrom().string(lr).getRoot();
 
 			} else {
 
@@ -501,6 +510,7 @@ public class TuningEngine {
 	 * 
 	 * @param out
 	 * @param fileresult
+	 * @param astmodel
 	 * @throws IOException
 	 */
 	private void executionResultToCSV(File out, Map<String, Object> fileresult) throws IOException {
@@ -520,6 +530,10 @@ public class TuningEngine {
 			List<Map<String, Object>> configs = (List<Map<String, Object>>) map.get(CONFIGS);
 			for (Map<String, Object> config : configs) {
 				// re-init the row
+
+				if (config == null || config.get(NRACTIONS) == null)
+					continue;
+
 				row = xmatcher + sep;
 
 				row += config.get(NRACTIONS) + sep;
