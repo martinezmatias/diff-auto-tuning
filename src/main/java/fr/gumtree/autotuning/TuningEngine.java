@@ -1,10 +1,12 @@
 package fr.gumtree.autotuning;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -18,6 +20,12 @@ import java.util.concurrent.Future;
 import java.util.stream.Collectors;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import com.github.gumtreediff.actions.model.Delete;
+import com.github.gumtreediff.actions.model.Insert;
+import com.github.gumtreediff.actions.model.Move;
+import com.github.gumtreediff.actions.model.TreeDelete;
+import com.github.gumtreediff.actions.model.TreeInsert;
+import com.github.gumtreediff.actions.model.Update;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
@@ -39,6 +47,12 @@ import gumtree.spoon.diff.operations.Operation;
  *
  */
 public class TuningEngine {
+	private static final String NR_TREEDELETE = "NR_TREEDELETE";
+	private static final String NR_TREEINSERT = "NR_TREEINSERT";
+	private static final String NR_MOVE = "NR_MOVE";
+	private static final String NR_UPDATE = "NR_UPDATE";
+	private static final String NR_DELETE = "NR_DELETE";
+	private static final String NR_INSERT = "NR_INSERT";
 	private static final String CONFIGS = "r";
 	private static final String MATCHER = "MATCHER";
 	private static final String MATCHERS = "MATCHERS";
@@ -57,6 +71,10 @@ public class TuningEngine {
 	private AstComparator diff = new AstComparator();
 	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 
+	enum ASTMODE {
+		GTSPOON, JDT
+	};
+
 	// TODO: we cannot use the same generator when we execute on parallel.
 	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
 
@@ -72,6 +90,11 @@ public class TuningEngine {
 
 	};
 
+	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
+			boolean parallel) throws IOException {
+		this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.matchers);
+	}
+
 	/**
 	 * Navigates megadiff datasets
 	 * 
@@ -80,20 +103,37 @@ public class TuningEngine {
 	 * @param stop    max numbers of diff to analyze per subset
 	 * @throws IOException
 	 */
-	public void navigateMegaDiff(String out, File path, int[] subsets, int stop, boolean parallel) throws IOException {
+	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
+			boolean parallel, Matcher[] matchers) throws IOException {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
 		long initTime = (new Date()).getTime();
+
 		for (int subset : subsets) {
 
-			int nrPairFiles = 0;
+			int nrCommit = 0;
 			File pathSubset = new File(path.getAbsoluteFile() + File.separator + subset + File.separator);
 
-			for (File commit : pathSubset.listFiles()) {
+			List<File> commits = Arrays.asList(pathSubset.listFiles());
 
-				if (stop <= nrPairFiles) {
-					System.out.println("Reach max " + nrPairFiles);
+			//
+			Collections.sort(commits);
+
+			for (File commit : commits) {
+
+				if (".DS_Store".equals(commit.getName()))
+					continue;
+
+				nrCommit++;
+
+				if (nrCommit <= begin) {
+					System.out.println("Skip " + commit.getName());
+					continue;
+				}
+
+				if (nrCommit > stop) {
+					System.out.println("Reach max " + nrCommit);
 					break;
 				}
 
@@ -116,17 +156,14 @@ public class TuningEngine {
 						continue;
 					}
 
-					nrPairFiles++;
-					System.out.println(nrPairFiles + " Analyzing " + previousVersion);
+					System.out.println(nrCommit + " Analyzing " + previousVersion);
 					String diffId = commit.getName() + "_" + fileModif.getName();
 
-					Map<String, Object> fileResult = new HashMap<>();
+					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
+							parallel, treeProperties, matchers);
 					fileResult.put(FILE, fileModif.getName());
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
-
-					analyzeDiff(diffId, previousVersion, postVersion, parallel, treeProperties, fileResult,
-							this.matchers);
 
 					File outResults = new File(out + diffId + ".csv");
 
@@ -135,11 +172,58 @@ public class TuningEngine {
 				}
 			}
 		}
-		treeInfoToCSV(new File(out + "/tree_info_" + Arrays.toString(subsets) + ".csv"), treeProperties);
+		File treeFile = new File(out + "/tree_info_" + Arrays.toString(subsets) + ".csv");
+		treeInfoToCSV(treeFile, treeProperties);
+		System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
 
 		long endTime = (new Date()).getTime();
 
 		System.out.println("Time " + (endTime - initTime) / 1000);
+
+	}
+
+	public Map<String, Object> navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
+			ASTMODE astmodel, boolean parallel, Matcher[] matchers) throws IOException {
+
+		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
+
+		long initTime = (new Date()).getTime();
+
+		File pathSubset = new File(path.getAbsoluteFile() + File.separator + subset + File.separator);
+
+		File commit = new File(
+				pathSubset.getAbsolutePath() + File.separator + subset + "_" + commitId + File.separator);
+
+		if (!commit.exists()) {
+			throw new FileNotFoundException(commit.getAbsolutePath());
+		}
+
+		File fileModif = Arrays.asList(commit.listFiles()).stream().filter(e -> !".DS_Store".equals(e.getName()))
+				.findFirst().get();
+
+		String pathname = calculatePathName(fileModif, commit);
+
+		File previousVersion = new File(pathname.trim() + "_s.java");
+		File postVersion = new File(pathname.trim() + "_t.java");
+
+		String diffId = commit.getName() + "_" + fileModif.getName();
+
+		Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel, parallel,
+				treeProperties, matchers);
+
+		fileResult.put(FILE, fileModif.getName());
+		fileResult.put(COMMIT, commit.getName());
+		fileResult.put(MEGADIFFSET, subset);
+
+		File outResults = new File(out + diffId + ".csv");
+
+		executionResultToCSV(outResults, fileResult);
+
+		long endTime = (new Date()).getTime();
+
+		System.out.println("Time " + (endTime - initTime) / 1000);
+
+		return fileResult;
 
 	}
 
@@ -151,35 +235,50 @@ public class TuningEngine {
 	 * @param parallel
 	 * @param treeProperties
 	 * @param fileResult
+	 * @return
 	 */
-	public void analyzeDiff(String diffId, File previousVersion, File postVersion, boolean parallel,
-			Map<String, Pair<Map, Map>> treeProperties, Map<String, Object> fileResult, Matcher[] matchers) {
+	public Map<String, Object> analyzeDiff(String diffId, File previousVersion, File postVersion, ASTMODE model,
+			boolean parallel, Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
 		try {
-			// TODO: Also with JDT
+			ITree tl = null;
+			ITree tr = null;
+			if (ASTMODE.GTSPOON.equals(model)) {
+				tl = scanner.getTree(diff.getCtType(previousVersion));
+				tr = scanner.getTree(diff.getCtType(postVersion));
+			} else if (ASTMODE.JDT.equals(model)) {
 
-			ITree tl = scanner.getTree(diff.getCtType(previousVersion));
-			ITree tr = scanner.getTree(diff.getCtType(postVersion));
+			} else {
+
+			}
 
 			treeProperties.put(diffId, new Pair<Map, Map>(extractTreeFeaturesMap(tl), extractTreeFeaturesMap(tr)));
 
-			List<Map<String, Object>> matcherResults = new ArrayList<>();
-
-			fileResult.put(MATCHERS, matcherResults);
-
-			for (Matcher matcher : matchers) {
-				try {
-					Map<String, Object> resultJson = computeFitnessFunction(tl, tr, matcher, parallel);
-
-					matcherResults.add(resultJson);
-				} catch (Exception e) {
-					System.err.println("Problems with matcher " + matcher.getClass().getSimpleName());
-					e.printStackTrace();
-				}
-			}
+			return analyzeDiff(tl, tr, parallel, matchers);
 
 		} catch (Exception e) {
 			e.printStackTrace();
+			return new HashMap<>();
 		}
+	}
+
+	public Map<String, Object> analyzeDiff(ITree tl, ITree tr, boolean parallel, Matcher[] matchers) {
+		List<Map<String, Object>> matcherResults = new ArrayList<>();
+
+		Map<String, Object> fileResult = new HashMap<>();
+
+		fileResult.put(MATCHERS, matcherResults);
+
+		for (Matcher matcher : matchers) {
+			try {
+				Map<String, Object> resultJson = computeFitnessFunction(tl, tr, matcher, parallel);
+
+				matcherResults.add(resultJson);
+			} catch (Exception e) {
+				System.err.println("Problems with matcher " + matcher.getClass().getSimpleName());
+				e.printStackTrace();
+			}
+		}
+		return fileResult;
 	}
 
 	public Map<String, Object> computeFitnessFunction(ITree tl, ITree tr, Matcher matcher, boolean parallel) {
@@ -340,6 +439,13 @@ public class TuningEngine {
 		resultMap.put(NRACTIONS, actionsAll.size());
 		resultMap.put(NRROOTS, actionsRoot.size());
 
+		resultMap.put(NR_INSERT, actionsAll.stream().filter(e -> e.getAction() instanceof Insert).count());
+		resultMap.put(NR_DELETE, actionsAll.stream().filter(e -> e.getAction() instanceof Delete).count());
+		resultMap.put(NR_UPDATE, actionsAll.stream().filter(e -> e.getAction() instanceof Update).count());
+		resultMap.put(NR_MOVE, actionsAll.stream().filter(e -> e.getAction() instanceof Move).count());
+		resultMap.put(NR_TREEINSERT, actionsAll.stream().filter(e -> e.getAction() instanceof TreeInsert).count());
+		resultMap.put(NR_TREEDELETE, actionsAll.stream().filter(e -> e.getAction() instanceof TreeDelete).count());
+
 		resultMap.put(TIME, (endSingleDiff - initSingleDiff));
 
 		resultMap.put(CONFIG, aGumTreeProperties);
@@ -420,6 +526,15 @@ public class TuningEngine {
 
 				row += config.get(NRROOTS) + sep;
 
+				//
+				row += config.get(NR_INSERT) + sep;
+				row += config.get(NR_DELETE) + sep;
+				row += config.get(NR_UPDATE) + sep;
+				row += config.get(NR_MOVE) + sep;
+				row += config.get(NR_TREEINSERT) + sep;
+				row += config.get(NR_TREEDELETE) + sep;
+
+				//
 				row += config.get(TIME) + sep;
 
 				GumTreeProperties gtp = (GumTreeProperties) config.get(CONFIG);
@@ -430,6 +545,14 @@ public class TuningEngine {
 					header += MATCHER + sep;
 					header += NRACTIONS + sep;
 					header += NRROOTS + sep;
+
+					header += NR_INSERT + sep;
+					header += NR_DELETE + sep;
+					header += NR_UPDATE + sep;
+					header += NR_MOVE + sep;
+					header += NR_TREEINSERT + sep;
+					header += NR_TREEDELETE + sep;
+
 					header += TIME + sep;
 					header += "NROPTIONS" + sep;
 
@@ -458,7 +581,7 @@ public class TuningEngine {
 		}
 
 		fw.close();
-		System.out.println("Save file " + out);
+		System.out.println("Save file " + out.getAbsolutePath());
 
 	}
 

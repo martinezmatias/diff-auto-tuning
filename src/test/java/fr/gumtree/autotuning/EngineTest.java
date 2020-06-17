@@ -1,6 +1,7 @@
 package fr.gumtree.autotuning;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -9,11 +10,17 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import org.junit.Test;
 
+import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.Matcher;
+import com.github.gumtreediff.utils.Pair;
+
+import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 
 public class EngineTest {
 
@@ -30,24 +37,76 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON, parallel);
 
 	}
 
 	@Test
-	public void testNavigate_Single() throws IOException {
+	public void testNavigate_SingleDiff() throws IOException {
 		File rootMegadiff = new File(
 				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
 
-		boolean parallel = false;
+		boolean parallel = true;
 		// Let's try with set 1
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, limitDiffPerGroup, parallel);
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON, parallel);
+
+	}
+
+	Matcher[] matchers = new Matcher[] {
+			// Simple
+			new CompositeMatchers.SimpleGumtree(),
+			//
+			new CompositeMatchers.ClassicGumtree(),
+			//
+			new CompositeMatchers.CompleteGumtreeMatcher(),
+			//
+			new CompositeMatchers.ChangeDistiller(),
+
+	};
+
+	@Test
+	public void testNavigate_SingleDiff_1_831e3b() throws IOException {
+		File rootMegadiff = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+
+		String commitId = "831e3b0420e70f7c2695cb248dd8b488b1fd84b7";
+
+		boolean parallel = false;
+
+		int megadiff_id = 1;
+
+		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+				ASTMODE.GTSPOON, parallel, matchers);
+
+		assertNotNull(result);
+		System.out.println(result);
+
+	}
+
+	@Test
+	public void testNavigate_SingleMatcher() throws IOException {
+		String pathMegadiff = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded";
+		File rootMegadiff = new File(pathMegadiff);
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+
+		boolean parallel = true;
+		// Let's try with set 1
+		int[] megadiff_ids = new int[] { 1 };
+		// let's simply try 1 diff per group
+		int limitDiffPerGroup = 1;
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON, parallel,
+				new Matcher[] { new CompositeMatchers.ChangeDistiller() });
 
 	}
 
@@ -61,8 +120,8 @@ public class EngineTest {
 
 		TuningEngine reader = new TuningEngine();
 		boolean parallel = false;
-		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, parallel, new HashMap<>(),
-				new HashMap<String, Object>(), reader.getMatchers());
+		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, ASTMODE.GTSPOON, parallel,
+				new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
 	}
 
 	@Test
