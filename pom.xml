@@ -46,18 +46,24 @@
 			<artifactId>picocli</artifactId>
 			<version>4.3.2</version>
 		</dependency>
- 
+
 		<dependency>
 			<groupId>gt3</groupId>
 			<artifactId>gen.jdt</artifactId>
 			<version>3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893</version>
 		</dependency>
 
- 
+
 		<dependency>
 			<groupId>com.google.guava</groupId>
 			<artifactId>guava</artifactId>
 			<version>29.0-jre</version>
+		</dependency>
+
+		<dependency>
+			<groupId>org.kohsuke</groupId>
+			<artifactId>github-api</artifactId>
+			<version>1.114</version>
 		</dependency>
 
 	</dependencies>
@@ -72,7 +78,7 @@
 							<mainClass>fr.gumtree.autotuning.Main</mainClass>
 						</manifest>
 					</archive>
-					 
+
 					<descriptorRefs>
 						<descriptorRef>jar-with-dependencies</descriptorRef>
 					</descriptorRefs>
@@ -88,7 +94,7 @@
 				</executions>
 			</plugin>
 		</plugins>
-	
+
 		<pluginManagement>
 			<plugins>
 				<plugin>
@@ -112,7 +118,7 @@
 						</execution>
 					</executions>
 				</plugin>
-				
+
 			</plugins>
 		</pluginManagement>
 

@@ -158,7 +158,7 @@ public class TuningEngine {
 						continue;
 					}
 
-					System.out.println(nrCommit + " Analyzing " + previousVersion);
+					// System.out.println(nrCommit + " Analyzing " + previousVersion);
 					String diffId = commit.getName() + "_" + fileModif.getName();
 
 					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
@@ -167,7 +167,9 @@ public class TuningEngine {
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
 
-					File outResults = new File(out + File.separator + diffId + "_" + astmodel.name() + ".csv");
+					File outResults = new File(
+							out + File.separator + subset + File.separator + diffId + "_" + astmodel.name() + ".csv");
+					outResults.getParentFile().mkdirs();
 
 					executionResultToCSV(outResults, fileResult);
 
