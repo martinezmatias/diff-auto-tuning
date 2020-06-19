@@ -12,9 +12,13 @@
 	<url>http://maven.apache.org</url>
 
 	<properties>
-		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-	</properties>
 
+		<maven.compiler.source>1.9</maven.compiler.source>
+		<maven.compiler.target>1.9</maven.compiler.target>
+		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
+		<github.global.server>github</github.global.server>
+	</properties>
 	<dependencies>
 		<dependency>
 			<groupId>junit</groupId>
@@ -31,12 +35,6 @@
 		</dependency>
 
 		<dependency>
-			<groupId>com.github.gumtreediff</groupId>
-			<artifactId>gen.jdt</artifactId>
-			<version>2.1.2</version>
-		</dependency>
-
-		<dependency>
 			<groupId>io.jenetics</groupId>
 			<artifactId>jenetics</artifactId>
 			<version>5.2.0</version>
@@ -48,8 +46,76 @@
 			<artifactId>picocli</artifactId>
 			<version>4.3.2</version>
 		</dependency>
+ 
+		<dependency>
+			<groupId>gt3</groupId>
+			<artifactId>gen.jdt</artifactId>
+			<version>3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893</version>
+		</dependency>
+
+ 
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>29.0-jre</version>
+		</dependency>
+
 	</dependencies>
 
+	<build>
+		<plugins>
+			<plugin>
+				<artifactId>maven-assembly-plugin</artifactId>
+				<configuration>
+					<archive>
+						<manifest>
+							<mainClass>fr.gumtree.autotuning.Main</mainClass>
+						</manifest>
+					</archive>
+					 
+					<descriptorRefs>
+						<descriptorRef>jar-with-dependencies</descriptorRef>
+					</descriptorRefs>
+				</configuration>
+				<executions>
+					<execution>
+						<id>make-assembly</id> <!-- this is used for inheritance merges -->
+						<phase>package</phase> <!-- bind to the packaging phase -->
+						<goals>
+							<goal>single</goal>
+						</goals>
+					</execution>
+				</executions>
+			</plugin>
+		</plugins>
+	
+		<pluginManagement>
+			<plugins>
+				<plugin>
+					<groupId>org.apache.maven.plugins</groupId>
+					<artifactId>maven-install-plugin</artifactId>
+					<version>2.5</version>
+					<executions>
+						<execution>
+							<id>gt3</id>
+							<phase>clean</phase>
+							<goals>
+								<goal>install-file</goal>
+							</goals>
+							<configuration>
+								<groupId>gt3</groupId>
+								<artifactId>gen.jdt</artifactId>
+								<version>3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893</version>
+								<packaging>jar</packaging>
+								<file>${basedir}/libs/gen.jdt-3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893.jar</file>
+							</configuration>
+						</execution>
+					</executions>
+				</plugin>
+				
+			</plugins>
+		</pluginManagement>
 
+	</build>
 
 </project>

@@ -167,7 +167,7 @@ public class TuningEngine {
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
 
-					File outResults = new File(out + diffId + "_" + astmodel.name() + ".csv");
+					File outResults = new File(out + File.separator + diffId + "_" + astmodel.name() + ".csv");
 
 					executionResultToCSV(outResults, fileResult);
 

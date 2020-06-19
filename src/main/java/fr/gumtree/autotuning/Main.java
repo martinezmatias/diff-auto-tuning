@@ -31,6 +31,7 @@ public class Main implements Callable<Integer> {
 	boolean parallel;
 
 	public static void main(String[] args) {
+		System.out.println("Command: " + Arrays.toString(args));
 		Main m = new Main();
 		CommandLine cl = new CommandLine(m);
 		cl.execute(args);
