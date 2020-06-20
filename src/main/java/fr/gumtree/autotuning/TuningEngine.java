@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -72,8 +73,11 @@ public class TuningEngine {
 	private static final String MEGADIFFSET = "MEGADIFFSET";
 	private static final String COMMIT = "COMMIT";
 	private static final String FILE = "FILE";
+	private static final String TIMEOUT = "TIMEOUT";
 	private AstComparator diff = new AstComparator();
 	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
+
+	long timeOutSeconds = 60 * 5;
 
 	enum ASTMODE {
 		GTSPOON, JDT
@@ -304,12 +308,10 @@ public class TuningEngine {
 
 		Map<String, Object> result = new HashMap<>();
 
-		// propertiesJSON.addProperty(MATCHER, matcher.getClass().getSimpleName());
 		result.put(MATCHER, matcher.getClass().getSimpleName());
 
 		List<Object> alldiffresults = new ArrayList<>();
 
-		// propertiesJSON.add(CONFIGS, allDiffResulFromMatcher);
 		result.put(CONFIGS, alldiffresults);
 
 		if (matcher instanceof ConfigurableMatcher) {
@@ -364,7 +366,8 @@ public class TuningEngine {
 		} else {
 			// parallel
 			try {
-				List<Map<String, Object>> results = runInParallelSc(10, tl, tr, matcher, combinations);
+				List<Map<String, Object>> results = runInParallelSc(10, tl, tr, matcher, combinations,
+						this.timeOutSeconds);
 				for (Map<String, Object> iResult : results) {
 
 					alldiffresults.add(iResult);
@@ -429,18 +432,65 @@ public class TuningEngine {
 		}).collect(Collectors.toList());
 	}
 
-	public List<Map<String, Object>> runInParallelSc(int nrThreads, ITree tl, ITree tr, Matcher matcher,
+	public List<Map<String, Object>> runInParallelScWait(int nrThreads, ITree tl, ITree tr, Matcher matcher,
 			List<GumTreeProperties> combinations) throws Exception {
 
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
 		List<Callable<Map<String, Object>>> callables = new ArrayList<>();
 
+		Map<Future<Map<String, Object>>, Callable<Map<String, Object>>> futures = new HashMap();
+
+		for (GumTreeProperties aGumTreeProperties : combinations) {
+			// callables.add();
+
+			DiffCallable callable = new DiffCallable(tl, tr, matcher, aGumTreeProperties);
+			Future<Map<String, Object>> futureTask = executor.submit(callable);
+			futures.put(futureTask, callable);
+		}
+
+		// List<Future<Map<String, Object>>> result = executor.invokeAll(callables, 30,
+		// TimeUnit.SECONDS);
+
+		// TOTAL
+		executor.awaitTermination(1, TimeUnit.MINUTES);
+
+		executor.shutdown();
+
+		Collection<Future<Map<String, Object>>> result = futures.keySet();
+
+		return result.stream().map(e -> {
+			try {
+				if (e.isDone() && !e.isCancelled())
+					return e.get();
+				else {
+					// System.out.println("Cancell task");
+
+					HashMap hashMap = new HashMap();
+					hashMap.put(TIMEOUT, "true");
+
+					return hashMap;
+				}
+			} catch (Exception e1) {
+
+				e1.printStackTrace();
+				return null;
+			}
+		}).collect(Collectors.toList());
+	}
+
+	public List<Map<String, Object>> runInParallelSc(int nrThreads, ITree tl, ITree tr, Matcher matcher,
+			List<GumTreeProperties> combinations, long timeoutSeconds) throws Exception {
+
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
+
+		List<DiffCallable> callables = new ArrayList<>();
+
 		for (GumTreeProperties aGumTreeProperties : combinations) {
 			callables.add(new DiffCallable(tl, tr, matcher, aGumTreeProperties));
 		}
 
-		List<Future<Map<String, Object>>> result = executor.invokeAll(callables, 30, TimeUnit.SECONDS);
+		List<Future<Map<String, Object>>> result = executor.invokeAll(callables, timeoutSeconds, TimeUnit.SECONDS);
 
 		executor.shutdown();
 
@@ -449,8 +499,20 @@ public class TuningEngine {
 				if (e.isDone() && !e.isCancelled())
 					return e.get();
 				else {
-					System.out.println("Cancell task");
-					return new HashMap();
+					// System.out.println("Cancell task");
+
+					HashMap notFinishedConfig = new HashMap();
+					notFinishedConfig.put(TIMEOUT, "true");
+
+					int indexFuture = result.indexOf(e);
+					if (indexFuture >= 0) {
+						// Store the properties of the future not finished
+						DiffCallable icallable = callables.get(indexFuture);
+						notFinishedConfig.put(CONFIG, icallable.aGumTreeProperties);
+
+					}
+
+					return notFinishedConfig;
 				}
 			} catch (Exception e1) {
 
@@ -482,6 +544,8 @@ public class TuningEngine {
 		long endSingleDiff = new Date().getTime();
 
 		Map<String, Object> resultMap = new HashMap<>();
+
+		// resultMap.put(MATCHER, matcher.getClass().getSimpleName());
 
 		resultMap.put(NRACTIONS, actionsAll.size());
 		resultMap.put(NRROOTS, actionsRoot.size());
@@ -569,30 +633,57 @@ public class TuningEngine {
 			for (Map<String, Object> config : configs) {
 				// re-init the row
 
-				if (config == null || config.get(NRACTIONS) == null)
-					continue;
+				// if (config == null || config.get(NRACTIONS) == null)
+				GumTreeProperties gtp = gtp = (config.containsKey(CONFIG)) ? (GumTreeProperties) config.get(CONFIG)
+						: new GumTreeProperties();
+				if (config == null || config.get(TIMEOUT) != null) {
 
-				row = xmatcher + sep;
+					row = xmatcher + sep;
 
-				row += config.get(NRACTIONS) + sep;
+					row += "" + sep;
 
-				row += config.get(NRROOTS) + sep;
+					row += "" + sep;
 
-				//
-				row += config.get(NR_INSERT) + sep;
-				row += config.get(NR_DELETE) + sep;
-				row += config.get(NR_UPDATE) + sep;
-				row += config.get(NR_MOVE) + sep;
-				row += config.get(NR_TREEINSERT) + sep;
-				row += config.get(NR_TREEDELETE) + sep;
+					//
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					//
+					row += "" + sep;
 
-				//
-				row += config.get(TIME) + sep;
+					row += "" + sep;
 
-				GumTreeProperties gtp = (GumTreeProperties) config.get(CONFIG);
+					// TIMEout
+					row += "1" + sep;
 
-				row += gtp.getProperties().keySet().size() + sep;
+				} else {
 
+					row = xmatcher + sep;
+
+					row += config.get(NRACTIONS) + sep;
+
+					row += config.get(NRROOTS) + sep;
+
+					//
+					row += config.get(NR_INSERT) + sep;
+					row += config.get(NR_DELETE) + sep;
+					row += config.get(NR_UPDATE) + sep;
+					row += config.get(NR_MOVE) + sep;
+					row += config.get(NR_TREEINSERT) + sep;
+					row += config.get(NR_TREEDELETE) + sep;
+
+					//
+					row += config.get(TIME) + sep;
+
+					// gtp = (GumTreeProperties) config.get(CONFIG);
+
+					row += gtp.getProperties().keySet().size() + sep;
+					// TIMEout
+					row += "0" + sep;
+				}
 				if (first) {
 					header += MATCHER + sep;
 					header += NRACTIONS + sep;
@@ -607,6 +698,7 @@ public class TuningEngine {
 
 					header += TIME + sep;
 					header += "NROPTIONS" + sep;
+					header += TIMEOUT + sep;
 
 				}
 
@@ -679,5 +771,13 @@ public class TuningEngine {
 		fw.write(header + row);
 		fw.close();
 
+	}
+
+	public long getTimeOutSeconds() {
+		return timeOutSeconds;
+	}
+
+	public void setTimeOutSeconds(long timeOutSeconds) {
+		this.timeOutSeconds = timeOutSeconds;
 	}
 }

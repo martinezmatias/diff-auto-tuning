@@ -29,9 +29,12 @@ public class Main implements Callable<Integer> {
 	String astmodel;
 	@Option(names = "-parallel", defaultValue = "true")
 	boolean parallel;
+	// in seconds
+	@Option(names = "-timeout", defaultValue = "3000", descriptionKey = "timeout for a matcher (all config) in seconds")
+	long timeout;
 
 	public static void main(String[] args) {
-		System.out.println("Command: " + Arrays.toString(args));
+		System.out.println("Arguments received: " + Arrays.toString(args));
 		Main m = new Main();
 		CommandLine cl = new CommandLine(m);
 		cl.execute(args);
@@ -96,11 +99,12 @@ public class Main implements Callable<Integer> {
 	@Override
 	public Integer call() throws Exception {
 
-		System.out.println("out:  " + toString());
+		System.out.println("Command:  " + toString());
 
 		ASTMODE mode = ASTMODE.valueOf(this.astmodel);
 
 		TuningEngine engine = new TuningEngine();
+		engine.setTimeOutSeconds(timeout);
 		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, mode, parallel);
 		System.out.println("-END-");
 		return null;
@@ -109,7 +113,16 @@ public class Main implements Callable<Integer> {
 	@Override
 	public String toString() {
 		return "Main [out=" + out + ", pathMegadiff=" + pathMegadiff + ", subsets=" + Arrays.toString(subsets)
-				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + parallel + "]";
+				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + parallel
+				+ ", timeouut=" + timeout + "]";
+	}
+
+	public long getTimeout() {
+		return timeout;
+	}
+
+	public void setTimeout(long timeout) {
+		this.timeout = timeout;
 	}
 
 }
