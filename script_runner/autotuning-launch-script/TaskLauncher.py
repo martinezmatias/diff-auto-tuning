@@ -9,7 +9,6 @@ def is_grid5k():
 
 def runProject(out, path, subset, begin=0, stop = 10000000, astmodel="GTSPOON", parallel=True):
 
-
 	at_java_cmd = javahome + "/java  -cp {}  fr.gumtree.autotuning.Main -out={} -path={} -subset={} -begin={} -stop={} -astmodel={} -parallel={}  ".format(liblocation, out, path, subset, begin, stop, astmodel, parallel)
 
 	cmd = ""
@@ -19,8 +18,8 @@ def runProject(out, path, subset, begin=0, stop = 10000000, astmodel="GTSPOON", 
 
 			cmd = "oarsub -l nodes=1,walltime=%s -O %s -E %s \"%s\"" % (
 				GRID5K_TIME_OUT,
-				"out_{}_{}_{}_{}.txt".format(subset,begin,stop, astmodel),
-				"error_{}_{}_{}_{}.txt".format(subset,begin,stop, astmodel),
+				"./logs/out_{}_{}_{}_{}.txt".format(subset,begin,stop, astmodel),
+				"./logs/error_{}_{}_{}_{}.txt".format(subset,begin,stop, astmodel),
 				at_java_cmd)
 
 			#cmd = at_java_cmd
