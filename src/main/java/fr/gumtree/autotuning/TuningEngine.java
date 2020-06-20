@@ -636,10 +636,12 @@ public class TuningEngine {
 			for (Map<String, Object> config : configs) {
 				// re-init the row
 
-				// if (config == null || config.get(NRACTIONS) == null)
+				if (config == null)
+					continue;
+
 				GumTreeProperties gtp = (config.containsKey(CONFIG)) ? (GumTreeProperties) config.get(CONFIG)
 						: new GumTreeProperties();
-				if (config == null || config.get(TIMEOUT) != null) {
+				if (config.get(TIMEOUT) != null) {
 
 					row = xmatcher + sep;
 
@@ -680,8 +682,6 @@ public class TuningEngine {
 
 					//
 					row += config.get(TIME) + sep;
-
-					// gtp = (GumTreeProperties) config.get(CONFIG);
 
 					row += gtp.getProperties().keySet().size() + sep;
 					// TIMEout
