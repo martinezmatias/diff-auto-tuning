@@ -18,6 +18,8 @@ import java.util.concurrent.ExecutionException;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
@@ -143,7 +145,7 @@ public class TuningEngine {
 					continue;
 
 				for (File fileModif : commit.listFiles()) {
-
+					long initdiff = (new Date()).getTime();
 					if (".DS_Store".equals(fileModif.getName()))
 						continue;
 
@@ -161,21 +163,25 @@ public class TuningEngine {
 					// System.out.println(nrCommit + " Analyzing " + previousVersion);
 					String diffId = commit.getName() + "_" + fileModif.getName();
 
+					System.out.println("\n---diff " + nrCommit + "/" + commits.size() + " id " + diffId);
 					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
 							parallel, treeProperties, matchers);
 					fileResult.put(FILE, fileModif.getName());
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
 
-					File outResults = new File(
-							out + File.separator + subset + File.separator + diffId + "_" + astmodel.name() + ".csv");
+					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
+							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
 					outResults.getParentFile().mkdirs();
 
 					executionResultToCSV(outResults, fileResult);
 
+					System.out.println("diff time " + ((new Date()).getTime() - initdiff) / 1000 + " sec");
+
 				}
 			}
 		}
+		System.out.println("Finished all diff from " + begin + " to " + stop);
 		File treeFile = new File(
 				out + "/tree_info_" + Arrays.toString(subsets).replace("[", "").replace("]", "").replace(",", "-") + "_"
 						+ astmodel.name() + "_" + begin + "_" + stop + ".csv");
@@ -318,7 +324,6 @@ public class TuningEngine {
 			// We collect the domains
 			for (ConfigurationOptions option : options) {
 
-				System.out.println("Option " + option);
 				ParameterDomain<?> paramOption = ParametersResolvers.parametersDomain.get(option);
 				if (paramOption != null) {
 					domains.add(paramOption);
@@ -359,7 +364,7 @@ public class TuningEngine {
 		} else {
 			// parallel
 			try {
-				List<Map<String, Object>> results = runInParallel(10, tl, tr, matcher, combinations);
+				List<Map<String, Object>> results = runInParallelSc(10, tl, tr, matcher, combinations);
 				for (Map<String, Object> iResult : results) {
 
 					alldiffresults.add(iResult);
@@ -417,6 +422,37 @@ public class TuningEngine {
 			try {
 				return e.get();
 			} catch (InterruptedException | ExecutionException e1) {
+
+				e1.printStackTrace();
+				return null;
+			}
+		}).collect(Collectors.toList());
+	}
+
+	public List<Map<String, Object>> runInParallelSc(int nrThreads, ITree tl, ITree tr, Matcher matcher,
+			List<GumTreeProperties> combinations) throws Exception {
+
+		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
+
+		List<Callable<Map<String, Object>>> callables = new ArrayList<>();
+
+		for (GumTreeProperties aGumTreeProperties : combinations) {
+			callables.add(new DiffCallable(tl, tr, matcher, aGumTreeProperties));
+		}
+
+		List<Future<Map<String, Object>>> result = executor.invokeAll(callables, 30, TimeUnit.SECONDS);
+
+		executor.shutdown();
+
+		return result.stream().map(e -> {
+			try {
+				if (e.isDone() && !e.isCancelled())
+					return e.get();
+				else {
+					System.out.println("Cancell task");
+					return new HashMap();
+				}
+			} catch (Exception e1) {
 
 				e1.printStackTrace();
 				return null;
