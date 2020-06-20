@@ -25,4 +25,13 @@ public class MainTest {
 		Main.main(command);
 	}
 
+	@Test
+	public void testMain3() {
+		String[] command = new String[] {
+				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+				"-out=./out/", //
+				"-stop=1", //
+				"-subset=1", "-timeout=10" };
+		Main.main(command);
+	}
 }

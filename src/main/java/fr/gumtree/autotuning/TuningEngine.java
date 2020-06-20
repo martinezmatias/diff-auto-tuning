@@ -637,7 +637,7 @@ public class TuningEngine {
 				// re-init the row
 
 				// if (config == null || config.get(NRACTIONS) == null)
-				GumTreeProperties gtp = gtp = (config.containsKey(CONFIG)) ? (GumTreeProperties) config.get(CONFIG)
+				GumTreeProperties gtp = (config.containsKey(CONFIG)) ? (GumTreeProperties) config.get(CONFIG)
 						: new GumTreeProperties();
 				if (config == null || config.get(TIMEOUT) != null) {
 
