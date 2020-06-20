@@ -12,5 +12,5 @@ end = sys.argv[2]
 
 model = sys.argv[3]
 
-for i in range(1, 40):
+for i in range(1, 41):
 	runProject(out = outResult, path = megadiffpath, subset=i, begin=begin, stop = end, astmodel=model, parallel=True)
