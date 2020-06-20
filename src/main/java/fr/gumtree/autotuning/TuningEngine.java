@@ -303,7 +303,7 @@ public class TuningEngine {
 	}
 
 	public Map<String, Object> computeFitnessFunction(ITree tl, ITree tr, Matcher matcher, boolean parallel) {
-
+		long initMatcher = (new Date()).getTime();
 		List<GumTreeProperties> combinations = null;
 
 		Map<String, Object> result = new HashMap<>();
@@ -338,8 +338,9 @@ public class TuningEngine {
 			// Now, the CartesianProduct of all options
 			combinations = computeCartesianProduct(domains);
 
-			System.out.println("Matcher " + matcher.getClass().getSimpleName() + " options: " + domains.size()
-					+ " Nr config: " + combinations.size());
+			// System.out.println("Matcher " + matcher.getClass().getSimpleName() + "
+			// options: " + domains.size()
+			// + " Nr config: " + combinations.size());
 
 		} else {
 			// No properties
@@ -377,6 +378,8 @@ public class TuningEngine {
 				e.printStackTrace();
 			}
 		}
+		System.out.println("Matcher " + matcher.getClass().getSimpleName() + " time "
+				+ (((new Date()).getTime() - initMatcher) / 1000) + " Nr_config: " + combinations.size());
 		return result;
 
 	}
