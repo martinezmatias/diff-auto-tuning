@@ -32,7 +32,7 @@ def runProject(out, path, subset, begin=0, stop = 10000000, astmodel="GTSPOON", 
 		print(" at java command {} ".format(cmd))
 		devnull = open('/dev/null', 'w')
 		cmd_output = subprocess.check_output(cmd, shell=True, stdin=None, stderr=devnull)
-		# cmd_output = subprocess.check_call(cmd, shell=True, stdout=STDOUT, stdin=None, stderr=devnull)
+		## cmd_output = subprocess.check_call(cmd, shell=True, stdout=STDOUT, stdin=None, stderr=devnull)
 
 		print("Return grid node execution {}".format(cmd_output))
 
