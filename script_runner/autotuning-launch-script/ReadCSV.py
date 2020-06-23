@@ -1,39 +1,26 @@
 import os
 import re
 import pandas
+from statistics import mean
 
-'''given an group id, return the max number, so the process can start from there'''
-def getMaxAnalyzed(rootResults, groupId, model = "GTSPOON"):
-	filesGroup = os.path.join(rootResults, groupId)
+CHANGE_DISTILLER = "ChangeDistiller"
 
-	if not os.path.isdir(filesGroup):
-		return groupId, None
-	maxid = 0
-	for diff in os.listdir(filesGroup):
+CompleteGT = "CompleteGumtreeMatcher"
 
-		if model not in diff:
-			continue
-		#	print(diff)
-		keyfiles = int(re.split('_+', diff)[1])
-		#	print(keyfiles)
-		if keyfiles > maxid:
-			maxid = keyfiles
+ClasicGT = "ClassicGumtree"
+
+SimpleGT = "SimpleGumtree"
 
 
-	return groupId, maxid
+def initStructure():
+	st = []
+	for i in range(1, 41):
+		st = {}
+		st[SimpleGT] = []
+		st[ClasicGT] = []
+		st[CompleteGT] = []
+		st[CHANGE_DISTILLER] = []
 
-def parser(rootResults):
-
-	files = os.listdir(rootResults)
-
-	for groupId in files:
-
-		if groupId == ".DS_Store":
-			continue
-
-		groupId, maxid = getMaxAnalyzed(rootResults, groupId)
-
-		print("group id {}  max {} ".format(groupId, maxid))
 
 
 def parserCSV(rootResults):
@@ -41,8 +28,13 @@ def parserCSV(rootResults):
 	files = os.listdir(rootResults)
 	totalDiffAnalyzed = 0
 
+	timesoutByGroup = {}
 	timesByGroup = {}
+	diffAnalyzedByGroup = {}
 	problems = []
+
+	executionTimePerDiffAlgorith = {}
+
 	for groupId in files:
 
 		if groupId == ".DS_Store":
@@ -54,6 +46,8 @@ def parserCSV(rootResults):
 			continue
 
 		timesByGroup[groupId] = []
+		timesoutByGroup[groupId] = []
+		diffAnalyzedByGroup[groupId] = []
 		for diff in os.listdir(filesGroup):
 
 			if not diff.endswith(".csv"):
@@ -66,14 +60,24 @@ def parserCSV(rootResults):
 
 				times = df["TIME"].to_list()
 				timeouts = df["TIMEOUT"].to_list()
-				sumTimes = sum (filter(lambda x: str(x) != 'nan', times))
+
+				sumTimesOfDiff = sum (filter(lambda x: str(x) != 'nan', times))
+
+				countTimeouts = len(list(filter(lambda x: x == 1, timeouts)))
+				timesoutByGroup[groupId].append(countTimeouts)
+
 				print("times {}".format(times))
 				print("timeso{}".format(timeouts))
 				totalDiffAnalyzed+=1
 
-				timesByGroup[groupId].append(sumTimes)
-			except:
+				timesByGroup[groupId].append(sumTimesOfDiff)
+
+				#### Retrieve algoritm
+
+
+			except Exception as e:
 				print("Problems with {}".format(diff))
+				print(e)
 				problems.append(diff)
 
 
@@ -83,11 +87,13 @@ def parserCSV(rootResults):
 
 	## Let'sum all per group
 
-	for groupId in timesByGroup:
+	for groupId in sorted(timesByGroup.keys(), key=lambda x: int(x)):
 			sumid = sum(timesByGroup[groupId])
-			print("gid: {} sum miliseconds {} minutes {} hours".format(groupId, sumid, sumid/60000), sumid/3600000)
+			avgTimeout = mean(timesoutByGroup[groupId])
+			print("avg {}".format(avgTimeout))
+			print("gid: {}, sum: miliseconds {}, minutes {}, hours {},  avg timeout {} ".format(groupId, sumid, sumid/60000, sumid/3600000, avgTimeout))
+
 
 
 
 ###
-#parserCSV("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/results/out-gtspoon/")
