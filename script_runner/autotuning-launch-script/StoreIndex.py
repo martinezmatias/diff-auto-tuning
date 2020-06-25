@@ -1,6 +1,9 @@
 import os
 import re
-'''given an group id, return the max number, so the process can start from there'''
+'''given an group id, return the max number, so the process can start from there
+Clarification: it returns the ID of megadiff, not the max number of files analyzed.
+A megadiff folder can have more than one file, so they share the same Diff's id.
+'''
 def getMaxAnalyzed(rootResults, groupId, model = "GTSPOON"):
 	filesGroup = os.path.join(rootResults, groupId)
 
