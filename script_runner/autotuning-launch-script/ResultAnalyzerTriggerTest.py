@@ -9,10 +9,10 @@ class MyTestCase(unittest.TestCase):
 		compareNewExecutedBetweenTwoExecutions("lastindex/lastIndext_GTSPOON_1592923835.802567.json",
 											   "lastindex/lastIndext_GTSPOON_1592924043.853812.json")
 
-	def _test_something(self):
-		saveExecutionsIndexOfBatches(out)
+	def _testSaveIndexLastExecution(self):
+		saveExecutionsIndexOfBatches("./results/out5")
 
 	def test_ParserResults(self):
-		parserCSV("./out/")
+		parserCSV("./results/out5")
 if __name__ == '__main__':
 	unittest.main()
