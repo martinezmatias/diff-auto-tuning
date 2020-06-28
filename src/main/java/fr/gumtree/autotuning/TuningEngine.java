@@ -37,6 +37,7 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.TreeContext;
 import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
@@ -97,6 +98,7 @@ public class TuningEngine {
 			new CompositeMatchers.ChangeDistiller(),
 
 	};
+	private int nrThreads = 10;
 
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
 			boolean parallel) throws IOException {
@@ -291,7 +293,8 @@ public class TuningEngine {
 
 		for (Matcher matcher : matchers) {
 			try {
-				Map<String, Object> resultJson = computeFitnessFunction(tl, tr, matcher, parallel);
+				Map<String, Object> resultJson = computeFitnessFunction(tl, tr, matcher,
+						parallel && this.nrThreads > 1);
 
 				matcherResults.add(resultJson);
 			} catch (Exception e) {
@@ -360,14 +363,14 @@ public class TuningEngine {
 
 				alldiffresults.add(resDiff);
 
-				if (iProperty % 10 == 0)
-					System.out.println(iProperty + "/" + combinations.size());
+				// if (iProperty % 10 == 0)
+				// System.out.println(iProperty + "/" + combinations.size());
 
 			}
 		} else {
 			// parallel
 			try {
-				List<Map<String, Object>> results = runInParallelSc(10, tl, tr, matcher, combinations,
+				List<Map<String, Object>> results = runInParallelSc(nrThreads, tl, tr, matcher, combinations,
 						this.timeOutSeconds);
 				for (Map<String, Object> iResult : results) {
 
@@ -405,6 +408,7 @@ public class TuningEngine {
 					// parallel two diffs
 					matcher.getClass().newInstance()
 					// matcher
+					// matcher
 					, aGumTreeProperties);
 		}
 
@@ -435,6 +439,7 @@ public class TuningEngine {
 		}).collect(Collectors.toList());
 	}
 
+	@Deprecated
 	public List<Map<String, Object>> runInParallelScWait(int nrThreads, ITree tl, ITree tr, Matcher matcher,
 			List<GumTreeProperties> combinations) throws Exception {
 
@@ -502,7 +507,6 @@ public class TuningEngine {
 				if (e.isDone() && !e.isCancelled())
 					return e.get();
 				else {
-					// System.out.println("Cancell task");
 
 					HashMap notFinishedConfig = new HashMap();
 					notFinishedConfig.put(TIMEOUT, "true");
@@ -536,19 +540,15 @@ public class TuningEngine {
 	 */
 	public Map<String, Object> runDiff(ITree tl, ITree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
 		long initSingleDiff = new Date().getTime();
+		Map<String, Object> resultMap = new HashMap<>();
+		Diff result = null;
 
-		Diff result = new DiffImpl(scanner.getTreeContext(), tl, tr, new ChawatheScriptGenerator(), matcher,
-				aGumTreeProperties);
+		result = new DiffImpl(new TreeContext()// scanner.getTreeContext()
+				, tl, tr, new ChawatheScriptGenerator(), matcher, aGumTreeProperties);
 
 		List<Operation> actionsAll = result.getAllOperations();
 
 		List<Operation> actionsRoot = result.getRootOperations();
-
-		long endSingleDiff = new Date().getTime();
-
-		Map<String, Object> resultMap = new HashMap<>();
-
-		// resultMap.put(MATCHER, matcher.getClass().getSimpleName());
 
 		resultMap.put(NRACTIONS, actionsAll.size());
 		resultMap.put(NRROOTS, actionsRoot.size());
@@ -560,6 +560,7 @@ public class TuningEngine {
 		resultMap.put(NR_TREEINSERT, actionsAll.stream().filter(e -> e.getAction() instanceof TreeInsert).count());
 		resultMap.put(NR_TREEDELETE, actionsAll.stream().filter(e -> e.getAction() instanceof TreeDelete).count());
 
+		long endSingleDiff = new Date().getTime();
 		resultMap.put(TIME, (endSingleDiff - initSingleDiff));
 
 		resultMap.put(CONFIG, aGumTreeProperties);
@@ -782,5 +783,13 @@ public class TuningEngine {
 
 	public void setTimeOutSeconds(long timeOutSeconds) {
 		this.timeOutSeconds = timeOutSeconds;
+	}
+
+	public int getNrThreads() {
+		return nrThreads;
+	}
+
+	public void setNrThreads(int nrThreads) {
+		this.nrThreads = nrThreads;
 	}
 }
