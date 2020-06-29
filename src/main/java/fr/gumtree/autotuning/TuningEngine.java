@@ -80,6 +80,10 @@ public class TuningEngine {
 
 	long timeOutSeconds = 60 * 5;
 
+	enum PARALLEL_EXECUTION {
+		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
+	}
+
 	enum ASTMODE {
 		GTSPOON, JDT
 	};
@@ -101,7 +105,7 @@ public class TuningEngine {
 	private int nrThreads = 10;
 
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
-			boolean parallel) throws IOException {
+			PARALLEL_EXECUTION parallel) throws IOException {
 		this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.matchers);
 	}
 
@@ -114,7 +118,7 @@ public class TuningEngine {
 	 * @throws IOException
 	 */
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
-			boolean parallel, Matcher[] matchers) throws IOException {
+			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -201,7 +205,7 @@ public class TuningEngine {
 	}
 
 	public Map<String, Object> navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
-			ASTMODE astmodel, boolean parallel, Matcher[] matchers) throws IOException {
+			ASTMODE astmodel, PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -256,7 +260,7 @@ public class TuningEngine {
 	 * @return
 	 */
 	public Map<String, Object> analyzeDiff(String diffId, File previousVersion, File postVersion, ASTMODE model,
-			boolean parallel, Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
+			PARALLEL_EXECUTION parallel, Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
 		try {
 			ITree tl = null;
 			ITree tr = null;
@@ -276,7 +280,10 @@ public class TuningEngine {
 
 			treeProperties.put(diffId, new Pair<Map, Map>(extractTreeFeaturesMap(tl), extractTreeFeaturesMap(tr)));
 
-			return analyzeDiff(tl, tr, parallel, matchers);
+			if (parallel.equals(PARALLEL_EXECUTION.MATCHER_LEVEL))
+				return analyzeDiffByMatcherThread(tl, tr, parallel, matchers);
+			else
+				return analyzeDiff(tl, tr, parallel, matchers);
 
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -284,7 +291,7 @@ public class TuningEngine {
 		}
 	}
 
-	public Map<String, Object> analyzeDiff(ITree tl, ITree tr, boolean parallel, Matcher[] matchers) {
+	public Map<String, Object> analyzeDiff(ITree tl, ITree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
 		List<Map<String, Object>> matcherResults = new ArrayList<>();
 
 		Map<String, Object> fileResult = new HashMap<>();
@@ -293,8 +300,9 @@ public class TuningEngine {
 
 		for (Matcher matcher : matchers) {
 			try {
+
 				Map<String, Object> resultJson = computeFitnessFunction(tl, tr, matcher,
-						parallel && this.nrThreads > 1);
+						PARALLEL_EXECUTION.PROPERTY_LEVEL.equals(parallel) && this.nrThreads > 1);
 
 				matcherResults.add(resultJson);
 			} catch (Exception e) {
@@ -302,6 +310,47 @@ public class TuningEngine {
 				e.printStackTrace();
 			}
 		}
+		return fileResult;
+	}
+
+	public Map<String, Object> analyzeDiffByMatcherThread(ITree tl, ITree tr, PARALLEL_EXECUTION parallel,
+			Matcher[] matchers) {
+		List<Map<String, Object>> matcherResults = new ArrayList<>();
+
+		Map<String, Object> fileResult = new HashMap<>();
+
+		fileResult.put(MATCHERS, matcherResults);
+
+		ExecutorService executor = Executors.newFixedThreadPool(matchers.length);
+		List<Callable<Map<String, Object>>> callables = new ArrayList<>();
+
+		try {
+
+			for (Matcher matcher : matchers) {
+
+				callables.add(new MatcherCallable(tl, tr, matcher));
+			}
+
+			List<Future<Map<String, Object>>> result = executor.invokeAll(callables);
+
+			executor.shutdown();
+
+			List<Map<String, Object>> collectedResults = result.stream().map(e -> {
+				try {
+					return e.get();
+				} catch (InterruptedException | ExecutionException e1) {
+
+					e1.printStackTrace();
+					return null;
+				}
+			}).collect(Collectors.toList());
+
+			matcherResults.addAll(collectedResults);
+
+		} catch (Throwable e) {
+			e.printStackTrace();
+		}
+
 		return fileResult;
 	}
 
@@ -385,6 +434,24 @@ public class TuningEngine {
 				+ (((new Date()).getTime() - initMatcher) / 1000) + " Nr_config: " + combinations.size());
 		return result;
 
+	}
+
+	public class MatcherCallable implements Callable<Map<String, Object>> {
+		ITree tl;
+		ITree tr;
+		Matcher matcher;
+
+		public MatcherCallable(ITree tl, ITree tr, Matcher matcher) {
+			this.tl = tl;
+			this.tr = tr;
+			this.matcher = matcher;
+		}
+
+		@Override
+		public Map<String, Object> call() throws Exception {
+
+			return computeFitnessFunction(tl, tr, matcher, false);
+		}
 	}
 
 	public class DiffCallable implements Callable<Map<String, Object>> {

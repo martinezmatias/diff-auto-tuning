@@ -8,6 +8,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -21,6 +22,7 @@ import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
 
 import fr.gumtree.autotuning.TuningEngine.ASTMODE;
+import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
 
 public class EngineTest {
 
@@ -37,7 +39,8 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON, parallel);
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
 
@@ -54,7 +57,8 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON, parallel);
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
 
@@ -88,7 +92,7 @@ public class EngineTest {
 		int megadiff_id = 1;
 
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, parallel, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL, matchers);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -109,38 +113,88 @@ public class EngineTest {
 		// "010de14013c38b7f82e4755270e88a8249f3a825";
 		// time 7.72 min file
 		// nr_98_id_1_010de14013c38b7f82e4755270e88a8249f3a825_SimpleConveyer_GTSPOON.csv
-		boolean parallel = true;
 
 		int megadiff_id = 1;
 
 		reader.setNrThreads(10);
 		System.out.println(reader.getNrThreads());
+
+		long tinit = (new Date()).getTime();
+
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON,
-				// ASTMODE.JDT,
-				parallel, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL, matchers);
+		long tpropertyparalel = (new Date()).getTime() - tinit;
 
 		assertNotNull(result);
 		Pair<Long, Integer> r1 = getResults(result);
 
 		reader.setNrThreads(1);
 
+		tinit = (new Date()).getTime();
 		Map<String, Object> result2 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, parallel, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE, matchers);
+		long tpnoneparalel = (new Date()).getTime() - tinit;
 
 		Pair<Long, Integer> r2 = getResults(result2);
 
-		assertTrue(r1.first >= r2.first);
-		assertTrue(r1.second >= r2.second);
+		Long timeSerial = r2.first;
+		Long timePropertyParallel = r1.first;
+		assertTrue(timePropertyParallel >= timeSerial);
+
+		Integer executionSerial = r2.second;
+		Integer executionsPropertiesParallel = r1.second;
+		assertTrue(executionsPropertiesParallel >= executionSerial);
+
+		System.out.println("Total execution time property parallel " + timePropertyParallel / 1000 + ", none parallel "
+				+ timeSerial / 1000);
+
+		System.out.println(tpnoneparalel / 1000 + " None sec vs  property paralel" + tpropertyparalel / 1000);
+		assertTrue(tpnoneparalel > tpropertyparalel);
+		System.out.println("Matcher callable");
+		tinit = (new Date()).getTime();
+		Map<String, Object> result3 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE, matchers);
+		long tmatcherparallel = (new Date()).getTime() - tinit;
+
+		Pair<Long, Integer> r3 = getResults(result3);
+
+		System.out.println("Results Matcher callable");
+
+		// vs property paralell
+		Long timeMatcherParallel = r3.first;
+		assertTrue(timeMatcherParallel < timePropertyParallel);
+		Integer executionsMatcherParallel = r3.second;
+		assertTrue(executionsMatcherParallel >= executionsPropertiesParallel);
+
+		System.out.println("Total execution time matcher parallel " + timeMatcherParallel / 1000
+				+ ", property paralell " + timePropertyParallel / 1000);
+
+		System.out.println(tmatcherparallel / 1000 + " matcher sec vs  property paralel" + tpropertyparalel / 1000);
+		// 10 threads...
+
+		assertTrue(tmatcherparallel >= tpropertyparalel);
+
+		// vs Serial
+
+		//
+		assertTrue(timeMatcherParallel < timeSerial);
+		System.out.println(
+				"Total execution time matcher parallel " + timeMatcherParallel / 1000 + ", none " + timeSerial / 1000);
+
+		assertTrue(executionsMatcherParallel >= executionSerial);
+		System.out.println(tmatcherparallel / 1000 + " matcher sec vs  none paralel" + tpnoneparalel / 1000);
+
+		assertTrue(tmatcherparallel < tpnoneparalel);
+
 	}
 
 	public Pair<Long, Integer> getResults(Map<String, Object> result) {
 		long time = 0;
 		int total = 0;
 		System.out.println(result);
-		for (Object ob : ((List) result.get("MATCHERS"))) {
-			Map dd = (Map) ob;
-			List<Map> configs = (List<Map>) dd.get("r");
+		for (Object matcher : ((List) result.get("MATCHERS"))) {
+			Map propertiesOfMatcher = (Map) matcher;
+			List<Map> configs = (List<Map>) propertiesOfMatcher.get("r");
 			for (Map config : configs) {
 
 				if (config != null && config.get("TIME") != null)
@@ -166,8 +220,8 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON, parallel,
-				new Matcher[] { new CompositeMatchers.ChangeDistiller() });
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+				PARALLEL_EXECUTION.PROPERTY_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
 
 	}
 
@@ -180,9 +234,9 @@ public class EngineTest {
 				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
 
 		TuningEngine reader = new TuningEngine();
-		boolean parallel = false;
-		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, ASTMODE.GTSPOON, parallel,
-				new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
+
+		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, ASTMODE.GTSPOON,
+				PARALLEL_EXECUTION.PROPERTY_LEVEL, new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
 	}
 
 	@Test
