@@ -23,6 +23,9 @@ public class ParametersResolvers {
 		parametersDomain.put(ConfigurationOptions.GT_BUM_SMT_SBUP,
 				new DoubleParameterDomain(ConfigurationOptions.GT_BUM_SMT_SBUP, Double.class, 0.4, 0.1, 1.0, 0.2));
 
+		parametersDomain.put(ConfigurationOptions.GT_XYM_SIM,
+				new DoubleParameterDomain(ConfigurationOptions.GT_XYM_SIM, Double.class, 0.5, 0.2, 1.0, 0.2));
+
 		// CD
 		// CD TD
 		parametersDomain.put(ConfigurationOptions.GT_CD_LSIM,

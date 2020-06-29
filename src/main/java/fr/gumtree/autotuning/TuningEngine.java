@@ -100,6 +100,8 @@ public class TuningEngine {
 			new CompositeMatchers.CompleteGumtreeMatcher(),
 			//
 			new CompositeMatchers.ChangeDistiller(),
+			//
+			new CompositeMatchers.XyMatcher(),
 
 	};
 	private int nrThreads = 10;
