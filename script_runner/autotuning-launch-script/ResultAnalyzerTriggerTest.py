@@ -13,6 +13,9 @@ class MyTestCase(unittest.TestCase):
 		saveExecutionsIndexOfBatches("./results/out5")
 
 	def test_ParserResults(self):
-		parserCSV("./results/out5")
+		parserCSV("../../results/executions/out_serial_5/")
+
+	def _test_ParserResultsParallell(self):
+		parserCSV("../../results/executions/out_parallel_4/")
 if __name__ == '__main__':
 	unittest.main()
