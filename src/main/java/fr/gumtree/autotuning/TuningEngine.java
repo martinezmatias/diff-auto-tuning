@@ -78,7 +78,7 @@ public class TuningEngine {
 	private AstComparator diff = new AstComparator();
 	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 
-	long timeOutSeconds = 60 * 5;
+	long timeOutSeconds = 60 * 30; // 30 min
 
 	enum PARALLEL_EXECUTION {
 		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
@@ -333,15 +333,16 @@ public class TuningEngine {
 				callables.add(new MatcherCallable(tl, tr, matcher));
 			}
 
-			List<Future<Map<String, Object>>> result = executor.invokeAll(callables);
+			List<Future<Map<String, Object>>> result = executor.invokeAll(callables, this.timeOutSeconds,
+					TimeUnit.SECONDS);
 
 			executor.shutdown();
 
 			List<Map<String, Object>> collectedResults = result.stream().map(e -> {
 				try {
 					return e.get();
-				} catch (InterruptedException | ExecutionException e1) {
-
+				} catch (Exception e1) {
+					System.err.println("Problems when collecting data");
 					e1.printStackTrace();
 					return null;
 				}
@@ -699,6 +700,11 @@ public class TuningEngine {
 		boolean first = true;
 		FileWriter fw = new FileWriter(out);
 		for (Map<String, Object> map : matchers) {
+
+			if (!map.containsKey(MATCHER) || map.get(MATCHER) == null) {
+				System.out.println("No matcher in results ");
+				continue;
+			}
 
 			String xmatcher = map.get(MATCHER).toString();
 

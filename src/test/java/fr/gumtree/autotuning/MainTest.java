@@ -10,7 +10,7 @@ public class MainTest {
 				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
 				"-out=./out/", //
 				"-stop=1", //
-				"-subset=1" };
+				"-subset=1", "-parallel=true" };
 		Main.main(command);
 	}
 
@@ -21,7 +21,7 @@ public class MainTest {
 				"-out=./out/", //
 				"-stop=1", //
 				"-astmodel=JDT", //
-				"-subset=1" };
+				"-subset=1", "-parallel=true" };
 		Main.main(command);
 	}
 
