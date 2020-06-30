@@ -7,7 +7,6 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
@@ -78,7 +77,7 @@ public class TuningEngine {
 	private AstComparator diff = new AstComparator();
 	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 
-	long timeOutSeconds = 60 * 30; // 30 min
+	long timeOutSeconds = 60 * 60; // 60 min
 
 	enum PARALLEL_EXECUTION {
 		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
@@ -105,6 +104,22 @@ public class TuningEngine {
 
 	};
 	private int nrThreads = 10;
+
+	Map<String, List<GumTreeProperties>> cacheCombinations = new HashMap<String, List<GumTreeProperties>>();
+
+	public TuningEngine() {
+		super();
+
+		initCacheCombinationProperties();
+	}
+
+	public void initCacheCombinationProperties() {
+		for (Matcher matcher : matchers) {
+			List<GumTreeProperties> allCombinations = computesCombinations(matcher);
+			this.cacheCombinations.put(matcher.getClass().getCanonicalName(), allCombinations);
+
+		}
+	}
 
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
 			PARALLEL_EXECUTION parallel) throws IOException {
@@ -193,7 +208,7 @@ public class TuningEngine {
 				}
 			}
 		}
-		System.out.println("Finished all diff from " + begin + " to " + stop);
+		System.out.println("Finished all diff from index " + begin + " to " + stop);
 		File treeFile = new File(
 				out + "/tree_info_" + Arrays.toString(subsets).replace("[", "").replace("]", "").replace(",", "-") + "_"
 						+ astmodel.name() + "_" + begin + "_" + stop + ".csv");
@@ -202,12 +217,12 @@ public class TuningEngine {
 
 		long endTime = (new Date()).getTime();
 
-		System.out.println("Time " + (endTime - initTime) / 1000);
+		System.out.println("TOTAL Time " + (endTime - initTime) / 1000);
 
 	}
 
 	public Map<String, Object> navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
-			ASTMODE astmodel, PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
+			ASTMODE astmodel, PARALLEL_EXECUTION parallel) throws IOException {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -340,7 +355,40 @@ public class TuningEngine {
 
 			List<Map<String, Object>> collectedResults = result.stream().map(e -> {
 				try {
-					return e.get();
+					if (e.isDone() && !e.isCancelled()) {
+
+						return e.get();
+					} else {
+
+						Map<String, Object> resultFromCancelled = new HashMap<>();
+
+						int indexFuture = result.indexOf(e);
+						if (indexFuture >= 0) {
+
+							Matcher matcher = matchers[indexFuture];
+							System.out.println("Timeout for " + matcher.getClass().getSimpleName());
+
+							resultFromCancelled.put(MATCHER, matcher.getClass().getSimpleName());
+
+							List<Object> alldiffresults = new ArrayList<>();
+
+							resultFromCancelled.put(CONFIGS, alldiffresults);
+
+							List<GumTreeProperties> combinations = getPropertiesCombinations(matcher);
+
+							for (GumTreeProperties gumTreeProperties : combinations) {
+
+								Map notFinishedConfig = new HashMap();
+								notFinishedConfig.put(TIMEOUT, "true");
+								notFinishedConfig.put(CONFIG, gumTreeProperties);
+								alldiffresults.add(notFinishedConfig);
+
+							}
+						}
+						return resultFromCancelled;
+
+					}
+
 				} catch (Exception e1) {
 					System.err.println("Problems when collecting data");
 					e1.printStackTrace();
@@ -350,7 +398,9 @@ public class TuningEngine {
 
 			matcherResults.addAll(collectedResults);
 
-		} catch (Throwable e) {
+		} catch (
+
+		Throwable e) {
 			e.printStackTrace();
 		}
 
@@ -371,31 +421,7 @@ public class TuningEngine {
 
 		if (matcher instanceof ConfigurableMatcher) {
 
-			ConfigurableMatcher configurableMatcher = (ConfigurableMatcher) matcher;
-
-			// We collect the options of the matcher
-			Set<ConfigurationOptions> options = configurableMatcher.getApplicableOptions();
-
-			List<ParameterDomain> domains = new ArrayList<>();
-
-			// We collect the domains
-			for (ConfigurationOptions option : options) {
-
-				ParameterDomain<?> paramOption = ParametersResolvers.parametersDomain.get(option);
-				if (paramOption != null) {
-					domains.add(paramOption);
-				} else {
-					System.err.println("Missing config for " + option);
-					throw new RuntimeException("Missing config for " + option);
-				}
-			}
-
-			// Now, the CartesianProduct of all options
-			combinations = computeCartesianProduct(domains);
-
-			// System.out.println("Matcher " + matcher.getClass().getSimpleName() + "
-			// options: " + domains.size()
-			// + " Nr config: " + combinations.size());
+			combinations = getPropertiesCombinations(matcher);
 
 		} else {
 			// No properties
@@ -415,9 +441,6 @@ public class TuningEngine {
 
 				alldiffresults.add(resDiff);
 
-				// if (iProperty % 10 == 0)
-				// System.out.println(iProperty + "/" + combinations.size());
-
 			}
 		} else {
 			// parallel
@@ -433,10 +456,40 @@ public class TuningEngine {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("Matcher " + matcher.getClass().getSimpleName() + " time "
-				+ (((new Date()).getTime() - initMatcher) / 1000) + " Nr_config: " + combinations.size());
+		System.out.println("End execution Matcher " + matcher.getClass().getSimpleName() + ", time "
+				+ (((new Date()).getTime() - initMatcher)) + " milliseconds, Nr_config: " + combinations.size());
 		return result;
 
+	}
+
+	public List<GumTreeProperties> getPropertiesCombinations(Matcher matcher) {
+		return this.cacheCombinations.get(matcher.getClass().getCanonicalName());
+	}
+
+	public List<GumTreeProperties> computesCombinations(Matcher matcher) {
+		List<GumTreeProperties> combinations;
+		ConfigurableMatcher configurableMatcher = (ConfigurableMatcher) matcher;
+
+		// We collect the options of the matcher
+		Set<ConfigurationOptions> options = configurableMatcher.getApplicableOptions();
+
+		List<ParameterDomain> domains = new ArrayList<>();
+
+		// We collect the domains
+		for (ConfigurationOptions option : options) {
+
+			ParameterDomain<?> paramOption = ParametersResolvers.parametersDomain.get(option);
+			if (paramOption != null) {
+				domains.add(paramOption);
+			} else {
+				System.err.println("Missing config for " + option);
+				throw new RuntimeException("Missing config for " + option);
+			}
+		}
+
+		// Now, the CartesianProduct of all options
+		combinations = computeCartesianProduct(domains);
+		return combinations;
 	}
 
 	public class MatcherCallable implements Callable<Map<String, Object>> {
@@ -509,54 +562,6 @@ public class TuningEngine {
 		}).collect(Collectors.toList());
 	}
 
-	@Deprecated
-	public List<Map<String, Object>> runInParallelScWait(int nrThreads, ITree tl, ITree tr, Matcher matcher,
-			List<GumTreeProperties> combinations) throws Exception {
-
-		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
-
-		List<Callable<Map<String, Object>>> callables = new ArrayList<>();
-
-		Map<Future<Map<String, Object>>, Callable<Map<String, Object>>> futures = new HashMap();
-
-		for (GumTreeProperties aGumTreeProperties : combinations) {
-			// callables.add();
-
-			DiffCallable callable = new DiffCallable(tl, tr, matcher, aGumTreeProperties);
-			Future<Map<String, Object>> futureTask = executor.submit(callable);
-			futures.put(futureTask, callable);
-		}
-
-		// List<Future<Map<String, Object>>> result = executor.invokeAll(callables, 30,
-		// TimeUnit.SECONDS);
-
-		// TOTAL
-		executor.awaitTermination(1, TimeUnit.MINUTES);
-
-		executor.shutdown();
-
-		Collection<Future<Map<String, Object>>> result = futures.keySet();
-
-		return result.stream().map(e -> {
-			try {
-				if (e.isDone() && !e.isCancelled())
-					return e.get();
-				else {
-					// System.out.println("Cancell task");
-
-					HashMap hashMap = new HashMap();
-					hashMap.put(TIMEOUT, "true");
-
-					return hashMap;
-				}
-			} catch (Exception e1) {
-
-				e1.printStackTrace();
-				return null;
-			}
-		}).collect(Collectors.toList());
-	}
-
 	public List<Map<String, Object>> runInParallelSc(int nrThreads, ITree tl, ITree tr, Matcher matcher,
 			List<GumTreeProperties> combinations, long timeoutSeconds) throws Exception {
 
@@ -592,7 +597,7 @@ public class TuningEngine {
 					return notFinishedConfig;
 				}
 			} catch (Exception e1) {
-
+				System.err.println("Exception by collecting the results in Property Parallel");
 				e1.printStackTrace();
 				return null;
 			}

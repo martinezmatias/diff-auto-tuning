@@ -62,21 +62,6 @@ public class EngineTest {
 
 	}
 
-	Matcher[] matchers = new Matcher[] {
-			// Simple
-			new CompositeMatchers.SimpleGumtree(),
-			//
-			new CompositeMatchers.ClassicGumtree(),
-			//
-			new CompositeMatchers.CompleteGumtreeMatcher(),
-			//
-			new CompositeMatchers.ChangeDistiller(),
-
-			//
-			// new CompositeMatchers.XyMatcher(),
-
-	};
-
 	@Test
 	public void testNavigate_SingleDiff_1_831e3b() throws IOException {
 		File rootMegadiff = new File(
@@ -92,7 +77,7 @@ public class EngineTest {
 		int megadiff_id = 1;
 
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -122,7 +107,7 @@ public class EngineTest {
 		long tinit = (new Date()).getTime();
 
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		long tpropertyparalel = (new Date()).getTime() - tinit;
 
 		assertNotNull(result);
@@ -132,7 +117,7 @@ public class EngineTest {
 
 		tinit = (new Date()).getTime();
 		Map<String, Object> result2 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE);
 		long tpnoneparalel = (new Date()).getTime() - tinit;
 
 		Pair<Long, Integer> r2 = getResults(result2);
@@ -153,7 +138,7 @@ public class EngineTest {
 		System.out.println("Matcher callable");
 		tinit = (new Date()).getTime();
 		Map<String, Object> result3 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE, matchers);
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE);
 		long tmatcherparallel = (new Date()).getTime() - tinit;
 
 		Pair<Long, Integer> r3 = getResults(result3);
@@ -222,6 +207,42 @@ public class EngineTest {
 		int limitDiffPerGroup = 1;
 		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
+
+	}
+
+	@Test
+	public void testNavigate_SingleMatcherMatcherParallelTimeout() throws IOException {
+		String pathMegadiff = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded";
+		File rootMegadiff = new File(pathMegadiff);
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+		reader.setTimeOutSeconds(0);
+
+		// Let's try with set 1
+		int[] megadiff_ids = new int[] { 1 };
+		// let's simply try 1 diff per group
+		int limitDiffPerGroup = 1;
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+				PARALLEL_EXECUTION.MATCHER_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
+
+	}
+
+	@Test
+	public void testNavigate_SingleMatcherMatcherParallelTimeoutAllMatchers() throws IOException {
+		String pathMegadiff = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded";
+		File rootMegadiff = new File(pathMegadiff);
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+		reader.setTimeOutSeconds(10);
+
+		// Let's try with set 1
+		int[] megadiff_ids = new int[] { 1 };
+		// let's simply try 1 diff per group
+		int limitDiffPerGroup = 1;
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+				PARALLEL_EXECUTION.MATCHER_LEVEL);
 
 	}
 
