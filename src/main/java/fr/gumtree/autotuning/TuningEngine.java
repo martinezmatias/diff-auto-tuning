@@ -360,39 +360,14 @@ public class TuningEngine {
 						return e.get();
 					} else {
 
-						Map<String, Object> resultFromCancelled = new HashMap<>();
-
-						int indexFuture = result.indexOf(e);
-						if (indexFuture >= 0) {
-
-							Matcher matcher = matchers[indexFuture];
-							System.out.println("Timeout for " + matcher.getClass().getSimpleName());
-
-							resultFromCancelled.put(MATCHER, matcher.getClass().getSimpleName());
-
-							List<Object> alldiffresults = new ArrayList<>();
-
-							resultFromCancelled.put(CONFIGS, alldiffresults);
-
-							List<GumTreeProperties> combinations = getPropertiesCombinations(matcher);
-
-							for (GumTreeProperties gumTreeProperties : combinations) {
-
-								Map notFinishedConfig = new HashMap();
-								notFinishedConfig.put(TIMEOUT, "true");
-								notFinishedConfig.put(CONFIG, gumTreeProperties);
-								alldiffresults.add(notFinishedConfig);
-
-							}
-						}
-						return resultFromCancelled;
+						return returnEmptyResult(matchers, result, e, ERROR_TYPE.TIMEOUT);
 
 					}
 
 				} catch (Exception e1) {
 					System.err.println("Problems when collecting data");
 					e1.printStackTrace();
-					return null;
+					return returnEmptyResult(matchers, result, e, ERROR_TYPE.EXCEPTION);
 				}
 			}).collect(Collectors.toList());
 
@@ -405,6 +380,40 @@ public class TuningEngine {
 		}
 
 		return fileResult;
+	}
+
+	enum ERROR_TYPE {
+		TIMEOUT, EXCEPTION
+	}
+
+	public Map<String, Object> returnEmptyResult(Matcher[] matchers, List<Future<Map<String, Object>>> result,
+			Future<Map<String, Object>> e, ERROR_TYPE errortype) {
+		Map<String, Object> resultFromCancelled = new HashMap<>();
+
+		int indexFuture = result.indexOf(e);
+		if (indexFuture >= 0) {
+
+			Matcher matcher = matchers[indexFuture];
+			System.out.println("Timeout for " + matcher.getClass().getSimpleName());
+
+			resultFromCancelled.put(MATCHER, matcher.getClass().getSimpleName());
+
+			List<Object> alldiffresults = new ArrayList<>();
+
+			resultFromCancelled.put(CONFIGS, alldiffresults);
+
+			List<GumTreeProperties> combinations = getPropertiesCombinations(matcher);
+
+			for (GumTreeProperties gumTreeProperties : combinations) {
+
+				Map notFinishedConfig = new HashMap();
+				notFinishedConfig.put(TIMEOUT, errortype.ordinal() + 1);
+				notFinishedConfig.put(CONFIG, gumTreeProperties);
+				alldiffresults.add(notFinishedConfig);
+
+			}
+		}
+		return resultFromCancelled;
 	}
 
 	public Map<String, Object> computeFitnessFunction(ITree tl, ITree tr, Matcher matcher, boolean parallel) {
@@ -706,7 +715,7 @@ public class TuningEngine {
 		FileWriter fw = new FileWriter(out);
 		for (Map<String, Object> map : matchers) {
 
-			if (!map.containsKey(MATCHER) || map.get(MATCHER) == null) {
+			if (map == null || !map.containsKey(MATCHER) || map.get(MATCHER) == null) {
 				System.out.println("No matcher in results ");
 				continue;
 			}
@@ -743,7 +752,7 @@ public class TuningEngine {
 					row += "" + sep;
 
 					// TIMEout
-					row += "1" + sep;
+					row += config.get(TIMEOUT) + sep;
 
 				} else {
 
