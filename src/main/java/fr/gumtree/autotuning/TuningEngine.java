@@ -12,6 +12,7 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutionException;
@@ -52,28 +53,29 @@ import gumtree.spoon.diff.operations.Operation;
  *
  */
 public class TuningEngine {
-	private static final String NR_TREEDELETE = "NR_TREEDELETE";
-	private static final String NR_TREEINSERT = "NR_TREEINSERT";
-	private static final String NR_MOVE = "NR_MOVE";
-	private static final String NR_UPDATE = "NR_UPDATE";
-	private static final String NR_DELETE = "NR_DELETE";
-	private static final String NR_INSERT = "NR_INSERT";
-	private static final String CONFIGS = "r";
-	private static final String MATCHER = "MATCHER";
-	private static final String MATCHERS = "MATCHERS";
-	private static final String TRIGHT = "TRIGHT";
-	private static final String TLEFT = "TLEFT";
-	private static final String CONFIG = "CONFIG";
-	private static final String TIME = "TIME";
-	private static final String NRROOTS = "NRROOTS";
-	private static final String NRACTIONS = "NRACTIONS";
-	private static final String STRUCTHASH = "STRUCTHASH";
-	private static final String HEIGHT = "HEIGHT";
+	public static final String NR_TREEDELETE = "NR_TREEDELETE";
+	public static final String NR_TREEINSERT = "NR_TREEINSERT";
+	public static final String NR_MOVE = "NR_MOVE";
+	public static final String NR_UPDATE = "NR_UPDATE";
+	public static final String NR_DELETE = "NR_DELETE";
+	public static final String NR_INSERT = "NR_INSERT";
+	public static final String CONFIGS = "r";
+	public static final String MATCHER = "MATCHER";
+	public static final String TIME_MATCHER_ALL_CONFIGS = "TIME_MATCHER_ALL_CONFIGS";
+	public static final String MATCHERS = "MATCHERS";
+	public static final String TRIGHT = "TRIGHT";
+	public static final String TLEFT = "TLEFT";
+	public static final String CONFIG = "CONFIG";
+	public static final String TIME = "TIME";
+	public static final String NRROOTS = "NRROOTS";
+	public static final String NRACTIONS = "NRACTIONS";
+	public static final String STRUCTHASH = "STRUCTHASH";
+	public static final String HEIGHT = "HEIGHT";
 	public static final String SIZE = "SIZE";
-	private static final String MEGADIFFSET = "MEGADIFFSET";
-	private static final String COMMIT = "COMMIT";
-	private static final String FILE = "FILE";
-	private static final String TIMEOUT = "TIMEOUT";
+	public static final String MEGADIFFSET = "MEGADIFFSET";
+	public static final String COMMIT = "COMMIT";
+	public static final String FILE = "FILE";
+	public static final String TIMEOUT = "TIMEOUT";
 	private AstComparator diff = new AstComparator();
 	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 
@@ -90,8 +92,8 @@ public class TuningEngine {
 	// TODO: we cannot use the same generator when we execute on parallel.
 	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
 
-	Matcher[] matchers = new Matcher[] {
-			// Simple
+	Matcher[] allMatchers = new Matcher[] {
+			//
 			new CompositeMatchers.SimpleGumtree(),
 			//
 			new CompositeMatchers.ClassicGumtree(),
@@ -115,7 +117,7 @@ public class TuningEngine {
 
 	public void initCacheCombinationProperties() {
 		this.cacheCombinations.clear();
-		for (Matcher matcher : matchers) {
+		for (Matcher matcher : allMatchers) {
 			List<GumTreeProperties> allCombinations = computesCombinations(matcher);
 			this.cacheCombinations.put(matcher.getClass().getCanonicalName(), allCombinations);
 
@@ -124,20 +126,21 @@ public class TuningEngine {
 
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
 			PARALLEL_EXECUTION parallel) throws IOException {
-		this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.matchers);
+		this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.allMatchers);
 	}
 
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
 			PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
 
 		if (matchersString == null || matchersString.length == 0) {
-			System.out.println("Using default matchers " + Arrays.toString(this.matchers));
-			this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.matchers);
+			System.out.println("Using default matchers " + Arrays.toString(this.allMatchers));
+			this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.allMatchers);
 		} else {
+			System.out.println("Using existing matchers " + Arrays.toString(matchersString));
 			List<Matcher> selectedMatchers = new ArrayList<Matcher>();
 
 			for (String mS : matchersString) {
-				for (Matcher matcher : this.matchers) {
+				for (Matcher matcher : this.allMatchers) {
 					if (matcher.getClass().getSimpleName().toLowerCase().equals(mS.toLowerCase())) {
 						selectedMatchers.add(matcher);
 					}
@@ -166,7 +169,7 @@ public class TuningEngine {
 			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
 		this.initCacheCombinationProperties();
 
-		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
+		// Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
 		long initTime = (new Date()).getTime();
 
@@ -219,12 +222,19 @@ public class TuningEngine {
 					// System.out.println(nrCommit + " Analyzing " + previousVersion);
 					String diffId = commit.getName() + "_" + fileModif.getName();
 
+					Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
+
 					System.out.println("\n---diff " + nrCommit + "/" + commits.size() + " id " + diffId);
 					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
 							parallel, treeProperties, matchers);
+
+					System.out.println("diff time " + ((new Date()).getTime() - initdiff) / 1000 + " sec");
+
 					fileResult.put(FILE, fileModif.getName());
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
+
+					// Saving in files
 
 					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
 							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
@@ -232,17 +242,18 @@ public class TuningEngine {
 
 					executionResultToCSV(outResults, fileResult);
 
-					System.out.println("diff time " + ((new Date()).getTime() - initdiff) / 1000 + " sec");
-
+					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
+							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
+					System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
+					// treeInfoToCSV(treeFile, treeProperties);
+					megadataToCSV(treeFile, treeProperties, fileResult);
 				}
 			}
 		}
 		System.out.println("Finished all diff from index " + begin + " to " + stop);
-		File treeFile = new File(
-				out + "/tree_info_" + Arrays.toString(subsets).replace("[", "").replace("]", "").replace(",", "-") + "_"
-						+ astmodel.name() + "_" + begin + "_" + stop + ".csv");
-		treeInfoToCSV(treeFile, treeProperties);
-		System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
+
+		// treeInfoToCSV(treeFile, treeProperties);
+		// System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
 
 		long endTime = (new Date()).getTime();
 
@@ -277,7 +288,7 @@ public class TuningEngine {
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
 		Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel, parallel,
-				treeProperties, matchers);
+				treeProperties, allMatchers);
 
 		fileResult.put(FILE, fileModif.getName());
 		fileResult.put(COMMIT, commit.getName());
@@ -451,7 +462,9 @@ public class TuningEngine {
 
 		Map<String, Object> result = new HashMap<>();
 
-		result.put(MATCHER, matcher.getClass().getSimpleName());
+		String matcherName = matcher.getClass().getSimpleName();
+
+		result.put(MATCHER, matcherName);
 
 		List<Object> alldiffresults = new ArrayList<>();
 
@@ -494,8 +507,13 @@ public class TuningEngine {
 				e.printStackTrace();
 			}
 		}
-		System.out.println("End execution Matcher " + matcher.getClass().getSimpleName() + ", time "
-				+ (((new Date()).getTime() - initMatcher)) + " milliseconds, Nr_config: " + combinations.size());
+
+		//
+
+		long timeAllConfigs = ((new Date()).getTime() - initMatcher);
+		result.put(TIME_MATCHER_ALL_CONFIGS, timeAllConfigs);
+		System.out.println("End execution Matcher " + matcherName + ", time " + timeAllConfigs
+				+ " milliseconds, Nr_config: " + combinations.size());
 		return result;
 
 	}
@@ -717,11 +735,11 @@ public class TuningEngine {
 	}
 
 	public Matcher[] getMatchers() {
-		return matchers;
+		return allMatchers;
 	}
 
 	public void setMatchers(Matcher[] matchers) {
-		this.matchers = matchers;
+		this.allMatchers = matchers;
 	}
 
 	/**
@@ -886,6 +904,53 @@ public class TuningEngine {
 			row += t.second.get(SIZE) + sep;
 			row += t.second.get(HEIGHT) + sep;
 			row += t.second.get(STRUCTHASH) + sep;
+			row += endline;
+		}
+
+		FileWriter fw = new FileWriter(name);
+		fw.write(header + row);
+		fw.close();
+
+	}
+
+	private void megadataToCSV(File name, Map<String, Pair<Map, Map>> treeProperties, Map<String, Object> fileResult)
+			throws IOException {
+
+		String sep = ",";
+		String endline = "\n";
+		String header = "DIFFID" + sep + "L_" + SIZE + sep + "L_" + HEIGHT + sep + "L_" + STRUCTHASH + sep + "R_" + SIZE
+				+ sep + "R_" + HEIGHT + sep + "R_" + STRUCTHASH;
+
+		for (Matcher matcher : allMatchers) {
+			header += (sep + matcher.getClass().getSimpleName());
+		}
+
+		header += endline;
+
+		String row = "";
+		List<Map<String, Object>> matchersInfo = (List<Map<String, Object>>) fileResult.get(MATCHERS);
+		for (String id : treeProperties.keySet()) {
+
+			Pair<Map, Map> t = treeProperties.get(id);
+			row += id + sep;
+			row += t.first.get(SIZE) + sep;
+			row += t.first.get(HEIGHT) + sep;
+			row += t.first.get(STRUCTHASH) + sep;
+			row += t.second.get(SIZE) + sep;
+			row += t.second.get(HEIGHT) + sep;
+			row += t.second.get(STRUCTHASH) + sep;
+
+			for (Matcher matcher : allMatchers) {
+				Optional<Map<String, Object>> findFirst = matchersInfo.stream()
+						.filter(e -> e.get(MATCHER).equals(matcher.getClass().getSimpleName())).findFirst();
+				if (findFirst.isPresent()) {
+					Map<String, Object> pM = findFirst.get();
+
+					row += pM.get(TIME_MATCHER_ALL_CONFIGS) + sep;
+				} else {
+					row += "" + sep;
+				}
+			}
 			row += endline;
 		}
 
