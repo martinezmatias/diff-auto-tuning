@@ -13,6 +13,18 @@ end = sys.argv[2]
 
 model = sys.argv[3]
 
+if len(sys.argv) > 4:
+	outDir = sys.argv[4]
+else:
+	outDir = outResult
+
+matchers = ""
+if len(sys.argv) > 5:
+	matP = sys.argv[5]
+	mall = matP.split("_")
+	for m in mall:
+		matchers+=" -matchers="+m
+
 for i in range(1, 41):
 
 	groupId, maxid = getMaxAnalyzed(outResult, str(i), model)
@@ -21,4 +33,4 @@ for i in range(1, 41):
 		maxid = begin
 	else:
 		maxid = maxid + 1
-	runProject(out = outResult, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=False)
+	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=False, matchers=matchers)

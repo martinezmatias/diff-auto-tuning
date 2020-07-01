@@ -7,9 +7,9 @@ def is_grid5k():
     return os.path.exists("/usr/bin/oarsub")
 
 
-def runProject(out, path, subset, begin=0, stop = 10000000, astmodel="GTSPOON", parallel=True):
+def runProject(out, path, subset, begin=0, stop = 10000000, astmodel="GTSPOON", parallel=True, matchers = ""):
 
-	at_java_cmd = javahome + "/java  -cp {}  fr.gumtree.autotuning.Main -out={} -path={} -subset={} -begin={} -stop={} -astmodel={} -parallel={}  ".format(liblocation, out, path, subset, begin, stop, astmodel, parallel)
+	at_java_cmd = javahome + "/java  -cp {}  fr.gumtree.autotuning.Main -out={} -path={} -subset={} -begin={} -stop={} -astmodel={} -parallel={} {} ".format(liblocation, out, path, subset, begin, stop, astmodel, parallel, matchers)
 
 	cmd = ""
 	try:

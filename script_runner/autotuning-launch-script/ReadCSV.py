@@ -31,14 +31,14 @@ def initStructure():
 
 keytimesoutByGroup = "timesoutByGroup";
 # sum all the times of a pair diff (sum all configurations)
-keySumTimesAllConfigOfPairsByGroup = "keySumTimesAllConfigOfPairsByGroup"
+keyTimePairAnalysisByGroup = "keyTimePairAnalysisByGroup"
 keyTimeSingleConfigurationByGroup = "keyTimeSingleConfigurationByGroup"
 keydiffAnalyzedByGroup = "diffAnalyzedByGroup"
 keysuccessfulByGroup = "successfulByGroup";
 
 
-allkeys = [keytimesoutByGroup, keysuccessfulByGroup, keySumTimesAllConfigOfPairsByGroup, keydiffAnalyzedByGroup, keyTimeSingleConfigurationByGroup]
-timesByDiffPair = {}
+allkeys = [keytimesoutByGroup, keysuccessfulByGroup, keyTimePairAnalysisByGroup, keydiffAnalyzedByGroup, keyTimeSingleConfigurationByGroup]
+#timesByDiffPair = {}
 
 def parserCSV(rootResults):
 
@@ -53,6 +53,7 @@ def parserCSV(rootResults):
 
 	resultsAlgoDiff = initStructure()
 
+	## Navigate group ids
 	for groupId in sorted(files, key= lambda x: int(x)):
 
 		if groupId == ".DS_Store":
@@ -68,6 +69,7 @@ def parserCSV(rootResults):
 		## let's read the diff from csv
 		diffFromGroup = 0
 
+		##Navigates diff
 		for diff in os.listdir(filesGroup):
 
 			if not diff.endswith(".csv"):
@@ -86,9 +88,6 @@ def parserCSV(rootResults):
 
 				totalDiffAnalyzed += 1
 
-			#### Retrieve algoritm
-
-
 			except Exception as e:
 				print("Problems with {}".format(diff))
 				#print(e.with_traceback())
@@ -104,7 +103,7 @@ def parserCSV(rootResults):
 
 		print("group {} Total time {:.2f} min {:.2f} hr".format(groupId, sumTimes/60000, sumTimes/3600000))
 		## Testing
-		break
+		#break
 
 	## Let'sum all per group
 	printResults(result, "all")
@@ -116,56 +115,69 @@ def parserCSV(rootResults):
 
 def printResults(result, key = "all", outliers = True, plot = True, debug = True):
 	fig, ax = plt.subplots()
-	keysGroups  = list(sorted(result[keySumTimesAllConfigOfPairsByGroup].keys(), key=lambda x: int(x)))
+	keysGroups  = list(sorted(result[keyTimePairAnalysisByGroup].keys(), key=lambda x: int(x)))
+	###DATA for plots:
 	# time of each Diff-Pair
 	datakeySumTimesOfPairsByGroup = []
-	#
 	datakeyTimeSingleConfigurationByGroup = []
 	alldj = []
 	for groupId in keysGroups:
 		## sum times
 		## let'' pass to minutes
 
-		if len(result[keySumTimesAllConfigOfPairsByGroup][groupId]) < 2:
+		if len(result[keyTimePairAnalysisByGroup][groupId]) < 2:
 				print("Not enough data for {} {} ".format(groupId, key))
 				continue
+		if plot:
+			##In the plot we show the time of each pair (sum of all its single configurations)
+			datakeySumTimesOfPairsByGroup.append([x / 60000 for x in result[keyTimePairAnalysisByGroup][groupId]])
+			saveDistributionPlot(datakeySumTimesOfPairsByGroup, "Megadiff group (nr of lines affected)", "Time Minutes", key,
+				 keysGroups, "./plots/distribution_diffpair_time_{}.pdf")
 
-		datakeySumTimesOfPairsByGroup.append( [ x/60000 for x in  result[keySumTimesAllConfigOfPairsByGroup][groupId]])
-		sumTimeAllPairsOfGroup = sum(result[keySumTimesAllConfigOfPairsByGroup][groupId])
-		avgTimeAllPairsOfGroup = mean(result[keySumTimesAllConfigOfPairsByGroup][groupId])
-		medianTimeAllPairsOfGroup = np.median(result[keySumTimesAllConfigOfPairsByGroup][groupId])
-		#print(result[keySumTimesAllConfigOfPairsByGroup][groupId])
-		stdTimeAllPairsOfGroup = 0
-		avgTimeSingleConfig = 0
-		stdTimeSingleConfig = 0
-		try:
-			stdTimeAllPairsOfGroup = 0 if len(result[keySumTimesAllConfigOfPairsByGroup][groupId]) <= 1 else np.std(result[keySumTimesAllConfigOfPairsByGroup][groupId])
-			avgTimeSingleConfig = mean(result[keyTimeSingleConfigurationByGroup][groupId])
-			stdTimeSingleConfig = 0 if len(result[keyTimeSingleConfigurationByGroup][groupId]) <= 1 else np.std(
+			##the second  plot: distribution of single configuration
+			datakeyTimeSingleConfigurationByGroup.append([x for x in result[keyTimeSingleConfigurationByGroup][groupId]])
+
+			saveDistributionPlot(datakeyTimeSingleConfigurationByGroup, "Megadiff group (nr of lines affected)", "Time milliseconds", key,
+				 keysGroups, "./plots/distribution_singlediffconfig_time_{}.pdf")
+
+
+
+		## The total time of ALL pairs
+		sumTimeAllPairsOfGroup = sum(result[keyTimePairAnalysisByGroup][groupId])
+		## Avg time of each pairs
+		avgTimeAllPairsOfGroup = mean(result[keyTimePairAnalysisByGroup][groupId])
+		medianTimeAllPairsOfGroup = np.median(result[keyTimePairAnalysisByGroup][groupId])
+		stdTimeAllPairsOfGroup = 0 if len(result[keyTimePairAnalysisByGroup][groupId]) <= 1 else np.std(result[keyTimePairAnalysisByGroup][groupId])
+
+		## Configurations
+		## Avg of ALL single configuration
+		avgTimeSingleConfig = mean(result[keyTimeSingleConfigurationByGroup][groupId])
+		stdTimeSingleConfig = 0 if len(result[keyTimeSingleConfigurationByGroup][groupId]) <= 1 else np.std(
 				result[keyTimeSingleConfigurationByGroup][groupId])
 
-		except BaseException as e:
-			print(e)
-			stdTimeAllPairsOfGroup = 0
-		##	# time by single configuration
-			## time out:
 		avgTimeout = mean(result[keytimesoutByGroup][groupId])
 		avgSuccessful = mean(result[keysuccessfulByGroup][groupId])
 
-		#
-		datakeyTimeSingleConfigurationByGroup.append([ x for x in  result[keyTimeSingleConfigurationByGroup][groupId]])
 
 		dj = {}
 		dj["groupid"] = groupId
 		dj["nrdiff"] =result[keydiffAnalyzedByGroup][groupId]
+		##Sum Pairs
+		dj["sum_total_time_group_sec"] = sumTimeAllPairsOfGroup / 1000
 		dj["sum_total_time_group_min"] =  sumTimeAllPairsOfGroup / 60000
 		dj["sum_total_time_group_hr"] = sumTimeAllPairsOfGroup / 3600000
+
+		## Single Pairs
+		dj["avgTimeAllPairsOfGroup_sec"] = avgTimeAllPairsOfGroup / 1000
 		dj["avgTimeAllPairsOfGroup_min"] =  avgTimeAllPairsOfGroup / 60000
 		dj["avgTimeAllPairsOfGroup_hr"] =  avgTimeAllPairsOfGroup / 3600000
-		dj["medianTimeAllPairsOfGroup_min"] =  medianTimeAllPairsOfGroup / 60000
-		dj["stdTimeAllPairsOfGroup_min"] =  stdTimeAllPairsOfGroup / 60000
+
+		dj["medianTimeAllPairsOfGroup_sec"] =  medianTimeAllPairsOfGroup / 1000
+		dj["stdTimeAllPairsOfGroup_sec"] =  stdTimeAllPairsOfGroup / 1000
+		## Single Config
 		dj["avgTimeSingleConfig_sec"] = avgTimeSingleConfig / 1000
 		dj["stdTimeSingleConfig_sec"] = stdTimeSingleConfig / 1000
+
 		dj["avgNrSuccessfulConfig"] = avgSuccessful
 		dj["avgNrTimeoutConfig"] =avgTimeout
 
@@ -191,33 +203,8 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 
 																  stdTimeSingleConfig / 1000,
 																  avgTimeout, avgSuccessful))
-			print("group id {} (#{}): {}".format(groupId, len(result[keySumTimesAllConfigOfPairsByGroup][groupId]), result[keySumTimesAllConfigOfPairsByGroup][groupId]))
+			print("group id {} (#{}): {}".format(groupId, len(result[keyTimePairAnalysisByGroup][groupId]), result[keyTimePairAnalysisByGroup][groupId]))
 
-	if plot:
-		print("data diff-pair: {}".format(datakeySumTimesOfPairsByGroup))
-		#ax.boxplot(datakeySumTimesOfPairsByGroup, showfliers=False)
-		#ax.set_xticklabels(keysGroups)
-		ax.violinplot(datakeySumTimesOfPairsByGroup, showmedians=True, showmeans=True)
-		legend = [""]
-		legend.extend(keysGroups)
-		plt.title(key)
-		plt.ylabel("Time Minutes")
-		plt.xlabel("Megadiff group (nr of lines affected)")
-		#plt.show()
-		plt.savefig("./plots/distribution_diffpair_time_{}.pdf".format(key))
-
-		fig, ax = plt.subplots()
-		#ax.boxplot(datakeyTimeSingleConfigurationByGroup, showfliers=False)
-		#ax.set_xticklabels(keysGroups)
-		ax.violinplot(datakeyTimeSingleConfigurationByGroup, showmedians=True, showmeans=True)
-		legend = [""]
-		legend.extend(keysGroups)
-		ax.set_xticklabels(legend)
-		plt.title(key)
-		plt.ylabel("Time milliseconds")
-		plt.xlabel("Megadiff group (nr of lines affected)")
-		#plt.show()
-		plt.savefig("./plots/distribution_singlediffconfig_time_{}.pdf".format(key))
 
 	import csv
 
@@ -228,6 +215,20 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 		for a in alldj:
 			writer.writerow(a)
 
+
+def saveDistributionPlot(data, xlabel, ylabel, key, legends, filename):
+	fig, ax = plt.subplots()
+	# ax.boxplot(datakeyTimeSingleConfigurationByGroup, showfliers=False)
+	# ax.set_xticklabels(keysGroups)
+	ax.violinplot(data, showmedians=True, showmeans=True)
+	legend = [""]
+	legend.extend(legends)
+	ax.set_xticklabels(legend)
+	plt.title(key)
+	plt.ylabel(ylabel)
+	plt.xlabel(xlabel)
+	# plt.show()
+	plt.savefig(filename.format(key))
 
 '''Plots the time of single commits by algorithm'''
 def printSingleConfigTime(resultsAlgoDiff):
@@ -240,8 +241,7 @@ def printSingleConfigTime(resultsAlgoDiff):
 	for algo in LIST_DIFF_ALGO:
 		key = algo
 		result = resultsAlgoDiff[algo]
-		fig, ax = plt.subplots()
-		keysGroups  = list(sorted(result[keySumTimesAllConfigOfPairsByGroup].keys(), key=lambda x: int(x)))
+		keysGroups  = list(sorted(result[keyTimePairAnalysisByGroup].keys(), key=lambda x: int(x)))
 
 		datakeyTimeSingleConfigurationByGroup = []
 
@@ -264,8 +264,6 @@ def printSingleConfigTime(resultsAlgoDiff):
 		fig.set_size_inches(10, 6)
 		#plt.show()
 		plt.savefig("./plots/distribution_singlediffconfig_time_{}.pdf".format(key))
-
-
 
 	##
 	for i in range(1,41):
@@ -292,12 +290,13 @@ def storeTimes(df, groupId, result, filename = "", key = "all"):
 	filteredConfigurationTimes = list(filter(lambda x: str(x) != 'nan', times))
 	sumTimesOfDiff = int(sum(filteredConfigurationTimes))
 	print("{}: {} #{} sum times config {} , all {} ".format(key, filename, len(times), sumTimesOfDiff, sorted(filteredConfigurationTimes)))
-	## We store if
+	## We store if there are at least one configuration correctly executed
 	if len(filteredConfigurationTimes) > 0:
-		avgTimesOfDiff = None if len(filteredConfigurationTimes) == 0 else  mean(filteredConfigurationTimes)
-		result[keySumTimesAllConfigOfPairsByGroup][groupId].append(sumTimesOfDiff)
-		if avgTimesOfDiff is not None :
-			result[keyTimeSingleConfigurationByGroup][groupId].append(avgTimesOfDiff)
+		#avgTimesOfDiff = None if len(filteredConfigurationTimes) == 0 else  mean(filteredConfigurationTimes)
+		#	result[keyTimeSingleConfigurationByGroup][groupId].append(avgTimesOfDiff)
+		# We put all the times, not only the Avg as was done previously
+		result[keyTimeSingleConfigurationByGroup][groupId].extend(filteredConfigurationTimes)
+		result[keyTimePairAnalysisByGroup][groupId].append(sumTimesOfDiff)
 	else:
 		print("None result for {} but with timeouts {}".format(key, len(list(filter(lambda x: x == 1, timeouts)))))
 
@@ -305,9 +304,6 @@ def storeTimes(df, groupId, result, filename = "", key = "all"):
 	countNotTimeouts = len(list(filter(lambda x: x == 0, timeouts)))
 	result[keytimesoutByGroup][groupId].append(countTimeouts)
 	result[keysuccessfulByGroup][groupId].append(countNotTimeouts)
-
-	timesByDiffPair[filename] = sumTimesOfDiff
-
 
 ###
 def initResut(result = {}):
