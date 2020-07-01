@@ -114,6 +114,7 @@ public class TuningEngine {
 	}
 
 	public void initCacheCombinationProperties() {
+		this.cacheCombinations.clear();
 		for (Matcher matcher : matchers) {
 			List<GumTreeProperties> allCombinations = computesCombinations(matcher);
 			this.cacheCombinations.put(matcher.getClass().getCanonicalName(), allCombinations);
@@ -126,6 +127,33 @@ public class TuningEngine {
 		this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.matchers);
 	}
 
+	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
+			PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
+
+		if (matchersString == null || matchersString.length == 0) {
+			System.out.println("Using default matchers " + Arrays.toString(this.matchers));
+			this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.matchers);
+		} else {
+			List<Matcher> selectedMatchers = new ArrayList<Matcher>();
+
+			for (String mS : matchersString) {
+				for (Matcher matcher : this.matchers) {
+					if (matcher.getClass().getSimpleName().toLowerCase().equals(mS.toLowerCase())) {
+						selectedMatchers.add(matcher);
+					}
+				}
+			}
+			if (selectedMatchers.isEmpty()) {
+				throw new IllegalArgumentException("Any matcher found:  " + Arrays.toString(matchersString));
+			}
+			System.out.println("Selected matchers " + selectedMatchers);
+			Matcher[] newMatchers = new Matcher[selectedMatchers.size()];
+			selectedMatchers.toArray(newMatchers);
+
+			this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, newMatchers);
+		}
+	}
+
 	/**
 	 * Navigates megadiff datasets
 	 * 
@@ -136,6 +164,7 @@ public class TuningEngine {
 	 */
 	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
 			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
+		this.initCacheCombinationProperties();
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 

@@ -33,6 +33,8 @@ public class Main implements Callable<Integer> {
 	// in seconds
 	@Option(names = "-timeout", defaultValue = "3000", descriptionKey = "timeout for a matcher (all config) in seconds")
 	long timeout;
+	@Option(names = "-matchers", required = false)
+	String[] matchers;
 
 	public static void main(String[] args) {
 		System.out.println("Arguments received: " + Arrays.toString(args));
@@ -108,7 +110,7 @@ public class Main implements Callable<Integer> {
 		engine.setTimeOutSeconds(timeout);
 
 		PARALLEL_EXECUTION execution = (parallel) ? PARALLEL_EXECUTION.MATCHER_LEVEL : PARALLEL_EXECUTION.NONE;
-		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, mode, execution);
+		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, mode, execution, this.matchers);
 		System.out.println("-END-");
 		return null;
 	}
@@ -117,7 +119,7 @@ public class Main implements Callable<Integer> {
 	public String toString() {
 		return "Main [out=" + out + ", pathMegadiff=" + pathMegadiff + ", subsets=" + Arrays.toString(subsets)
 				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + parallel
-				+ ", timeouut=" + timeout + "]";
+				+ ", timeout=" + timeout + "]";
 	}
 
 	public long getTimeout() {
@@ -126,6 +128,14 @@ public class Main implements Callable<Integer> {
 
 	public void setTimeout(long timeout) {
 		this.timeout = timeout;
+	}
+
+	public String[] getMatchers() {
+		return matchers;
+	}
+
+	public void setMatchers(String[] matchers) {
+		this.matchers = matchers;
 	}
 
 }
