@@ -53,6 +53,7 @@ import gumtree.spoon.diff.operations.Operation;
  *
  */
 public class TuningEngine {
+	// TODO: CHange to enum
 	public static final String NR_TREEDELETE = "NR_TREEDELETE";
 	public static final String NR_TREEINSERT = "NR_TREEINSERT";
 	public static final String NR_MOVE = "NR_MOVE";
@@ -76,6 +77,10 @@ public class TuningEngine {
 	public static final String COMMIT = "COMMIT";
 	public static final String FILE = "FILE";
 	public static final String TIMEOUT = "TIMEOUT";
+	// TIMES:
+	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
+	public static final String TIME_TREES_PARSING = "TIME_TREES_PARSING";
+
 	private AstComparator diff = new AstComparator();
 	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
 
@@ -171,6 +176,7 @@ public class TuningEngine {
 			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
 		this.initCacheCombinationProperties();
 
+		System.out.println("Execution mode " + parallel);
 		// Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
 		long initTime = (new Date()).getTime();
@@ -206,7 +212,6 @@ public class TuningEngine {
 					continue;
 
 				for (File fileModif : commit.listFiles()) {
-					long initdiff = (new Date()).getTime();
 					if (".DS_Store".equals(fileModif.getName()))
 						continue;
 
@@ -233,10 +238,13 @@ public class TuningEngine {
 
 					Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
+					long initdiff = (new Date()).getTime();
+
 					System.out.println("\n---diff " + nrCommit + "/" + commits.size() + " id " + diffId);
 					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
 							parallel, treeProperties, matchers);
 
+					// This time includes the creation of tree
 					long timediff = (new Date()).getTime() - initdiff;
 					System.out.println("diff time " + timediff / 1000 + " sec, " + timediff + " milliseconds");
 
@@ -262,7 +270,7 @@ public class TuningEngine {
 
 		long endTime = (new Date()).getTime();
 
-		System.out.println("TOTAL Time " + (endTime - initTime) / 1000);
+		System.out.println("TOTAL Time " + ((endTime - initTime) / 1000) + " secs");
 
 	}
 
@@ -326,6 +334,7 @@ public class TuningEngine {
 		try {
 			ITree tl = null;
 			ITree tr = null;
+			long init = (new Date()).getTime();
 			if (ASTMODE.GTSPOON.equals(model)) {
 				tl = scanner.getTree(diff.getCtType(previousVersion));
 				tr = scanner.getTree(diff.getCtType(postVersion));
@@ -339,14 +348,30 @@ public class TuningEngine {
 			} else {
 
 			}
-
+			long endTree = (new Date()).getTime();
 			treeProperties.put(diffId, new Pair<Map, Map>(extractTreeFeaturesMap(tl), extractTreeFeaturesMap(tr)));
 
+			long endFeatures = (new Date()).getTime();
+			Map<String, Object> result = null;
 			if (parallel.equals(PARALLEL_EXECUTION.MATCHER_LEVEL))
-				return analyzeDiffByMatcherThread(tl, tr, parallel, matchers);
+				result = analyzeDiffByMatcherThread(tl, tr, parallel, matchers);
 			else
-				return analyzeDiff(tl, tr, parallel, matchers);
+				result = analyzeDiff(tl, tr, parallel, matchers);
 
+			long endMatching = (new Date()).getTime();
+
+			long timeParsing = endTree - init;
+			long timeFeaturing = endFeatures - endTree;
+			long timeMatching = endMatching - endFeatures;
+			System.out.println("Time tree " + timeParsing + ", time features " + timeFeaturing + ", time matching "
+					+ timeMatching);
+
+			if (result != null) {
+				result.put(TIME_TREES_PARSING, timeParsing);
+				result.put(TIME_ALL_MATCHER_DIFF, timeMatching);
+			}
+
+			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
 			return new HashMap<>();
@@ -896,41 +921,14 @@ public class TuningEngine {
 		return fileresult;
 	}
 
-	private void treeInfoToCSV(File name, Map<String, Pair<Map, Map>> treeProperties) throws IOException {
-
-		String sep = ",";
-		String endline = "\n";
-		String header = "DIFFID" + sep + "L_" + SIZE + sep + "L_" + HEIGHT + sep + "L_" + STRUCTHASH + sep + "R_" + SIZE
-				+ sep + "R_" + HEIGHT + sep + "R_" + STRUCTHASH + endline;
-
-		String row = "";
-
-		for (String id : treeProperties.keySet()) {
-
-			Pair<Map, Map> t = treeProperties.get(id);
-			row += id + sep;
-			row += t.first.get(SIZE) + sep;
-			row += t.first.get(HEIGHT) + sep;
-			row += t.first.get(STRUCTHASH) + sep;
-			row += t.second.get(SIZE) + sep;
-			row += t.second.get(HEIGHT) + sep;
-			row += t.second.get(STRUCTHASH) + sep;
-			row += endline;
-		}
-
-		FileWriter fw = new FileWriter(name);
-		fw.write(header + row);
-		fw.close();
-
-	}
-
 	private void metadataToCSV(File nameFile, Map<String, Pair<Map, Map>> treeProperties,
 			Map<String, Object> fileResult) throws IOException {
 
 		String sep = ",";
 		String endline = "\n";
 		String header = "DIFFID" + sep + "L_" + SIZE + sep + "L_" + HEIGHT + sep + "L_" + STRUCTHASH + sep + "R_" + SIZE
-				+ sep + "R_" + HEIGHT + sep + "R_" + STRUCTHASH;
+				+ sep + "R_" + HEIGHT + sep + "R_" + STRUCTHASH + sep + TIME_TREES_PARSING + sep
+				+ TIME_ALL_MATCHER_DIFF;
 
 		for (Matcher matcher : allMatchers) {
 			header += (sep + matcher.getClass().getSimpleName());
@@ -956,6 +954,11 @@ public class TuningEngine {
 			row += t.second.get(SIZE) + sep;
 			row += t.second.get(HEIGHT) + sep;
 			row += t.second.get(STRUCTHASH) + sep;
+
+			// Times:
+
+			row += fileResult.get(TIME_TREES_PARSING) + sep;
+			row += fileResult.get(TIME_ALL_MATCHER_DIFF) + sep;
 
 			for (Matcher matcher : allMatchers) {
 				Optional<Map<String, Object>> findFirst = matchersInfo.stream()

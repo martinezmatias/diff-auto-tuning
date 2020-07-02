@@ -42,9 +42,9 @@ public class MainTest {
 				"-out=./out/", //
 				"-stop=1", //
 				"-subset=1", "-timeout=10", //
-				"-matchers", "XyMatcher", //
-				"-matchers", "blablabla", //
-				"-matchers", "simpleGumtree", };
+				"-matchers=XyMatcher", //
+				"-matchers=blablabla", //
+				"-matchers=simpleGumtree", "-overwriteresults=true", "-parallel=true" };
 		Main.main(command);
 	}
 
@@ -54,7 +54,7 @@ public class MainTest {
 				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
 				"-out=./outxysimpletest/", //
 				"-stop=100000000", //
-				"-subset=1",
+				"-begin=15151", "-subset=2",
 				// "-timeout=10", //
 				"-matchers", "XyMatcher", //
 				"-matchers", "simpleGumtree", "-overwriteresults=false" };
