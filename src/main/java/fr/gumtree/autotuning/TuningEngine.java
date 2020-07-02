@@ -107,6 +107,8 @@ public class TuningEngine {
 	};
 	private int nrThreads = 10;
 
+	private boolean overwriteresults = false;
+
 	Map<String, List<GumTreeProperties>> cacheCombinations = new HashMap<String, List<GumTreeProperties>>();
 
 	public TuningEngine() {
@@ -191,7 +193,7 @@ public class TuningEngine {
 				nrCommit++;
 
 				if (nrCommit <= begin) {
-					System.out.println("Skip " + commit.getName());
+					System.out.println("Skip " + nrCommit + ": " + commit.getName());
 					continue;
 				}
 
@@ -219,8 +221,15 @@ public class TuningEngine {
 						continue;
 					}
 
-					// System.out.println(nrCommit + " Analyzing " + previousVersion);
 					String diffId = commit.getName() + "_" + fileModif.getName();
+
+					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
+							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
+
+					if (!overwriteresults && outResults.exists()) {
+						System.out.println("Already analyzed: " + nrCommit + ": " + outResults.getName());
+						continue;
+					}
 
 					Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -228,25 +237,21 @@ public class TuningEngine {
 					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
 							parallel, treeProperties, matchers);
 
-					System.out.println("diff time " + ((new Date()).getTime() - initdiff) / 1000 + " sec");
+					long timediff = (new Date()).getTime() - initdiff;
+					System.out.println("diff time " + timediff / 1000 + " sec, " + timediff + " milliseconds");
 
 					fileResult.put(FILE, fileModif.getName());
 					fileResult.put(COMMIT, commit.getName());
 					fileResult.put(MEGADIFFSET, subset);
 
 					// Saving in files
-
-					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
-							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
 					outResults.getParentFile().mkdirs();
 
 					executionResultToCSV(outResults, fileResult);
 
 					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
 							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
-					System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
-					// treeInfoToCSV(treeFile, treeProperties);
-					megadataToCSV(treeFile, treeProperties, fileResult);
+					metadataToCSV(treeFile, treeProperties, fileResult);
 				}
 			}
 		}
@@ -757,6 +762,12 @@ public class TuningEngine {
 		String header = "";
 
 		List<Map<String, Object>> matchers = (List<Map<String, Object>>) fileresult.get(MATCHERS);
+
+		if (matchers == null) {
+			System.err.println("Problems when saving results: No matchers for identifier " + out.getName());
+			return;
+		}
+
 		String row = "";
 		boolean first = true;
 		FileWriter fw = new FileWriter(out);
@@ -865,7 +876,7 @@ public class TuningEngine {
 		}
 
 		fw.close();
-		System.out.println("Save file " + out.getAbsolutePath());
+		System.out.println("Saved file " + out.getAbsolutePath());
 
 	}
 
@@ -913,8 +924,8 @@ public class TuningEngine {
 
 	}
 
-	private void megadataToCSV(File name, Map<String, Pair<Map, Map>> treeProperties, Map<String, Object> fileResult)
-			throws IOException {
+	private void metadataToCSV(File nameFile, Map<String, Pair<Map, Map>> treeProperties,
+			Map<String, Object> fileResult) throws IOException {
 
 		String sep = ",";
 		String endline = "\n";
@@ -929,6 +940,12 @@ public class TuningEngine {
 
 		String row = "";
 		List<Map<String, Object>> matchersInfo = (List<Map<String, Object>>) fileResult.get(MATCHERS);
+
+		if (matchersInfo == null) {
+			System.err.println("Problems when saving results: No matchers for identifier " + nameFile.getName());
+			return;
+		}
+
 		for (String id : treeProperties.keySet()) {
 
 			Pair<Map, Map> t = treeProperties.get(id);
@@ -954,7 +971,7 @@ public class TuningEngine {
 			row += endline;
 		}
 
-		FileWriter fw = new FileWriter(name);
+		FileWriter fw = new FileWriter(nameFile);
 		fw.write(header + row);
 		fw.close();
 
@@ -974,5 +991,13 @@ public class TuningEngine {
 
 	public void setNrThreads(int nrThreads) {
 		this.nrThreads = nrThreads;
+	}
+
+	public boolean isOverwriteResults() {
+		return overwriteresults;
+	}
+
+	public void setOverwriteResults(boolean overrideResults) {
+		this.overwriteresults = overrideResults;
 	}
 }

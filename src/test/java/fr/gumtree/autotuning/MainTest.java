@@ -47,4 +47,17 @@ public class MainTest {
 				"-matchers", "simpleGumtree", };
 		Main.main(command);
 	}
+
+	@Test
+	public void testMain5_matcher() {
+		String[] command = new String[] {
+				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+				"-out=./outxysimpletest/", //
+				"-stop=100000000", //
+				"-subset=1",
+				// "-timeout=10", //
+				"-matchers", "XyMatcher", //
+				"-matchers", "simpleGumtree", "-overwriteresults=false" };
+		Main.main(command);
+	}
 }

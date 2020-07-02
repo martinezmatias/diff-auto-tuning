@@ -86,7 +86,7 @@ public class EngineTest {
 
 	@SuppressWarnings("deprecation")
 	@Test
-	public void testNavigate_SingleDiff_1_025055b307b6ef358d5153c7b50a1740e2b17f35() throws IOException {
+	public void testNavigate_CompareTimeouts() throws IOException {
 		File rootMegadiff = new File(
 				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
 		assertTrue(rootMegadiff.exists());

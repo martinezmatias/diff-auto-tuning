@@ -35,6 +35,8 @@ public class Main implements Callable<Integer> {
 	long timeout;
 	@Option(names = "-matchers", required = false)
 	String[] matchers;
+	@Option(names = "-overwriteresults", defaultValue = "false", required = false)
+	boolean overwriteresults;
 
 	public static void main(String[] args) {
 		System.out.println("Arguments received: " + Arrays.toString(args));
@@ -119,7 +121,8 @@ public class Main implements Callable<Integer> {
 	public String toString() {
 		return "Main [out=" + out + ", pathMegadiff=" + pathMegadiff + ", subsets=" + Arrays.toString(subsets)
 				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + parallel
-				+ ", timeout=" + timeout + "]";
+				+ ", timeout=" + timeout + ", matchers=" + Arrays.toString(this.matchers) + ", overwriteresults="
+				+ this.overwriteresults + "]";
 	}
 
 	public long getTimeout() {
