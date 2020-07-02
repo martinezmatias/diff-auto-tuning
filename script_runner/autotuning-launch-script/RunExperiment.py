@@ -27,7 +27,7 @@ if len(sys.argv) > 5:
 
 for i in range(1, 41):
 
-	groupId, maxid = getMaxAnalyzed(outResult, str(i), model)
+	groupId, maxid = getMaxAnalyzed(outDir, str(i), model)
 	print(" groupId {} , maxid {} ".format(groupId, maxid))
 	if maxid is None:
 		maxid = begin
