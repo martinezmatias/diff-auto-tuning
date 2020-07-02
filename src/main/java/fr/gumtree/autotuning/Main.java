@@ -110,7 +110,7 @@ public class Main implements Callable<Integer> {
 
 		TuningEngine engine = new TuningEngine();
 		engine.setTimeOutSeconds(timeout);
-
+		engine.setOverwriteResults(overwriteresults);
 		PARALLEL_EXECUTION execution = (parallel) ? PARALLEL_EXECUTION.MATCHER_LEVEL : PARALLEL_EXECUTION.NONE;
 		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, mode, execution, this.matchers);
 		System.out.println("-END-");
