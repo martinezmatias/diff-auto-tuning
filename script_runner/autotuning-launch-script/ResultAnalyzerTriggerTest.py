@@ -13,8 +13,9 @@ class MyTestCase(unittest.TestCase):
 		saveExecutionsIndexOfBatches("./results/out5")
 
 	def test_ParserResults(self):
-		parserCSV("./results/out104gt/")
+		#parserCSV("./results/out104gt/")
 
+		parserCSV("./results/out8matcherparallel/")
 
 	def _test_plot(self):
 		#parserCSV("./results/out8matcherparallel/")

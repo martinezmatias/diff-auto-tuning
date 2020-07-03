@@ -17,7 +17,7 @@ SimpleGT = "SimpleGumtree"
 
 XyMatcher = "XyMatcher"
 
-LIST_DIFF_ALGO = [SimpleGT,ClasicGT, CompleteGT, #CHANGE_DISTILLER,
+LIST_DIFF_ALGO = [SimpleGT,ClasicGT, CompleteGT, CHANGE_DISTILLER,
 				  XyMatcher]
 
 def initStructure():
@@ -205,8 +205,9 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 																  stdTimeSingleConfig / 1000,
 																  avgTimeout, avgSuccessful))
 			print("group id {} times pairs (#{}): {}".format(groupId, len(result[keyTimePairAnalysisByGroup][groupId]), result[keyTimePairAnalysisByGroup][groupId]))
-			print("group id {} times single config(#{}): {}".format(groupId, len(result[keyTimeSingleConfigurationByGroup][groupId]),
-												 result[keyTimeSingleConfigurationByGroup][groupId]))
+			print("group id {} times single config(#{})".format(groupId, len(result[keyTimeSingleConfigurationByGroup][groupId]),
+												 #result[keyTimeSingleConfigurationByGroup][groupId]
+																))
 
 	import csv
 
@@ -283,9 +284,9 @@ def printSingleConfigTime(resultsAlgoDiff):
 		#ax.boxplot(dataGroup, showfliers=False)
 		ax.violinplot(dataGroup, showmedians=True, showmeans=True, vert=True)# pos, points=20, widths=0.3,
 		#		   showmeans=True, showextrema=True, showmedians=True)
-		legend = []#[""]
+		legend = [""] ###
 		for a in LIST_DIFF_ALGO:
-			legend.append("")
+			#legend.append("")
 			legend.append(a.replace("Matcher", ""))
 		#legend.extend(LIST_DIFF_ALGO)
 		#ax.set_xticklabels(legend)
