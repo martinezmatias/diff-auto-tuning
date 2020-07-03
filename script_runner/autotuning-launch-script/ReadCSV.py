@@ -17,7 +17,8 @@ SimpleGT = "SimpleGumtree"
 
 XyMatcher = "XyMatcher"
 
-LIST_DIFF_ALGO = [SimpleGT,ClasicGT, CompleteGT, CHANGE_DISTILLER, XyMatcher]
+LIST_DIFF_ALGO = [SimpleGT,ClasicGT, CompleteGT, #CHANGE_DISTILLER,
+				  XyMatcher]
 
 def initStructure():
 	st = {}
@@ -72,7 +73,7 @@ def parserCSV(rootResults):
 		##Navigates diff
 		for diff in os.listdir(filesGroup):
 
-			if not diff.endswith(".csv"):
+			if not diff.endswith(".csv") or diff.startswith("metaInfo"):
 				continue
 			try:
 				csvFile = os.path.join(filesGroup, diff)
@@ -184,10 +185,10 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 		alldj.append(dj)
 		## the number of diff is not the number of megadiff's diff folder analyzer: a folder can have several file pairs
 		if debug:
-			print("\n---gid: {}\n#diff {}\nTotal time group (sum all pairs-configurations of group): minutes {}, hours {}\n"
+			print("\n-{}--gid: {}\n#diff {}\nTotal time group (sum all pairs-configurations of group): minutes {}, hours {}\n"
 				  "Avg avg time to run diff pair  minutes {:.2f}, hours {:.2f},  median {:.2f} min,  std minutes {:.3f}\n"
 				  "Avg Time of Single Conf  seconds {:.2f},  std secods {:.3f}\n"
-				  "avg #timeout {:.2f} avg #successful {}".format(groupId,
+				  "avg #timeout {:.2f} avg #successful {}".format(key,groupId,
 																  result[keydiffAnalyzedByGroup][groupId],
 																  #
 																  sumTimeAllPairsOfGroup / 60000,
@@ -203,8 +204,9 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 
 																  stdTimeSingleConfig / 1000,
 																  avgTimeout, avgSuccessful))
-			print("group id {} (#{}): {}".format(groupId, len(result[keyTimePairAnalysisByGroup][groupId]), result[keyTimePairAnalysisByGroup][groupId]))
-
+			print("group id {} times pairs (#{}): {}".format(groupId, len(result[keyTimePairAnalysisByGroup][groupId]), result[keyTimePairAnalysisByGroup][groupId]))
+			print("group id {} times single config(#{}): {}".format(groupId, len(result[keyTimeSingleConfigurationByGroup][groupId]),
+												 result[keyTimeSingleConfigurationByGroup][groupId]))
 
 	import csv
 
@@ -229,10 +231,12 @@ def saveDistributionPlot(data, xlabel, ylabel, key, legends, filename):
 	plt.xlabel(xlabel)
 	# plt.show()
 	plt.savefig(filename.format(key))
+	plt.close()
 
 '''Plots the time of single commits by algorithm'''
 def printSingleConfigTime(resultsAlgoDiff):
 
+	##each key (group id) has 4 values: one per each algorith
 	databygroup = {}
 
 	for i in range(1,41):
@@ -251,6 +255,11 @@ def printSingleConfigTime(resultsAlgoDiff):
 			datakeyTimeSingleConfigurationByGroup.append(timesAlgoGroup)
 			databygroup[groupId].append(timesAlgoGroup)
 
+
+		if (len(datakeyTimeSingleConfigurationByGroup) == 0 or len(datakeyTimeSingleConfigurationByGroup[0])== 0):
+			print("No data for matcher {}".format(algo))
+			continue
+
 		fig, ax = plt.subplots()
 		#ax.boxplot(datakeyTimeSingleConfigurationByGroup,  showfliers=False)
 		#ax.set_xticklabels(keysGroups)
@@ -261,26 +270,33 @@ def printSingleConfigTime(resultsAlgoDiff):
 		plt.title(key)
 		plt.ylabel("Time milliseconds")
 		plt.xlabel("Megadiff group (nr of lines affected)")
-		fig.set_size_inches(10, 6)
+		#fig.set_size_inches(10, 6)
 		#plt.show()
-		plt.savefig("./plots/distribution_singlediffconfig_time_{}.pdf".format(key))
+		plt.savefig("./plots/distribution_singlediffconfig_time_matcher_{}.pdf".format(key))
+		plt.close()
 
 	##
 	for i in range(1,41):
 		dataGroup = databygroup[str(i)]
+
 		fig, ax = plt.subplots()
 		#ax.boxplot(dataGroup, showfliers=False)
-		ax.violinplot(dataGroup, showmedians=True, showmeans=True)# pos, points=20, widths=0.3,
+		ax.violinplot(dataGroup, showmedians=True, showmeans=True, vert=True)# pos, points=20, widths=0.3,
 		#		   showmeans=True, showextrema=True, showmedians=True)
-		legend = [""]
-		legend.extend(LIST_DIFF_ALGO)
+		legend = []#[""]
+		for a in LIST_DIFF_ALGO:
+			legend.append("")
+			legend.append(a.replace("Matcher", ""))
+		#legend.extend(LIST_DIFF_ALGO)
+		#ax.set_xticklabels(legend)
+		#https://stackoverflow.com/questions/33864578/matplotlib-making-labels-for-violin-plots
 		ax.set_xticklabels(legend)
 		plt.title("Megadiff group {}".format(str(i)))
 		plt.ylabel("Time milliseconds")
 		plt.xlabel("Diff Algorithm")
-		fig.set_size_inches(8, 8)
+		#fig.set_size_inches(8, 8)
 		# plt.show()
-		plt.savefig("./plots/distribution_groupalgorithm_{}.pdf".format(i))
+		plt.savefig("./plots/distribution_singlediffconfig_time_groupid_{}.pdf".format(i))
 		plt.close()
 
 

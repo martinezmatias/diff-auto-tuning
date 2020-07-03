@@ -33,4 +33,4 @@ for i in range(1, 41):
 		maxid = begin
 	else:
 		maxid = maxid + 1
-	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=False, matchers=matchers)
+	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=True, matchers=matchers)
