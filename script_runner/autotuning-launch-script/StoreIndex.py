@@ -12,7 +12,7 @@ def getMaxAnalyzed(rootResults, groupId, model = "GTSPOON"):
 	maxid = 0
 	for diff in os.listdir(filesGroup):
 
-		if model not in diff:
+		if model not in diff  or str(diff).startswith("metaInfo"):
 			continue
 		#	print(diff)
 		keyfiles = int(re.split('_+', diff)[1])

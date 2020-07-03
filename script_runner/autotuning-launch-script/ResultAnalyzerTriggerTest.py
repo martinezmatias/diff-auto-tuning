@@ -2,6 +2,11 @@ import unittest
 from ResultsAnalyzers import *
 from ReadCSV import *
 
+from SALib.sample import saltelli
+from SALib.analyze import sobol
+from SALib.test_functions import Ishigami
+import numpy as np
+
 class MyTestCase(unittest.TestCase):
 
 	def _test_CompareTwoExecutions(self):
@@ -12,10 +17,16 @@ class MyTestCase(unittest.TestCase):
 	def _testSaveIndexLastExecution(self):
 		saveExecutionsIndexOfBatches("./results/out5")
 
-	def test_ParserResults(self):
+	def _test_ParserResults(self):
 		#parserCSV("./results/out104gt/")
 
 		parserCSV("./results/out8matcherparallel/")
+
+	def test_ComputeFitness(self):
+		#parserCSV("./results/out104gt/")
+
+		#computeFitnesss("./results/out8matcherparallel/")
+		computeFitnesss("./results/out104gt/")
 
 	def _test_plot(self):
 		#parserCSV("./results/out8matcherparallel/")
@@ -59,6 +70,29 @@ class MyTestCase(unittest.TestCase):
 					  )
 		plt.show()
 
+	def _testSensitivyanalysis(self):
+		#https://salib.readthedocs.io/en/latest/getting-started.html#installing-salib
+
+		# Define the model inputs
+		problem = {
+			'num_vars': 3,
+			'names': ['x1', 'x2', 'x3'],
+			'bounds': [[-3.14159265359, 3.14159265359],
+					   [-3.14159265359, 3.14159265359],
+					   [-3.14159265359, 3.14159265359]]
+		}
+
+		# Generate samples
+		param_values = saltelli.sample(problem, 1000)
+
+		# Run model (example)
+		Y = Ishigami.evaluate(param_values)
+
+		# Perform analysis
+		Si = sobol.analyze(problem, Y, print_to_console=True)
+
+		# Print the first-order sensitivity indices
+		print(Si['S1'])
 
 if __name__ == '__main__':
 	unittest.main()

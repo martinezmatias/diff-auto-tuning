@@ -332,3 +332,116 @@ def initGroup(result, groupid):
 	for key in allkeys:
 		result[key][groupid] = []
 	return result
+
+
+def computeFitnesss(rootResults):
+
+		files = (os.listdir(rootResults))
+		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
+		totalDiffAnalyzed = 0
+
+		result = {}
+		initResut(result)
+
+		problems = []
+
+		resultsAlgoDiff = initStructure()
+
+		## Navigate group ids
+		for groupId in sorted(files, key=lambda x: int(x)):
+
+			if groupId == ".DS_Store":
+				continue
+
+			filesGroup = os.path.join(rootResults, groupId)
+
+			if not os.path.isdir(filesGroup):
+				continue
+
+			initGroup(result, groupId)
+
+			## let's read the diff from csv
+			diffFromGroup = 0
+
+			##Navigates diff
+			for diff in os.listdir(filesGroup):
+				if not diff.endswith(".csv") or diff.startswith("metaInfo"):
+					continue
+				try:
+					csvFile = os.path.join(filesGroup, diff)
+					df = pandas.read_csv(csvFile)
+					diffFromGroup += 1
+					computeFitnessOfFilePair(diff, df)
+
+					totalDiffAnalyzed += 1
+
+				except Exception as e:
+					print("Problems with {}".format(diff))
+					print(e.with_traceback())
+					problems.append(diff)
+
+
+propertiesPerMatcher = {}
+propertiesPerMatcher["SimpleGumtree"] = ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
+propertiesPerMatcher["ClassicGumtree"] = ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
+propertiesPerMatcher["CompleteGumtreeMatcher"] = ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
+propertiesPerMatcher["ChangeDistiller"] = ["GT_CD_LSIM", "GT_CD_ML","GT_CD_SSIM1",  "GT_CD_SSIM2"]
+propertiesPerMatcher["XyMatcher"] = ["GT_STM_MH", "GT_XYM_SIM"]
+
+results = {}
+best = {}
+
+def computeFitnessOfFilePair(filename,datasetofPair, key = "all", entropyByFileName = {}):
+	## Calculate the distance for each comfig
+	## store the distance
+	## store if it's unique
+	## store entropy
+	#occurrences = collections.Counter(datasetofPair["NRACTIONS"])
+	import pandas as pd
+	import scipy.stats
+
+	nractions = datasetofPair["NRACTIONS"]
+	pd_series = pd.Series(nractions)
+	counts = pd_series.value_counts()
+	entropy = scipy.stats.entropy(counts)
+
+	minES = nractions.min(skipna=True)
+	print("\n--{} {}: entropy {} min ES {}".format(filename, key, entropy, minES))
+	#print(counts)
+	#ds1 = datasetofPair[datasetofPair["NRACTIONS"] == 2]
+	#	print(len(ds1["NRACTIONS"].to_list()))
+
+	entropyByFileName[filename] = entropy
+	listMin = []
+	for row in datasetofPair.iterrows():
+		#print("-->{}".format(row))
+		currentNrActions = row[1]['NRACTIONS']
+		distance = int(currentNrActions) - minES
+
+		rowkey = getConfigurationkey(row[1])
+		# print("--> {}".format(rowkey))
+		if rowkey not in results:
+			results[rowkey] = []
+			best[rowkey] = []
+		results[rowkey].append(distance)
+		best[rowkey].append(distance)
+
+		if distance == 0:
+			listMin.append(row[0])
+			best[rowkey].append(filename)
+
+	print("nr min configurations {}: ".format(len(listMin)))
+
+
+def showFinalResult():
+	for config in results.keys():
+		best = len(results[config])
+
+
+def getConfigurationkey(row):
+		matcherName = row['MATCHER']
+		key = matcherName;
+		for property in propertiesPerMatcher[matcherName]:
+			key+="_"+"{:.1f}".format((row[property])).rstrip('0').rstrip('.')
+
+		return key
