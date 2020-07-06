@@ -42,7 +42,7 @@ allkeys = [keytimesoutByGroup, keysuccessfulByGroup, keyTimePairAnalysisByGroup,
 #timesByDiffPair = {}
 
 def parserCSV(rootResults):
-
+	print("Starting analyzing folder {}".format(rootResults))
 	files = (os.listdir(rootResults) )
 	files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults,x)), files))
 	totalDiffAnalyzed = 0
@@ -55,7 +55,7 @@ def parserCSV(rootResults):
 	resultsAlgoDiff = initStructure()
 
 	## Navigate group ids
-	for groupId in sorted(files, key= lambda x: int(x)):
+	for groupId in sorted(files, key= lambda x: int(x), reverse=False):
 
 		if groupId == ".DS_Store":
 			continue
@@ -79,6 +79,7 @@ def parserCSV(rootResults):
 				csvFile = os.path.join(filesGroup, diff)
 				df = pandas.read_csv(csvFile)
 				diffFromGroup += 1
+				#print("{} diff {}  ".format(diffFromGroup, diff))
 
 				## Store times for all (no filter)
 
@@ -107,12 +108,13 @@ def parserCSV(rootResults):
 		#break
 
 	## Let'sum all per group
-	printResults(result, "all")
+	#printResults(result, "all")
 
-	printSingleConfigTime(resultsAlgoDiff)
+	#printSingleConfigTime(resultsAlgoDiff)
 
-	for algo in LIST_DIFF_ALGO:
-		printResults(resultsAlgoDiff[algo], key= algo, plot=False)
+	#for algo in LIST_DIFF_ALGO:
+	#	printResults(resultsAlgoDiff[algo], key= algo, plot=False)
+	print("END")
 
 def printResults(result, key = "all", outliers = True, plot = True, debug = True):
 	fig, ax = plt.subplots()
@@ -211,7 +213,7 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 
 	import csv
 
-	with open('execution_times_{}.csv'.format(key), 'w', newline='') as csvfile:
+	with open('./plots/execution_times_{}.csv'.format(key), 'w', newline='') as csvfile:
 		fieldnames = alldj[0].keys()
 		writer = csv.DictWriter(csvfile, fieldnames=fieldnames) #quotechar=""
 		writer.writeheader()
@@ -306,7 +308,9 @@ def storeTimes(df, groupId, result, filename = "", key = "all"):
 	timeouts = df["TIMEOUT"].to_list()
 	filteredConfigurationTimes = list(filter(lambda x: str(x) != 'nan', times))
 	sumTimesOfDiff = int(sum(filteredConfigurationTimes))
-	print("{}: {} #{} sum times config {} , all {} ".format(key, filename, len(times), sumTimesOfDiff, sorted(filteredConfigurationTimes)))
+	#print("{}: {} #{} sum times config {} , all {} ".format(key, filename, len(times), sumTimesOfDiff, sorted(filteredConfigurationTimes)))
+	#print("{}: {} #{} sum times config {}  ".format(key, filename, len(times), sumTimesOfDiff))
+
 	## We store if there are at least one configuration correctly executed
 	if len(filteredConfigurationTimes) > 0:
 		#avgTimesOfDiff = None if len(filteredConfigurationTimes) == 0 else  mean(filteredConfigurationTimes)
@@ -315,7 +319,8 @@ def storeTimes(df, groupId, result, filename = "", key = "all"):
 		result[keyTimeSingleConfigurationByGroup][groupId].extend(filteredConfigurationTimes)
 		result[keyTimePairAnalysisByGroup][groupId].append(sumTimesOfDiff)
 	else:
-		print("None result for {} but with timeouts {}".format(key, len(list(filter(lambda x: x == 1, timeouts)))))
+		#print("None result for {} but with timeouts {}".format(key, len(list(filter(lambda x: x == 1, timeouts)))))
+		pass
 
 	countTimeouts = len(list(filter(lambda x: x == 1, timeouts)))
 	countNotTimeouts = len(list(filter(lambda x: x == 0, timeouts)))
@@ -340,8 +345,10 @@ def computeFitnesss(rootResults):
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
 		totalDiffAnalyzed = 0
 
-		result = {}
-		initResut(result)
+		results = {}
+		entropy = {}
+		overlap = {}
+		#initResut(results)
 
 		problems = []
 
@@ -358,20 +365,22 @@ def computeFitnesss(rootResults):
 			if not os.path.isdir(filesGroup):
 				continue
 
-			initGroup(result, groupId)
+			#nitGroup(results, groupId)
 
 			## let's read the diff from csv
 			diffFromGroup = 0
 
 			##Navigates diff
-			for diff in os.listdir(filesGroup):
+			listdir = os.listdir(filesGroup)
+			for diff in listdir:
 				if not diff.endswith(".csv") or diff.startswith("metaInfo"):
 					continue
 				try:
+					print("groupid {} file {} /{}  total analyzed: {}".format(groupId,diffFromGroup, len(listdir)/2,totalDiffAnalyzed ))
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
-					computeFitnessOfFilePair(diff, df)
+					computeFitnessOfFilePair(results,diff, df, overlap=overlap, entropyByFileName=entropy)
 
 					totalDiffAnalyzed += 1
 
@@ -379,6 +388,11 @@ def computeFitnesss(rootResults):
 					print("Problems with {}".format(diff))
 					print(e.with_traceback())
 					problems.append(diff)
+
+			## test
+			break
+
+		printBest(results, overlap, entropy, limitTop=1000)
 
 
 propertiesPerMatcher = {}
@@ -388,10 +402,11 @@ propertiesPerMatcher["CompleteGumtreeMatcher"] = ["GT_BUM_SMT", "GT_BUM_SZT", "G
 propertiesPerMatcher["ChangeDistiller"] = ["GT_CD_LSIM", "GT_CD_ML","GT_CD_SSIM1",  "GT_CD_SSIM2"]
 propertiesPerMatcher["XyMatcher"] = ["GT_STM_MH", "GT_XYM_SIM"]
 
-results = {}
-best = {}
+# for each configuration, we store a dict where key are distance, values ocurrences
 
-def computeFitnessOfFilePair(filename,datasetofPair, key = "all", entropyByFileName = {}):
+#best = {}
+
+def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", entropyByFileName = {}, overlap = []):
 	## Calculate the distance for each comfig
 	## store the distance
 	## store if it's unique
@@ -405,33 +420,66 @@ def computeFitnessOfFilePair(filename,datasetofPair, key = "all", entropyByFileN
 	counts = pd_series.value_counts()
 	entropy = scipy.stats.entropy(counts)
 
+	#Take the min value of edit script size
 	minES = nractions.min(skipna=True)
-	print("\n--{} {}: entropy {} min ES {}".format(filename, key, entropy, minES))
-	#print(counts)
+	#print("\n--{} {}: entropy {} min ES {}".format(filename, key, entropy, minES))
 	#ds1 = datasetofPair[datasetofPair["NRACTIONS"] == 2]
-	#	print(len(ds1["NRACTIONS"].to_list()))
 
-	entropyByFileName[filename] = entropy
-	listMin = []
-	for row in datasetofPair.iterrows():
-		#print("-->{}".format(row))
-		currentNrActions = row[1]['NRACTIONS']
+	#entropyByFileName[filename] = entropy
+
+	bestOfFile = []
+	for rowConfiguration in datasetofPair.iterrows():
+		currentNrActions = rowConfiguration[1]['NRACTIONS']
+		if(np.isnan(currentNrActions)):
+			continue
+
 		distance = int(currentNrActions) - minES
 
-		rowkey = getConfigurationkey(row[1])
-		# print("--> {}".format(rowkey))
-		if rowkey not in results:
-			results[rowkey] = []
-			best[rowkey] = []
-		results[rowkey].append(distance)
-		best[rowkey].append(distance)
+		rowConfigurationKey = getConfigurationkey(rowConfiguration[1])
+		if rowConfigurationKey not in results:
+			results[rowConfigurationKey] = {}
+			overlap[rowConfigurationKey] = {}
+			entropyByFileName[rowConfigurationKey] = {}
+		incrementOne(results[rowConfigurationKey], distance)
 
 		if distance == 0:
-			listMin.append(row[0])
-			best[rowkey].append(filename)
+			bestOfFile.append(rowConfigurationKey)
 
-	print("nr min configurations {}: ".format(len(listMin)))
+	##let's compute the overlap
+	for best in bestOfFile:
+		incrementOne(overlap[best], len(bestOfFile))
+		incrementOne(entropyByFileName[best], entropy)
 
+
+
+
+
+def printBest(results, entropy, overlap, limitTop = 1000):
+	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
+	print("Finishing processing")
+	top = 0
+	for configuration in keySorted:
+		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
+		if (nrBest > 0):
+			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, plainDict(overlap[configuration])))
+		top += 1
+		if (top == limitTop):
+			break
+
+def plainDict(dic):
+	r = []
+	for k in dic.key():
+		nr = dic[k]
+		for i in range(1, nr + 1):
+			r.append(k)
+
+	return r
+
+def incrementOne(dict, key, value = 1):
+	if key not in dict:
+		dict[key] = value
+	else:
+		dict[key] += value
 
 def showFinalResult():
 	for config in results.keys():

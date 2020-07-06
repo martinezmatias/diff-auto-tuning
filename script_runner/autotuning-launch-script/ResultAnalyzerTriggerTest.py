@@ -18,18 +18,12 @@ class MyTestCase(unittest.TestCase):
 		saveExecutionsIndexOfBatches("./results/out5")
 
 	def _test_ParserResults(self):
-		#parserCSV("./results/out104gt/")
-
-		parserCSV("./results/out8matcherparallel/")
+		parserCSV("./results/out10bis1_4gt/")
 
 	def test_ComputeFitness(self):
-		#parserCSV("./results/out104gt/")
-
-		#computeFitnesss("./results/out8matcherparallel/")
-		computeFitnesss("./results/out104gt/")
+		computeFitnesss("./results/out10bis1_4gt/")
 
 	def _test_plot(self):
-		#parserCSV("./results/out8matcherparallel/")
 		import matplotlib.pyplot as plt
 
 		np.random.seed(10)
