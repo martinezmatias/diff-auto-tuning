@@ -84,6 +84,29 @@ public class EngineTest {
 
 	}
 
+	/// Diff in one annotation
+	@Test
+	public void testNavigate_SingleDiff_1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e() throws IOException {
+		File rootMegadiff = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+
+		String commitId = "02f3fd442349d4e7fdfc9c31a82bb1638db8495e";
+
+		boolean parallel = false;
+
+		int megadiff_id = 1;
+
+		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE);
+
+		assertNotNull(result);
+		System.out.println(result);
+
+	}
+
 	@SuppressWarnings("deprecation")
 	@Test
 	public void testNavigate_CompareTimeouts() throws IOException {
