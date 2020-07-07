@@ -208,7 +208,6 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 																  avgTimeout, avgSuccessful))
 			print("group id {} times pairs (#{}): {}".format(groupId, len(result[keyTimePairAnalysisByGroup][groupId]), result[keyTimePairAnalysisByGroup][groupId]))
 			print("group id {} times single config(#{})".format(groupId, len(result[keyTimeSingleConfigurationByGroup][groupId]),
-												 #result[keyTimeSingleConfigurationByGroup][groupId]
 																))
 
 	import csv
@@ -339,6 +338,22 @@ def initGroup(result, groupid):
 	return result
 
 
+def saveTimes(timesPerConfiguration):
+	fbestFile = open("./plots/data/times.csv", "w")
+	fbestFile.write("config,best_time_avg, notbest_time_avg\n")
+
+	for config in timesPerConfiguration.keys():
+		best_ = plainDict(timesPerConfiguration[config]["best"])
+		meantbest = "" if len(best_) == 0 else mean(best_)
+		medianbest = "" if len(best_) == 0 else np.median(best_)
+		notbest_ = plainDict(timesPerConfiguration[config]["notbest"])
+		meantnotbest= "" if len(notbest_) == 0 else mean(notbest_)
+		mediannotbest = "" if len(notbest_) == 0 else np.median(notbest_)
+		fbestFile.write("{},{},{},{},{}\n".format(config,meantbest,medianbest,meantnotbest, mediannotbest))
+	fbestFile.close()
+	pass
+
+
 def computeFitnesss(rootResults):
 
 		files = (os.listdir(rootResults))
@@ -346,13 +361,16 @@ def computeFitnesss(rootResults):
 		totalDiffAnalyzed = 0
 
 		results = {}
-		fileSummaryInfo = {}
 		overlap = {}
+		overlapPerAlgo = {}
 		#initResut(results)
 
 		problems = []
 
-		resultsAlgoDiff = initStructure()
+		timesPerConfiguration = {}
+		sizePerConfiguration = {}
+
+		listProportions = []
 
 		## Navigate group ids
 		for groupId in sorted(files, key=lambda x: int(x)):
@@ -364,8 +382,6 @@ def computeFitnesss(rootResults):
 
 			if not os.path.isdir(filesGroup):
 				continue
-
-			#nitGroup(results, groupId)
 
 			## let's read the diff from csv
 			diffFromGroup = 0
@@ -380,8 +396,17 @@ def computeFitnesss(rootResults):
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
-					computeFitnessOfFilePair(results,diff, df, overlap=overlap, debugInfoByFile=fileSummaryInfo)
+					fileSummaryInfo = computeFitnessOfFilePair(filesGroup, results,diff, df, overlap=overlap,
+											 overlapPerAlgo=  overlapPerAlgo,
+											 timesPerConfiguration = timesPerConfiguration,
+											 sizePerConfiguration = sizePerConfiguration
+											 )
 					totalDiffAnalyzed += 1
+
+					## Now, save info of file
+					## we store the proportion
+					listProportions.extend(saveInfoOfFiles(fileSummaryInfo))
+
 
 				except Exception as e:
 					print("Problems with {}".format(diff))
@@ -391,8 +416,10 @@ def computeFitnesss(rootResults):
 			## test
 			break
 
-		printBest(results, overlap= overlap, debugInfoByFile=fileSummaryInfo, limitTop=1000)
+		plotPropertiesOfBestPerFilePair(listProportions)
 
+		printBest(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, limitTop=1000)
+		saveTimes(timesPerConfiguration)
 
 propertiesPerMatcher = {}
 propertiesPerMatcher["SimpleGumtree"] = ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
@@ -405,28 +432,32 @@ propertiesPerMatcher["XyMatcher"] = ["GT_STM_MH", "GT_XYM_SIM"]
 
 #best = {}
 
-def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", overlap = [], debugBestbyConfiguration = {}, debugInfoByFile = {}, debug = True):
-	## Calculate the distance for each comfig
-	## store the distance
-	## store if it's unique
-	## store entropy
-	#occurrences = collections.Counter(datasetofPair["NRACTIONS"])
+def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "all", overlap = [],
+							 overlapPerAlgo = {}, debugBestbyConfiguration = {}, debug = True,
+							timesPerConfiguration = {},
+							sizePerConfiguration = {}
+							 ):
+
 	import pandas as pd
 	import scipy.stats
+
+	debugInfoByFile = {}
 
 	nractions = datasetofPair["NRACTIONS"]
 	pd_series = pd.Series(nractions)
 	counts = pd_series.value_counts()
 	entropy = scipy.stats.entropy(counts)
-
 	#Take the min value of edit script size
 	minES = nractions.min(skipna=True)
-	#ds1 = datasetofPair[datasetofPair["NRACTIONS"] == 2]
 	bestOfFile = []
 	totalRow = 0
+
+	size = getTreeSize(location, filename)
+
 	for rowConfiguration in datasetofPair.iterrows():
 		totalRow +=1
 		currentNrActions = rowConfiguration[1]['NRACTIONS']
+		currentTime = rowConfiguration[1]['TIME']
 		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
 			continue
 
@@ -438,13 +469,32 @@ def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", overl
 			overlap[rowConfigurationKey] = {}
 			debugBestbyConfiguration[rowConfigurationKey] = []
 
+			## time and sizes
+			timesPerConfiguration[rowConfigurationKey]  = {}
+			timesPerConfiguration[rowConfigurationKey]["best"] = {}
+			timesPerConfiguration[rowConfigurationKey]["notbest"] = {}
+
+			sizePerConfiguration[rowConfigurationKey] = {}
+			sizePerConfiguration[rowConfigurationKey]["best"] = {}
+			sizePerConfiguration[rowConfigurationKey]["notbest"] = {}
+
+
+			overlapPerAlgo[rowConfigurationKey] = {}
+			for algo in propertiesPerMatcher.keys():
+				overlapPerAlgo[rowConfigurationKey][algo] = {}
+
 		incrementOne(results[rowConfigurationKey], distance)
 
 		if distance == 0:
 			bestOfFile.append(rowConfigurationKey)
-
+			incrementOne(timesPerConfiguration[rowConfigurationKey]["best"], currentTime)
+			incrementOne(sizePerConfiguration[rowConfigurationKey]["best"], size)
 			if debug:
 				debugBestbyConfiguration[rowConfigurationKey].append(filename)
+
+		else:
+			incrementOne(timesPerConfiguration[rowConfigurationKey]["notbest"], currentTime)
+			incrementOne(sizePerConfiguration[rowConfigurationKey]["notbest"], size)
 
 	## Stats per file
 	proportionBest = len(bestOfFile) / totalRow
@@ -455,47 +505,116 @@ def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", overl
 		debugInfoByFile[filename]["entropyNrActions"] = entropy
 		debugInfoByFile[filename]["allBest"] = bestOfFile
 
-	##let's compute the overlap and entropy
-	for best in bestOfFile:
-		incrementOne(overlap[best], proportionBest)
-		#incrementOne(entropyByFileName[best], entropy)
 
-def printBest(results,  overlap, debugInfoByFile, limitTop = 1000):
+	##Initialization of structure
+	countOverlapAlgo = {}
+	for algo in propertiesPerMatcher.keys():
+		countOverlapAlgo[algo] = 0
+
+	## Computes which are the algoritms for the best
+	for best in bestOfFile:
+		# Store the proportion
+		incrementOne(overlap[best], proportionBest)
+		algorith = best.split("_")[0]
+		countOverlapAlgo[algorith] += 1
+
+	# Store the proportion w.r.t other algorithms
+	for best in bestOfFile:
+		algorith = best.split("_")[0]
+		for anotherAlgo in propertiesPerMatcher.keys():
+			if anotherAlgo is not algorith:
+				percentageOverlap = countOverlapAlgo[anotherAlgo]
+				incrementOne(overlapPerAlgo[best][anotherAlgo], percentageOverlap)
+
+	return debugInfoByFile
+
+
+def getTreeSize(location, filename):
+	import csv
+	with open('{}/metaInfo_{}'.format(location, filename), mode='r') as csv_file:
+		csv_reader = csv.DictReader(csv_file)
+		line_count = 0
+		for row in csv_reader:
+			if line_count == 1:
+				size = row["L_SIZE"]
+				return size
+			line_count += 1
+
+
+def printBest(results,  overlap, overlapPerAlgo,  limitTop = 1000, debug = False):
 	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
 	print("Finishing processing")
 	top = 0
+	fbestConfig = open("./plots/data/best_configurations_summary.csv", "w")
+	fbestConfig.write("top, configuration, nrBest\n")
+
 	for configuration in keySorted:
 		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
 		if (nrBest > 0):
-			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, sorted(plainDict(overlap[configuration]))))
+			lbest = sorted(plainDict(overlap[configuration]))
+			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, lbest))
+			fbestConfig.write("{},{},{}\n".format(top, configuration, nrBest))
+
+			## We store the overlap
+			fOverlapConfig = open("./plots/data/overlap_config_{}.csv".format(configuration), "w")
+			for b in lbest:
+				fOverlapConfig.write("{}\n".format(b))
+			fOverlapConfig.close()
+
+			## now overlap by algo
+			for algo in propertiesPerMatcher.keys():
+				fOverlapAlgoConfig = open("./plots/data/overlap_config_{}_{}.csv".format(algo, configuration), "w")
+				lbestalgo = sorted(plainDict(overlapPerAlgo[configuration][algo]))
+				for b in lbestalgo:
+					fOverlapAlgoConfig.write("{}\n".format(b))
+				fOverlapAlgoConfig.close()
+
+
 		top += 1
 		if (top == limitTop):
 			break
-	print("\n Info by file")
-	listProportions = []
-	for filename in debugInfoByFile.keys():
-		print("{}: nr best {}  proportion {} entropy {} all best {} ".format(filename,
-		debugInfoByFile[filename]["nrBest"] ,
-		debugInfoByFile[filename]["proportionBest"] ,
-		debugInfoByFile[filename]["entropyNrActions"] ,
-		debugInfoByFile[filename]["allBest"])
-		)
-		if debugInfoByFile[filename]["proportionBest"] > 0:
-			listProportions.append(debugInfoByFile[filename]["proportionBest"])
 
+	fbestConfig.flush()
+	fbestConfig.close()
+
+
+def plotPropertiesOfBestPerFilePair(listProportions):
 	fig, ax = plt.subplots()
-	ax.boxplot(listProportions, showfliers=False)
-	# ax.set_xticklabels(keysGroups)
-	#ax.violinplot(listProportions, showmedians=True, showmeans=True)
-	#legend = [""]
-	#legend.extend(legends)
-	#ax.set_xticklabels(legend)
-	#plt.title(key)
-	#plt.ylabel(ylabel)
-	#plt.xlabel(xlabel)
+	# ax.boxplot(listProportions, showfliers=False)
+	ax.violinplot(listProportions, showmedians=True, showmeans=True)
+	# legend = [""]
+	# legend.extend(legends)
+	# ax.set_xticklabels(legend)
+	plt.title("Distribution proportion best configuration")
+	plt.ylabel("Proportion")
+	# plt.xlabel("Distribution proportion best configuration")
 	# plt.show()
 	plt.savefig("./plots/distribution_bestProportion.pdf")
 	plt.close()
+
+
+def saveInfoOfFiles(debugInfoByFile):
+	listProportions = []
+	fbestFile = open("./plots/data/best_file_summary.csv", "w")
+	fbestFile.write("file,nrBest,proportionBest,entropyNrActions\n")
+	for filename in debugInfoByFile.keys():
+
+		if debugInfoByFile[filename]["proportionBest"] > 0:
+			listProportions.append(debugInfoByFile[filename]["proportionBest"])
+			fbestFile.write("{},{},{},{}\n".format(filename,
+												   debugInfoByFile[filename]["nrBest"],
+												   debugInfoByFile[filename]["proportionBest"],
+												   debugInfoByFile[filename]["entropyNrActions"]))
+
+			detailBestFile = open("./plots/data/best_{}".format(filename), "w")
+			for best in debugInfoByFile[filename]["allBest"]:
+				detailBestFile.write("{}\n".format(best))
+
+			detailBestFile.flush()
+			detailBestFile.close()
+	fbestFile.flush()
+	fbestFile.close()
+	return listProportions
 
 
 def plainDict(dic = {}):
