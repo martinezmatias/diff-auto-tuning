@@ -346,7 +346,7 @@ def computeFitnesss(rootResults):
 		totalDiffAnalyzed = 0
 
 		results = {}
-		entropy = {}
+		fileSummaryInfo = {}
 		overlap = {}
 		#initResut(results)
 
@@ -380,8 +380,7 @@ def computeFitnesss(rootResults):
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
-					computeFitnessOfFilePair(results,diff, df, overlap=overlap, entropyByFileName=entropy)
-
+					computeFitnessOfFilePair(results,diff, df, overlap=overlap, debugInfoByFile=fileSummaryInfo)
 					totalDiffAnalyzed += 1
 
 				except Exception as e:
@@ -392,7 +391,7 @@ def computeFitnesss(rootResults):
 			## test
 			break
 
-		printBest(results, overlap, entropy, limitTop=1000)
+		printBest(results, overlap= overlap, debugInfoByFile=fileSummaryInfo, limitTop=1000)
 
 
 propertiesPerMatcher = {}
@@ -406,7 +405,7 @@ propertiesPerMatcher["XyMatcher"] = ["GT_STM_MH", "GT_XYM_SIM"]
 
 #best = {}
 
-def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", entropyByFileName = {}, overlap = []):
+def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", overlap = [], debugBestbyConfiguration = {}, debugInfoByFile = {}, debug = True):
 	## Calculate the distance for each comfig
 	## store the distance
 	## store if it's unique
@@ -422,15 +421,13 @@ def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", entro
 
 	#Take the min value of edit script size
 	minES = nractions.min(skipna=True)
-	#print("\n--{} {}: entropy {} min ES {}".format(filename, key, entropy, minES))
 	#ds1 = datasetofPair[datasetofPair["NRACTIONS"] == 2]
-
-	#entropyByFileName[filename] = entropy
-
 	bestOfFile = []
+	totalRow = 0
 	for rowConfiguration in datasetofPair.iterrows():
+		totalRow +=1
 		currentNrActions = rowConfiguration[1]['NRACTIONS']
-		if(np.isnan(currentNrActions)):
+		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
 			continue
 
 		distance = int(currentNrActions) - minES
@@ -439,36 +436,71 @@ def computeFitnessOfFilePair(results, filename,datasetofPair, key = "all", entro
 		if rowConfigurationKey not in results:
 			results[rowConfigurationKey] = {}
 			overlap[rowConfigurationKey] = {}
-			entropyByFileName[rowConfigurationKey] = {}
+			debugBestbyConfiguration[rowConfigurationKey] = []
+
 		incrementOne(results[rowConfigurationKey], distance)
 
 		if distance == 0:
 			bestOfFile.append(rowConfigurationKey)
 
-	##let's compute the overlap
+			if debug:
+				debugBestbyConfiguration[rowConfigurationKey].append(filename)
+
+	## Stats per file
+	proportionBest = len(bestOfFile) / totalRow
+	if debug:
+		debugInfoByFile[filename] = {}
+		debugInfoByFile[filename]["nrBest"] = len(bestOfFile)
+		debugInfoByFile[filename]["proportionBest"] = proportionBest
+		debugInfoByFile[filename]["entropyNrActions"] = entropy
+		debugInfoByFile[filename]["allBest"] = bestOfFile
+
+	##let's compute the overlap and entropy
 	for best in bestOfFile:
-		incrementOne(overlap[best], len(bestOfFile))
-		incrementOne(entropyByFileName[best], entropy)
+		incrementOne(overlap[best], proportionBest)
+		#incrementOne(entropyByFileName[best], entropy)
 
-
-
-
-
-def printBest(results, entropy, overlap, limitTop = 1000):
+def printBest(results,  overlap, debugInfoByFile, limitTop = 1000):
 	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
 	print("Finishing processing")
 	top = 0
 	for configuration in keySorted:
 		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
 		if (nrBest > 0):
-			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, plainDict(overlap[configuration])))
+			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, sorted(plainDict(overlap[configuration]))))
 		top += 1
 		if (top == limitTop):
 			break
+	print("\n Info by file")
+	listProportions = []
+	for filename in debugInfoByFile.keys():
+		print("{}: nr best {}  proportion {} entropy {} all best {} ".format(filename,
+		debugInfoByFile[filename]["nrBest"] ,
+		debugInfoByFile[filename]["proportionBest"] ,
+		debugInfoByFile[filename]["entropyNrActions"] ,
+		debugInfoByFile[filename]["allBest"])
+		)
+		if debugInfoByFile[filename]["proportionBest"] > 0:
+			listProportions.append(debugInfoByFile[filename]["proportionBest"])
 
-def plainDict(dic):
+	fig, ax = plt.subplots()
+	ax.boxplot(listProportions, showfliers=False)
+	# ax.set_xticklabels(keysGroups)
+	#ax.violinplot(listProportions, showmedians=True, showmeans=True)
+	#legend = [""]
+	#legend.extend(legends)
+	#ax.set_xticklabels(legend)
+	#plt.title(key)
+	#plt.ylabel(ylabel)
+	#plt.xlabel(xlabel)
+	# plt.show()
+	plt.savefig("./plots/distribution_bestProportion.pdf")
+	plt.close()
+
+
+def plainDict(dic = {}):
 	r = []
-	for k in dic.key():
+	for k in dic.keys():
 		nr = dic[k]
 		for i in range(1, nr + 1):
 			r.append(k)
@@ -480,10 +512,6 @@ def incrementOne(dict, key, value = 1):
 		dict[key] = value
 	else:
 		dict[key] += value
-
-def showFinalResult():
-	for config in results.keys():
-		best = len(results[config])
 
 
 def getConfigurationkey(row):
