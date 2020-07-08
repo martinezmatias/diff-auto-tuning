@@ -21,6 +21,7 @@ def computeFitnesss(rootResults):
 
 		timesPerConfiguration = {}
 		sizePerConfiguration = {}
+		heightPerConfiguration = {}
 
 		listProportions = []
 
@@ -54,6 +55,7 @@ def computeFitnesss(rootResults):
 											 overlapPerAlgo=  overlapPerAlgo,
 											 timesPerConfiguration = timesPerConfiguration,
 											 sizePerConfiguration = sizePerConfiguration,
+											 heigthPerConfiguration= heightPerConfiguration,
 											 matrixOverlapConfiguration = matrixOverlapConfigurations
 											 )
 					totalDiffAnalyzed += 1
@@ -74,29 +76,37 @@ def computeFitnesss(rootResults):
 
 		plotPropertiesOfBestPerFilePair(listProportions)
 
-		printBest(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, limitTop=1000)
+		printBest(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, 	timesPerConfig= timesPerConfiguration ,
+				  sizePerConfig= sizePerConfiguration , heightPerConfig = heightPerConfiguration)
 		##Move to the main result file
-		saveTimes(timesPerConfiguration)
-
+		saveNumberBestNotBest(timesPerConfiguration, name="timesPerConfiguration")
+		saveNumberBestNotBest(sizePerConfiguration, name="sizePerConfiguration")
+		saveNumberBestNotBest(heightPerConfiguration, name="heightPerConfiguration")
 		saveMatrixOverlapConfig(matrixOverlapConfigurations)
 
 
-def saveTimes(timesPerConfiguration,directory = "./plots/data/" ):
+def saveNumberBestNotBest(timesPerConfiguration, directory ="./plots/data/", name ="times"):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
-	fbestFile = open("{}/times.csv".format(directory), "w")
-	fbestFile.write("config,best_time_avg, notbest_time_avg\n")
+	fbestFile = open("{}/{}.csv".format(directory, name), "w")
+	fbestFile.write("config,best_time_avg, best_time_median, notbest_time_avg, notbest_time_median\n")
 
 	for config in timesPerConfiguration.keys():
-		best_ = plainDict(timesPerConfiguration[config]["best"])
-		meantbest = "" if len(best_) == 0 else mean(best_)
-		medianbest = "" if len(best_) == 0 else np.median(best_)
-		notbest_ = plainDict(timesPerConfiguration[config]["notbest"])
-		meantnotbest= "" if len(notbest_) == 0 else mean(notbest_)
-		mediannotbest = "" if len(notbest_) == 0 else np.median(notbest_)
-		fbestFile.write("{},{},{},{},{}\n".format(config,meantbest,medianbest,meantnotbest, mediannotbest))
+		content = "config,{}\n".format(getRowNumberBestNotBest(timesPerConfiguration, config))
+		fbestFile.write((content))
 	fbestFile.close()
+
+
+def getRowNumberBestNotBest(timesPerConfiguration, config):
+	best_ = plainDict(timesPerConfiguration[config]["best"])
+	meantbest = "" if len(best_) == 0 else mean(best_)
+	medianbest = "" if len(best_) == 0 else np.median(best_)
+	notbest_ = plainDict(timesPerConfiguration[config]["notbest"])
+	meantnotbest = "" if len(notbest_) == 0 else mean(notbest_)
+	mediannotbest = "" if len(notbest_) == 0 else np.median(notbest_)
+	content = "{},{},{},{}".format( meantbest, medianbest, meantnotbest, mediannotbest)
+	return content
 
 
 def saveMatrixOverlapConfig(matrixOverlapConfigurations, directory = "./plots/data"):
@@ -115,9 +125,10 @@ def saveMatrixOverlapConfig(matrixOverlapConfigurations, directory = "./plots/da
 			if anotherConfig not in matrixOverlapConfigurations[config]:
 				row.append("")
 			else:
-				row.append(matrixOverlapConfigurations[config][anotherConfig])
+				row.append(str(matrixOverlapConfigurations[config][anotherConfig]))
 
 		fbestFile.write(",".join(row))
+		fbestFile.write("\n")
 		fbestFile.flush()
 
 	fbestFile.close()
@@ -127,6 +138,7 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 							 overlapPerAlgo = {}, debugBestbyConfiguration = {}, debug = True,
 							timesPerConfiguration = {},
 							sizePerConfiguration = {},
+							heigthPerConfiguration = {},
 							 matrixOverlapConfiguration = {}
 							 ):
 
@@ -144,7 +156,7 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 	allBestConfigurationOfFile = []
 	totalRow = 0
 
-	size = getTreeSize(location, filename)
+	size, height = getTreeSize(location, filename)
 
 	for rowConfiguration in datasetofPair.iterrows():
 		totalRow +=1
@@ -170,6 +182,9 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 			sizePerConfiguration[rowConfigurationKey]["best"] = {}
 			sizePerConfiguration[rowConfigurationKey]["notbest"] = {}
 
+			heigthPerConfiguration[rowConfigurationKey] = {}
+			heigthPerConfiguration[rowConfigurationKey]["best"] = {}
+			heigthPerConfiguration[rowConfigurationKey]["notbest"] = {}
 
 			overlapPerAlgo[rowConfigurationKey] = {}
 			for algo in propertiesPerMatcher.keys():
@@ -180,13 +195,17 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 		if distance == 0:
 			allBestConfigurationOfFile.append(rowConfigurationKey)
 			incrementOne(timesPerConfiguration[rowConfigurationKey]["best"], currentTime)
-			incrementOne(sizePerConfiguration[rowConfigurationKey]["best"], size)
+			if size is not None : #and isinstance(size, int):
+				incrementOne(sizePerConfiguration[rowConfigurationKey]["best"], size)
+				incrementOne(heigthPerConfiguration[rowConfigurationKey]["best"], height)
 			if debug:
 				debugBestbyConfiguration[rowConfigurationKey].append(filename)
 
 		else:
 			incrementOne(timesPerConfiguration[rowConfigurationKey]["notbest"], currentTime)
-			incrementOne(sizePerConfiguration[rowConfigurationKey]["notbest"], size)
+			if size is not None:
+				incrementOne(sizePerConfiguration[rowConfigurationKey]["notbest"], size)
+				incrementOne(heigthPerConfiguration[rowConfigurationKey]["notbest"], height)
 
 	## Stats per file
 	proportionBest = len(allBestConfigurationOfFile) / totalRow
@@ -240,13 +259,14 @@ def getTreeSize(location, filename):
 		csv_reader = csv.DictReader(csv_file)
 		line_count = 0
 		for row in csv_reader:
-			if line_count == 1:
-				size = row["L_SIZE"]
-				return size
-			line_count += 1
+			size = row["L_SIZE"]
+			height = row["L_HEIGHT"]
+			return int(size), int(height)
 
 
-def printBest(results,  overlap, overlapPerAlgo,  limitTop = 1000, debug = False, directory = "./plots/data/"):
+	return None, None
+
+def printBest(results, overlap, overlapPerAlgo, limitTop = 3000, debug = False, directory = "./plots/data/", timesPerConfig = {}, sizePerConfig = {}, heightPerConfig = {}):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
@@ -262,14 +282,21 @@ def printBest(results,  overlap, overlapPerAlgo,  limitTop = 1000, debug = False
 	print("Finishing processing")
 	top = 0
 	fbestConfig = open("{}/best_configurations_summary.csv".format(directory), "w")
-	fbestConfig.write("top, configuration, nrBest\n")
+	fbestConfig.write("top, configuration, nrBest, "
+					  "best_time_avg, best_time_median, notbest_time_avg, notbest_time_median,"
+					   "best_size_avg, best_size_median, notbest_size_avg, notbest_size_median,"
+					   "best_height_avg, best_height_median, notbest_height_avg, notbest_height_median"
+					  "\n")
 
 	for configuration in keySorted:
 		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
 		if (nrBest > 0):
 			lbest = sorted(plainDict(overlap[configuration]))
-			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, lbest))
-			fbestConfig.write("{},{},{}\n".format(top, configuration, nrBest))
+			rowTimes = getRowNumberBestNotBest(timesPerConfig, configuration)
+			rowSizes = getRowNumberBestNotBest(sizePerConfig, configuration)
+			rowHeight = getRowNumberBestNotBest(heightPerConfig, configuration)
+
+			fbestConfig.write("{},{},{},{},{},{}\n".format(top, configuration, nrBest, rowTimes, rowSizes,rowHeight))
 
 			## We store the overlap
 			fOverlapConfig = open("{}/overlap_general_config_{}.csv".format(dir_over_gen, configuration), "w")
@@ -313,13 +340,21 @@ def plotPropertiesOfBestPerFilePair(listProportions, directory = "./plots/data")
 	plt.close()
 
 
-def saveInfoOfFiles(filename, debugInfoByFile, directory = "./plots/data"):
+def saveInfoOfFiles(filename, debugInfoByFile, directory = "./plots/data/"):
 
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
+	dir_best = "{}/overlap_best_configs_file/".format(directory)
+	if not os.path.exists(dir_best):
+		os.makedirs(dir_best)
+
+	dir_best_files = "{}/overlap_best_per_file/".format(directory)
+	if not os.path.exists(dir_best_files):
+		os.makedirs(dir_best_files)
+
 	listProportions = []
-	fbestFile = open("{}/best_file_summary_{}.csv".format(directory,filename), "w")
+	fbestFile = open("{}/best_file_summary_{}.csv".format(dir_best,filename), "w")
 	fbestFile.write("file,nrBest,proportionBest,entropyNrActions\n")
 
 	for filename in debugInfoByFile.keys():
@@ -331,7 +366,7 @@ def saveInfoOfFiles(filename, debugInfoByFile, directory = "./plots/data"):
 												   debugInfoByFile[filename]["proportionBest"],
 												   debugInfoByFile[filename]["entropyNrActions"]))
 
-			detailBestFile = open("./plots/data/best_{}".format(filename), "w")
+			detailBestFile = open("{}/best_{}".format(dir_best_files, filename), "w")
 			for best in debugInfoByFile[filename]["allBest"]:
 				detailBestFile.write("{}\n".format(best))
 
