@@ -1,34 +1,11 @@
+
 import os
 from statistics import mean, stdev
 import matplotlib.pyplot as plt
 from sklearn.metrics import cohen_kappa_score
 import numpy as np
-
-
+from DiffAlgorithmMetadata import *
 import pandas
-
-CHANGE_DISTILLER = "ChangeDistiller"
-
-CompleteGT = "CompleteGumtreeMatcher"
-
-ClasicGT = "ClassicGumtree"
-
-SimpleGT = "SimpleGumtree"
-
-XyMatcher = "XyMatcher"
-
-LIST_DIFF_ALGO = [SimpleGT,ClasicGT, CompleteGT, CHANGE_DISTILLER,
-				  XyMatcher]
-
-def initStructure():
-	st = {}
-	for algo in LIST_DIFF_ALGO:
-		st[algo] = {}
-		initResut(st[algo])
-		for i in range(1, 41):
-			initGroup(st[algo],str(i))
-
-	return st
 
 keytimesoutByGroup = "timesoutByGroup";
 # sum all the times of a pair diff (sum all configurations)
@@ -134,14 +111,14 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 		if plot:
 			##In the plot we show the time of each pair (sum of all its single configurations)
 			datakeySumTimesOfPairsByGroup.append([x / 60000 for x in result[keyTimePairAnalysisByGroup][groupId]])
-			saveDistributionPlot(datakeySumTimesOfPairsByGroup, "Megadiff group (nr of lines affected)", "Time Minutes", key,
-				 keysGroups, "./plots/distribution_diffpair_time_{}.pdf")
+			plotDistribution(datakeySumTimesOfPairsByGroup, "Megadiff group (nr of lines affected)", "Time Minutes", key,
+							 keysGroups, "./plots/distribution_diffpair_time_{}.pdf")
 
 			##the second  plot: distribution of single configuration
 			datakeyTimeSingleConfigurationByGroup.append([x for x in result[keyTimeSingleConfigurationByGroup][groupId]])
 
-			saveDistributionPlot(datakeyTimeSingleConfigurationByGroup, "Megadiff group (nr of lines affected)", "Time milliseconds", key,
-				 keysGroups, "./plots/distribution_singlediffconfig_time_{}.pdf")
+			plotDistribution(datakeyTimeSingleConfigurationByGroup, "Megadiff group (nr of lines affected)", "Time milliseconds", key,
+							 keysGroups, "./plots/distribution_singlediffconfig_time_{}.pdf")
 
 
 
@@ -220,7 +197,17 @@ def printResults(result, key = "all", outliers = True, plot = True, debug = True
 			writer.writerow(a)
 
 
-def saveDistributionPlot(data, xlabel, ylabel, key, legends, filename):
+def initStructure():
+	st = {}
+	for algo in LIST_DIFF_ALGO:
+		st[algo] = {}
+		initResut(st[algo])
+		for i in range(1, 41):
+			initGroup(st[algo],str(i))
+
+	return st
+
+def plotDistribution(data, xlabel, ylabel, key, legends, filename):
 	fig, ax = plt.subplots()
 	# ax.boxplot(datakeyTimeSingleConfigurationByGroup, showfliers=False)
 	# ax.set_xticklabels(keysGroups)
@@ -336,307 +323,3 @@ def initGroup(result, groupid):
 	for key in allkeys:
 		result[key][groupid] = []
 	return result
-
-
-def saveTimes(timesPerConfiguration):
-	fbestFile = open("./plots/data/times.csv", "w")
-	fbestFile.write("config,best_time_avg, notbest_time_avg\n")
-
-	for config in timesPerConfiguration.keys():
-		best_ = plainDict(timesPerConfiguration[config]["best"])
-		meantbest = "" if len(best_) == 0 else mean(best_)
-		medianbest = "" if len(best_) == 0 else np.median(best_)
-		notbest_ = plainDict(timesPerConfiguration[config]["notbest"])
-		meantnotbest= "" if len(notbest_) == 0 else mean(notbest_)
-		mediannotbest = "" if len(notbest_) == 0 else np.median(notbest_)
-		fbestFile.write("{},{},{},{},{}\n".format(config,meantbest,medianbest,meantnotbest, mediannotbest))
-	fbestFile.close()
-	pass
-
-
-def computeFitnesss(rootResults):
-
-		files = (os.listdir(rootResults))
-		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
-		totalDiffAnalyzed = 0
-
-		results = {}
-		overlap = {}
-		overlapPerAlgo = {}
-		#initResut(results)
-
-		problems = []
-
-		timesPerConfiguration = {}
-		sizePerConfiguration = {}
-
-		listProportions = []
-
-		## Navigate group ids
-		for groupId in sorted(files, key=lambda x: int(x)):
-
-			if groupId == ".DS_Store":
-				continue
-
-			filesGroup = os.path.join(rootResults, groupId)
-
-			if not os.path.isdir(filesGroup):
-				continue
-
-			## let's read the diff from csv
-			diffFromGroup = 0
-
-			##Navigates diff
-			listdir = os.listdir(filesGroup)
-			for diff in listdir:
-				if not diff.endswith(".csv") or diff.startswith("metaInfo"):
-					continue
-				try:
-					print("groupid {} file {} /{}  total analyzed: {}".format(groupId,diffFromGroup, len(listdir)/2,totalDiffAnalyzed ))
-					csvFile = os.path.join(filesGroup, diff)
-					df = pandas.read_csv(csvFile)
-					diffFromGroup += 1
-					fileSummaryInfo = computeFitnessOfFilePair(filesGroup, results,diff, df, overlap=overlap,
-											 overlapPerAlgo=  overlapPerAlgo,
-											 timesPerConfiguration = timesPerConfiguration,
-											 sizePerConfiguration = sizePerConfiguration
-											 )
-					totalDiffAnalyzed += 1
-
-					## Now, save info of file
-					## we store the proportion
-					listProportions.extend(saveInfoOfFiles(fileSummaryInfo))
-
-
-				except Exception as e:
-					print("Problems with {}".format(diff))
-					print(e.with_traceback())
-					problems.append(diff)
-
-			## test
-			break
-
-		plotPropertiesOfBestPerFilePair(listProportions)
-
-		printBest(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, limitTop=1000)
-		saveTimes(timesPerConfiguration)
-
-propertiesPerMatcher = {}
-propertiesPerMatcher["SimpleGumtree"] = ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
-propertiesPerMatcher["ClassicGumtree"] = ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
-propertiesPerMatcher["CompleteGumtreeMatcher"] = ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
-propertiesPerMatcher["ChangeDistiller"] = ["GT_CD_LSIM", "GT_CD_ML","GT_CD_SSIM1",  "GT_CD_SSIM2"]
-propertiesPerMatcher["XyMatcher"] = ["GT_STM_MH", "GT_XYM_SIM"]
-
-# for each configuration, we store a dict where key are distance, values ocurrences
-
-#best = {}
-
-def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "all", overlap = [],
-							 overlapPerAlgo = {}, debugBestbyConfiguration = {}, debug = True,
-							timesPerConfiguration = {},
-							sizePerConfiguration = {}
-							 ):
-
-	import pandas as pd
-	import scipy.stats
-
-	debugInfoByFile = {}
-
-	nractions = datasetofPair["NRACTIONS"]
-	pd_series = pd.Series(nractions)
-	counts = pd_series.value_counts()
-	entropy = scipy.stats.entropy(counts)
-	#Take the min value of edit script size
-	minES = nractions.min(skipna=True)
-	bestOfFile = []
-	totalRow = 0
-
-	size = getTreeSize(location, filename)
-
-	for rowConfiguration in datasetofPair.iterrows():
-		totalRow +=1
-		currentNrActions = rowConfiguration[1]['NRACTIONS']
-		currentTime = rowConfiguration[1]['TIME']
-		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
-			continue
-
-		distance = int(currentNrActions) - minES
-
-		rowConfigurationKey = getConfigurationkey(rowConfiguration[1])
-		if rowConfigurationKey not in results:
-			results[rowConfigurationKey] = {}
-			overlap[rowConfigurationKey] = {}
-			debugBestbyConfiguration[rowConfigurationKey] = []
-
-			## time and sizes
-			timesPerConfiguration[rowConfigurationKey]  = {}
-			timesPerConfiguration[rowConfigurationKey]["best"] = {}
-			timesPerConfiguration[rowConfigurationKey]["notbest"] = {}
-
-			sizePerConfiguration[rowConfigurationKey] = {}
-			sizePerConfiguration[rowConfigurationKey]["best"] = {}
-			sizePerConfiguration[rowConfigurationKey]["notbest"] = {}
-
-
-			overlapPerAlgo[rowConfigurationKey] = {}
-			for algo in propertiesPerMatcher.keys():
-				overlapPerAlgo[rowConfigurationKey][algo] = {}
-
-		incrementOne(results[rowConfigurationKey], distance)
-
-		if distance == 0:
-			bestOfFile.append(rowConfigurationKey)
-			incrementOne(timesPerConfiguration[rowConfigurationKey]["best"], currentTime)
-			incrementOne(sizePerConfiguration[rowConfigurationKey]["best"], size)
-			if debug:
-				debugBestbyConfiguration[rowConfigurationKey].append(filename)
-
-		else:
-			incrementOne(timesPerConfiguration[rowConfigurationKey]["notbest"], currentTime)
-			incrementOne(sizePerConfiguration[rowConfigurationKey]["notbest"], size)
-
-	## Stats per file
-	proportionBest = len(bestOfFile) / totalRow
-	if debug:
-		debugInfoByFile[filename] = {}
-		debugInfoByFile[filename]["nrBest"] = len(bestOfFile)
-		debugInfoByFile[filename]["proportionBest"] = proportionBest
-		debugInfoByFile[filename]["entropyNrActions"] = entropy
-		debugInfoByFile[filename]["allBest"] = bestOfFile
-
-
-	##Initialization of structure
-	countOverlapAlgo = {}
-	for algo in propertiesPerMatcher.keys():
-		countOverlapAlgo[algo] = 0
-
-	## Computes which are the algoritms for the best
-	for best in bestOfFile:
-		# Store the proportion
-		incrementOne(overlap[best], proportionBest)
-		algorith = best.split("_")[0]
-		countOverlapAlgo[algorith] += 1
-
-	# Store the proportion w.r.t other algorithms
-	for best in bestOfFile:
-		algorith = best.split("_")[0]
-		for anotherAlgo in propertiesPerMatcher.keys():
-			if anotherAlgo is not algorith:
-				percentageOverlap = countOverlapAlgo[anotherAlgo]
-				incrementOne(overlapPerAlgo[best][anotherAlgo], percentageOverlap)
-
-	return debugInfoByFile
-
-
-def getTreeSize(location, filename):
-	import csv
-	with open('{}/metaInfo_{}'.format(location, filename), mode='r') as csv_file:
-		csv_reader = csv.DictReader(csv_file)
-		line_count = 0
-		for row in csv_reader:
-			if line_count == 1:
-				size = row["L_SIZE"]
-				return size
-			line_count += 1
-
-
-def printBest(results,  overlap, overlapPerAlgo,  limitTop = 1000, debug = False):
-	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
-	print("Finishing processing")
-	top = 0
-	fbestConfig = open("./plots/data/best_configurations_summary.csv", "w")
-	fbestConfig.write("top, configuration, nrBest\n")
-
-	for configuration in keySorted:
-		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
-		if (nrBest > 0):
-			lbest = sorted(plainDict(overlap[configuration]))
-			print("{} {} #{} overlap {} ".format(top, configuration, nrBest, lbest))
-			fbestConfig.write("{},{},{}\n".format(top, configuration, nrBest))
-
-			## We store the overlap
-			fOverlapConfig = open("./plots/data/overlap_config_{}.csv".format(configuration), "w")
-			for b in lbest:
-				fOverlapConfig.write("{}\n".format(b))
-			fOverlapConfig.close()
-
-			## now overlap by algo
-			for algo in propertiesPerMatcher.keys():
-				fOverlapAlgoConfig = open("./plots/data/overlap_config_{}_{}.csv".format(algo, configuration), "w")
-				lbestalgo = sorted(plainDict(overlapPerAlgo[configuration][algo]))
-				for b in lbestalgo:
-					fOverlapAlgoConfig.write("{}\n".format(b))
-				fOverlapAlgoConfig.close()
-
-
-		top += 1
-		if (top == limitTop):
-			break
-
-	fbestConfig.flush()
-	fbestConfig.close()
-
-
-def plotPropertiesOfBestPerFilePair(listProportions):
-	fig, ax = plt.subplots()
-	# ax.boxplot(listProportions, showfliers=False)
-	ax.violinplot(listProportions, showmedians=True, showmeans=True)
-	# legend = [""]
-	# legend.extend(legends)
-	# ax.set_xticklabels(legend)
-	plt.title("Distribution proportion best configuration")
-	plt.ylabel("Proportion")
-	# plt.xlabel("Distribution proportion best configuration")
-	# plt.show()
-	plt.savefig("./plots/distribution_bestProportion.pdf")
-	plt.close()
-
-
-def saveInfoOfFiles(debugInfoByFile):
-	listProportions = []
-	fbestFile = open("./plots/data/best_file_summary.csv", "w")
-	fbestFile.write("file,nrBest,proportionBest,entropyNrActions\n")
-	for filename in debugInfoByFile.keys():
-
-		if debugInfoByFile[filename]["proportionBest"] > 0:
-			listProportions.append(debugInfoByFile[filename]["proportionBest"])
-			fbestFile.write("{},{},{},{}\n".format(filename,
-												   debugInfoByFile[filename]["nrBest"],
-												   debugInfoByFile[filename]["proportionBest"],
-												   debugInfoByFile[filename]["entropyNrActions"]))
-
-			detailBestFile = open("./plots/data/best_{}".format(filename), "w")
-			for best in debugInfoByFile[filename]["allBest"]:
-				detailBestFile.write("{}\n".format(best))
-
-			detailBestFile.flush()
-			detailBestFile.close()
-	fbestFile.flush()
-	fbestFile.close()
-	return listProportions
-
-
-def plainDict(dic = {}):
-	r = []
-	for k in dic.keys():
-		nr = dic[k]
-		for i in range(1, nr + 1):
-			r.append(k)
-
-	return r
-
-def incrementOne(dict, key, value = 1):
-	if key not in dict:
-		dict[key] = value
-	else:
-		dict[key] += value
-
-
-def getConfigurationkey(row):
-		matcherName = row['MATCHER']
-		key = matcherName;
-		for property in propertiesPerMatcher[matcherName]:
-			key+="_"+"{:.1f}".format((row[property])).rstrip('0').rstrip('.')
-
-		return key

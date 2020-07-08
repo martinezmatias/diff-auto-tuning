@@ -1,11 +1,13 @@
 import unittest
 from ResultsAnalyzers import *
-from ReadCSV import *
+from ResultsAnalyzeBest import *
+from ResultsAnalyzeTimes import *
 
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 from SALib.test_functions import Ishigami
 import numpy as np
+
 
 class MyTestCase(unittest.TestCase):
 
