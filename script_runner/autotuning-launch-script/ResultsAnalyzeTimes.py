@@ -222,6 +222,7 @@ def plotDistribution(data, xlabel, ylabel, key, legends, filename):
 	plt.savefig(filename.format(key))
 	plt.close()
 
+
 '''Plots the time of single commits by algorithm'''
 def printSingleConfigTime(resultsAlgoDiff):
 
