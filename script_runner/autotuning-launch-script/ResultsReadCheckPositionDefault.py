@@ -24,5 +24,5 @@ def getPositionDefalt(fileLocation = "./plots/data/best_configurations_summary.c
 	print("not found {}".format(notfound))
 
 ##
-getPositionDefalt()
-print("End")
+
+	print("End")

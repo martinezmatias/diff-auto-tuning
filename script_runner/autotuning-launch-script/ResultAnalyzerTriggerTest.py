@@ -2,6 +2,8 @@ import unittest
 from ResultsAnalyzers import *
 from ResultsAnalyzeBest import *
 from ResultsAnalyzeTimes import *
+from ResultsReadCheckPositionDefault import *
+from ResultsAnalyzeRelationTimeSize import *
 
 from SALib.sample import saltelli
 from SALib.analyze import sobol
@@ -22,8 +24,15 @@ class MyTestCase(unittest.TestCase):
 	def _test_ParserResults(self):
 		parserCSV("./results/out10bis1_4gt/")
 
-	def test_ComputeFitness(self):
+	def _test_ComputeFitness(self):
 		computeFitnesss("./results/out10bis4_4gt/")
+
+
+	def test_AnalyzeTimeSize(self):
+		analyzeTimeSize("./results/out10bis4_4gt/")
+
+	def _test_AnalyzeTimeSize(self):
+		getPositionDefalt(fileLocation="../../results/summary/best_configurations_summary.csv")
 
 	def _test_plot(self):
 		import matplotlib.pyplot as plt
