@@ -16,6 +16,7 @@ def computeFitnesss(rootResults):
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
 		totalDiffAnalyzed = 0
 
+		# map where the key is the distance, value is the nr of ocurrences
 		results = {}
 		overlap = {}
 		overlapPerAlgo = {}
@@ -54,6 +55,7 @@ def computeFitnesss(rootResults):
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
+					totalDiffAnalyzed += 1
 					fileSummaryInfo = computeFitnessOfFilePair(filesGroup, results,diff, df, overlap=overlap,
 											 overlapPerAlgo=  overlapPerAlgo,
 											 timesPerConfiguration = timesPerConfiguration,
@@ -61,7 +63,7 @@ def computeFitnesss(rootResults):
 											 heigthPerConfiguration= heightPerConfiguration,
 											 matrixOverlapConfiguration = matrixOverlapConfigurations
 											 )
-					totalDiffAnalyzed += 1
+
 
 					## Now, save info of file
 					localProportion = saveInfoOfFiles(diff, fileSummaryInfo)
@@ -69,8 +71,8 @@ def computeFitnesss(rootResults):
 					listProportions.extend(localProportion)
 
 					#Testing
-					if diffFromGroup == 10:
-						break
+					#if diffFromGroup == 10:
+					#	break
 
 				except Exception as e:
 					print("Problems with {}".format(diff))
@@ -78,28 +80,27 @@ def computeFitnesss(rootResults):
 					problems.append(diff)
 
 			## test
-			break
-
-		if False:
-			plotPropertiesOfBestPerFilePair(listProportions)
-
-			saveBestConfigurations(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, timesPerConfig= timesPerConfiguration,
-							   sizePerConfig= sizePerConfiguration, heightPerConfig = heightPerConfiguration)
+			#break
 
 
-			##Move to the main result file
-			saveNumberBestNotBest(timesPerConfiguration, name="timesPerConfiguration")
-			saveNumberBestNotBest(sizePerConfiguration, name="sizePerConfiguration")
-			saveNumberBestNotBest(heightPerConfiguration, name="heightPerConfiguration")
+		plotPropertiesOfBestPerFilePair(listProportions)
 
-			# Save matrix overlap
-			saveMatrixOverlapConfig(matrixOverlapConfigurations)
+		saveBestConfigurations(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, timesPerConfig= timesPerConfiguration,
+						   sizePerConfig= sizePerConfiguration, heightPerConfig = heightPerConfiguration)
 
 
-			## Analyze parameter
-			analyzeParameter(timesPerConfiguration, name="timesPerConfiguration")
-			analyzeParameter(sizePerConfiguration, name="sizePerConfiguration")
-			analyzeParameter(heightPerConfiguration, name="heightPerConfiguration")
+		##Move to the main result file
+		saveNumberBestNotBest(timesPerConfiguration, name="timesPerConfiguration")
+		saveNumberBestNotBest(sizePerConfiguration, name="sizePerConfiguration")
+		saveNumberBestNotBest(heightPerConfiguration, name="heightPerConfiguration")
+
+		# Save matrix overlap
+		saveMatrixOverlapConfig(matrixOverlapConfigurations)
+
+		## Analyze parameter
+		analyzeParameter(timesPerConfiguration, name="timesPerConfiguration")
+		analyzeParameter(sizePerConfiguration, name="sizePerConfiguration")
+		analyzeParameter(heightPerConfiguration, name="heightPerConfiguration")
 
 
 def saveNumberBestNotBest(metricPerConfiguration, directory ="./plots/data/", name ="times"):
@@ -110,7 +111,8 @@ def saveNumberBestNotBest(metricPerConfiguration, directory ="./plots/data/", na
 	fbestFile.write("config,best_time_avg,best_time_median,notbest_time_avg,notbest_time_median,Mann-Whitney_U_stat,Mann-Whitney_U_p\n")
 
 	for config in metricPerConfiguration.keys():
-		content = "{},{}\n".format(config, getRowNumberBestNotBest(metricPerConfiguration, config))
+		rc, best, notbest = getRowNumberBestNotBest(metricPerConfiguration, config)
+		content = "{},{}\n".format(config,rc )
 		fbestFile.write((content))
 	fbestFile.close()
 
@@ -223,7 +225,7 @@ def getRowNumberBestNotBest(timesPerConfiguration, config):
 
 	##
 
-	return content
+	return content, len(best_), len(notbest_)
 
 
 def saveMatrixOverlapConfig(matrixOverlapConfigurations, directory = "./plots/data"):
@@ -277,20 +279,20 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 	# Retrieve metrics of the AST under comparison
 	size, height = getTreeSize(location, filename)
 
-
-	#if True:
-	#	return {}
+	if len(indexes) == 0:
+		columns = datasetofPair.columns
+		i = 1
+		for c in columns:
+			indexes[c] = i
+			i+=1
 
 	# Navigates each configuration (one per row)
-	for rowConfiguration in datasetofPair.iterrows():
+	for rowConfiguration in datasetofPair.itertuples(): #datasetofPair.iterrows():
 
 		totalRow +=1
 
-		#if True:
-		#	continue
-
-		currentNrActions = rowConfiguration[1]['NRACTIONS']
-		currentTime = rowConfiguration[1]['TIME']
+		currentNrActions = rowConfiguration.NRACTIONS #rowConfiguration[1]['NRACTIONS']
+		currentTime = rowConfiguration.TIME #rowConfiguration[1]['TIME']
 
 		# Skip if the configuration does not produce results (timeout, failure, etc)
 		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
@@ -300,7 +302,7 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 		distance = int(currentNrActions) - minES
 
 		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationkey(rowConfiguration[1])
+		rowConfigurationKey = getConfigurationkey(rowConfiguration) #rowConfiguration[1]
 
 		if rowConfigurationKey not in results:
 			results[rowConfigurationKey] = {}
@@ -375,12 +377,13 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 	# Store the proportion w.r.t other algorithms
 	# we create a matrix (matrixOverlapConfiguration) that compares each configuration
 	for oneBestConfiguration in allBestConfigurationOfFile:
-		if False:
-			algorithm_name = oneBestConfiguration.split("_")[0]
-			for anotherAlgo in propertiesPerMatcher.keys():
-				if anotherAlgo is not algorithm_name:
-					percentageOverlap = countOverlapAlgo[anotherAlgo]
-					incrementOne(overlapPerAlgo[oneBestConfiguration][anotherAlgo], percentageOverlap)
+
+			if False:
+				algorithm_name = oneBestConfiguration.split("_")[0]
+				for anotherAlgo in propertiesPerMatcher.keys():
+					if anotherAlgo is not algorithm_name:
+						percentageOverlap = countOverlapAlgo[anotherAlgo]
+						incrementOne(overlapPerAlgo[oneBestConfiguration][anotherAlgo], percentageOverlap)
 
 			# computes when two configurations are both the BEST for a file.
 			for anotherBestConfig in allBestConfigurationOfFile:
@@ -418,12 +421,12 @@ def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, 
 	dir_over_crossed = "{}/overlap_crossed/".format(directory)
 	if not os.path.exists(dir_over_crossed):
 		os.makedirs(dir_over_crossed)
-
+	# as results is a map where keys are distance, we sort according with the nr of occurrence of distance zero
 	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
 	print("Finishing processing")
 	top = 0
 	fbestConfig = open("{}/best_configurations_summary.csv".format(directory), "w")
-	fbestConfig.write("top,configuration,nrBest,"
+	fbestConfig.write("top,configuration,nrBest,total,"
 					  "best_time_avg,best_time_median,notbest_time_avg,notbest_time_median,time_Mann-Whitney_U_stat,time_Mann-Whitney_U_p,"
 					   "best_size_avg,best_size_median,notbest_size_avg,notbest_size_median,size_Mann-Whitney_U_stat,size_Mann-Whitney_U_p,"
 					   "best_height_avg,best_height_median,notbest_height_avg,notbest_height_median,height_Mann-Whitney_U_stat,height_Mann-Whitney_U_p"
@@ -432,26 +435,29 @@ def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, 
 	for configuration in keySorted:
 		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
 		if (nrBest > 0):
-			lbest = sorted(plainDict(overlap[configuration]))
-			rowTimes = getRowNumberBestNotBest(timesPerConfig, configuration)
-			rowSizes = getRowNumberBestNotBest(sizePerConfig, configuration)
-			rowHeight = getRowNumberBestNotBest(heightPerConfig, configuration)
+			rowTimes, allbest, allnotbest = getRowNumberBestNotBest(timesPerConfig, configuration)
+			rowSizes, a1, b1 = getRowNumberBestNotBest(sizePerConfig, configuration)
+			rowHeight, a1, b1 = getRowNumberBestNotBest(heightPerConfig, configuration)
 
-			fbestConfig.write("{},{},{},{},{},{}\n".format(top, configuration, nrBest, rowTimes, rowSizes,rowHeight))
+			fbestConfig.write("{},{},{},{},"
+							  "{},{},{}\n".format(top, configuration, nrBest, allbest + allnotbest,
+												  rowTimes, rowSizes,rowHeight))
 
-			## We store the overlap
-			fOverlapConfig = open("{}/overlap_general_config_{}.csv".format(dir_over_gen, configuration), "w")
-			for b in lbest:
-				fOverlapConfig.write("{}\n".format(b))
-			fOverlapConfig.close()
+			if False:
+				lbest = sorted(plainDict(overlap[configuration]))
+				## We store the overlap
+				fOverlapConfig = open("{}/overlap_general_config_{}.csv".format(dir_over_gen, configuration), "w")
+				for b in lbest:
+					fOverlapConfig.write("{}\n".format(b))
+				fOverlapConfig.close()
 
-			## now overlap by algo
-			for algo in propertiesPerMatcher.keys():
-				fOverlapAlgoConfig = open("{}/overlap_config_{}_with_{}.csv".format(dir_over_crossed,configuration, algo), "w")
-				lbestalgo = sorted(plainDict(overlapPerAlgo[configuration][algo]))
-				for b in lbestalgo:
-					fOverlapAlgoConfig.write("{}\n".format(b))
-				fOverlapAlgoConfig.close()
+				## now overlap by algo
+				for algo in propertiesPerMatcher.keys():
+					fOverlapAlgoConfig = open("{}/overlap_config_{}_with_{}.csv".format(dir_over_crossed,configuration, algo), "w")
+					lbestalgo = sorted(plainDict(overlapPerAlgo[configuration][algo]))
+					for b in lbestalgo:
+						fOverlapAlgoConfig.write("{}\n".format(b))
+					fOverlapAlgoConfig.close()
 
 
 		top += 1
@@ -533,11 +539,17 @@ def incrementOne(dict, key, value = 1):
 	else:
 		dict[key] += value
 
+indexes = {}
+
 '''Returns a key for the configuration'''
 def getConfigurationkey(row):
-		matcherName = row['MATCHER']
-		key = matcherName;
+
+		matcherName = row.MATCHER#row['MATCHER']
+		key = matcherName
 		for property in propertiesPerMatcher[matcherName]:
-			key+="_"+"{:.1f}".format((row[property])).rstrip('0').rstrip('.')
+			index = indexes[property]
+			idexProperty = row[index]
+
+			key+="_"+"{:.1f}".format((idexProperty)).rstrip('0').rstrip('.')
 
 		return key

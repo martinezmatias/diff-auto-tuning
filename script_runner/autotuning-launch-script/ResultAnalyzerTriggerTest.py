@@ -23,7 +23,7 @@ class MyTestCase(unittest.TestCase):
 		parserCSV("./results/out10bis1_4gt/")
 
 	def test_ComputeFitness(self):
-		computeFitnesss("./results/out10bis2_4gt/")
+		computeFitnesss("./results/out10bis4_4gt/")
 
 	def _test_plot(self):
 		import matplotlib.pyplot as plt
