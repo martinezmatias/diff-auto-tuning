@@ -71,8 +71,8 @@ def computeFitnesss(rootResults):
 					listProportions.extend(localProportion)
 
 					#Testing
-					#if diffFromGroup == 10:
-					#	break
+					if diffFromGroup == 10:
+						break
 
 				except Exception as e:
 					print("Problems with {}".format(diff))
@@ -80,7 +80,7 @@ def computeFitnesss(rootResults):
 					problems.append(diff)
 
 			## test
-			#break
+			break
 
 
 		plotPropertiesOfBestPerFilePair(listProportions)
@@ -101,6 +101,35 @@ def computeFitnesss(rootResults):
 		analyzeParameter(timesPerConfiguration, name="timesPerConfiguration")
 		analyzeParameter(sizePerConfiguration, name="sizePerConfiguration")
 		analyzeParameter(heightPerConfiguration, name="heightPerConfiguration")
+
+
+def getAllHyperparametersHeader():
+	header = []
+	for algo in propertiesPerMatcher.keys():
+		for hyperparam in propertiesPerMatcher[algo]:
+			header.append(algo+"_"+hyperparam)
+
+	return header
+	#return ",".join(header)
+
+def getValueOfHypeParameter(config, header):
+	configs = config.split("_")
+	algo = configs[0]
+	values = {}
+	paramsOfAlgo = propertiesPerMatcher[algo]
+	for param in range(0, len(paramsOfAlgo)):
+		paramName = paramsOfAlgo[param]
+		values[algo+"_"+paramName] = configs[param + 1]
+
+	row = []
+	for h in header:
+		if h in values:
+			row.append(values[h])
+		else:
+			row.append("")
+
+	return row
+
 
 
 def saveNumberBestNotBest(metricPerConfiguration, directory ="./plots/data/", name ="times"):
@@ -426,11 +455,15 @@ def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, 
 	print("Finishing processing")
 	top = 0
 	fbestConfig = open("{}/best_configurations_summary.csv".format(directory), "w")
+
+	header = getAllHyperparametersHeader()
+
 	fbestConfig.write("top,configuration,nrBest,total,"
 					  "best_time_avg,best_time_median,notbest_time_avg,notbest_time_median,time_Mann-Whitney_U_stat,time_Mann-Whitney_U_p,"
 					   "best_size_avg,best_size_median,notbest_size_avg,notbest_size_median,size_Mann-Whitney_U_stat,size_Mann-Whitney_U_p,"
 					   "best_height_avg,best_height_median,notbest_height_avg,notbest_height_median,height_Mann-Whitney_U_stat,height_Mann-Whitney_U_p"
-					  "\n")
+					    ",{}"
+					    "\n".format(",".join(header)))
 
 	for configuration in keySorted:
 		nrBest = (results[configuration][0] if 0 in results[configuration] else 0)
@@ -440,8 +473,11 @@ def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, 
 			rowHeight, a1, b1 = getRowNumberBestNotBest(heightPerConfig, configuration)
 
 			fbestConfig.write("{},{},{},{},"
-							  "{},{},{}\n".format(top, configuration, nrBest, allbest + allnotbest,
-												  rowTimes, rowSizes,rowHeight))
+							  "{},{},{}"
+							  ",{}\n".format(top, configuration, nrBest, allbest + allnotbest,
+												  rowTimes, rowSizes,rowHeight
+											 		, ",".join(getValueOfHypeParameter(configuration,header))
+											 ))
 
 			if False:
 				lbest = sorted(plainDict(overlap[configuration]))

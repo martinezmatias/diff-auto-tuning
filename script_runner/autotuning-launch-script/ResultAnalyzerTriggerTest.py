@@ -24,11 +24,11 @@ class MyTestCase(unittest.TestCase):
 	def _test_ParserResults(self):
 		parserCSV("./results/out10bis1_4gt/")
 
-	def _test_ComputeFitness(self):
+	def test_ComputeFitness(self):
 		computeFitnesss("./results/out10bis4_4gt/")
 
 
-	def test_AnalyzeTimeSize(self):
+	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis4_4gt/")
 
 	def _test_AnalyzeTimeSize(self):
