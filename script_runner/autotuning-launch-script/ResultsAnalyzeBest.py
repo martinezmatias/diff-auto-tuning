@@ -9,6 +9,8 @@ from DiffAlgorithmMetadata import *
 import pandas as pd
 import scipy.stats
 
+indexesOfColumns = {}
+
 '''Compute the fitness of all the data given as parameter'''
 def computeFitnesss(rootResults):
 
@@ -18,9 +20,6 @@ def computeFitnesss(rootResults):
 
 		# map where the key is the distance, value is the nr of ocurrences
 		results = {}
-		overlap = {}
-		overlapPerAlgo = {}
-
 		problems = []
 
 		timesPerConfiguration = {}
@@ -56,8 +55,7 @@ def computeFitnesss(rootResults):
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
 					totalDiffAnalyzed += 1
-					fileSummaryInfo = computeFitnessOfFilePair(filesGroup, results,diff, df, overlap=overlap,
-											 overlapPerAlgo=  overlapPerAlgo,
+					fileSummaryInfo = computeFitnessOfFilePair(filesGroup, results,diff, df,
 											 timesPerConfiguration = timesPerConfiguration,
 											 sizePerConfiguration = sizePerConfiguration,
 											 heigthPerConfiguration= heightPerConfiguration,
@@ -85,7 +83,7 @@ def computeFitnesss(rootResults):
 
 		plotPropertiesOfBestPerFilePair(listProportions)
 
-		saveBestConfigurations(results, overlap= overlap, overlapPerAlgo = overlapPerAlgo, timesPerConfig= timesPerConfiguration,
+		saveBestConfigurations(results, timesPerConfig= timesPerConfiguration,
 						   sizePerConfig= sizePerConfiguration, heightPerConfig = heightPerConfiguration)
 
 
@@ -102,7 +100,7 @@ def computeFitnesss(rootResults):
 		analyzeParameter(sizePerConfiguration, name="sizePerConfiguration")
 		analyzeParameter(heightPerConfiguration, name="heightPerConfiguration")
 
-
+'''returns a list with all the parameters with the algorithm name as prefix'''
 def getAllHyperparametersHeader():
 	header = []
 	for algo in propertiesPerMatcher.keys():
@@ -110,42 +108,43 @@ def getAllHyperparametersHeader():
 			header.append(algo+"_"+hyperparam)
 
 	return header
-	#return ",".join(header)
 
+'''given configuration get a row with values for each hyperparameter existing: 
+those that correspond to the configuration algorithm will have the corresponding value (specified in the config), otherwise 
+we put an empty string'''
 def getValueOfHypeParameter(config, header):
 	configs = config.split("_")
 	algo = configs[0]
-	values = {}
+	valuesOfCofiguration = {}
 	paramsOfAlgo = propertiesPerMatcher[algo]
 	for param in range(0, len(paramsOfAlgo)):
 		paramName = paramsOfAlgo[param]
-		values[algo+"_"+paramName] = configs[param + 1]
+		valuesOfCofiguration[algo+"_"+paramName] = configs[param + 1]
 
 	row = []
 	for h in header:
-		if h in values:
-			row.append(values[h])
+		if h in valuesOfCofiguration:
+			row.append(valuesOfCofiguration[h])
 		else:
 			row.append("")
-
 	return row
 
 
-
-def saveNumberBestNotBest(metricPerConfiguration, directory ="./plots/data/", name ="times"):
+'''save the metrics of a given measure into a file'''
+def saveNumberBestNotBest(measurePerConfiguration, directory ="./plots/data/", name ="times"):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
 	fbestFile = open("{}/single_configs_{}.csv".format(directory, name), "w")
 	fbestFile.write("config,best_time_avg,best_time_median,notbest_time_avg,notbest_time_median,Mann-Whitney_U_stat,Mann-Whitney_U_p\n")
 
-	for config in metricPerConfiguration.keys():
-		rc, best, notbest = getRowNumberBestNotBest(metricPerConfiguration, config)
+	for config in measurePerConfiguration.keys():
+		rc, best, notbest = getRowNumberBestNotBest(measurePerConfiguration, config)
 		content = "{},{}\n".format(config,rc )
 		fbestFile.write((content))
 	fbestFile.close()
 
-
+'''Store for each parameter and value the total number of diff with those values  '''
 def analyzeParameter(metricPerConfiguration, directory ="./plots/data/", name ="times"):
 
 	directorypar = "{}/parameters/".format(directory)
@@ -162,46 +161,47 @@ def analyzeParameter(metricPerConfiguration, directory ="./plots/data/", name ="
 	dataBest = {}
 	dataNotBest = {}
 	joinkey = "-"
+	## let's summarize the number of diff according to the hyperparameter and value
 	# navigate each configuration
 	for config in metricPerConfiguration.keys():
 
 			params = (config).split("_")
 			# get the Diff algorithm name
-			algoname = params[0]
+			algorithName = params[0]
 			# get all properties of that name
-			algoProperties = propertiesPerMatcher[algoname]
+			algoProperties = propertiesPerMatcher[algorithName]
 			# iterates on each  property
 			for i in range(1, len(algoProperties) + 1):
 				# create a key using the value of that property
-				key = algoname+joinkey+ algoProperties[i-1] +joinkey+params[i]
-				if key not in dataBest:
-					dataBest[key] = []
-					dataNotBest[key] = []
+				keySingleParameter = algorithName+joinkey+ algoProperties[i-1] +joinkey+params[i]
+				if keySingleParameter not in dataBest:
+					dataBest[keySingleParameter] = []
+					dataNotBest[keySingleParameter] = []
 
-				dataBest[key].extend(plainDict(metricPerConfiguration[config]["best"]))
-				dataNotBest[key].extend(plainDict(metricPerConfiguration[config]["notbest"]))
-
-	for key in dataBest:
+				dataBest[keySingleParameter].extend(plainDict(metricPerConfiguration[config]["best"]))
+				dataNotBest[keySingleParameter].extend(plainDict(metricPerConfiguration[config]["notbest"]))
+	## for each pair hyperparameter-value
+	for keySingleParameter in dataBest:
 		data = []
 		all = []
-		all.extend(dataBest[key])
-		all.extend(dataNotBest[key])
+		all.extend(dataBest[keySingleParameter])
+		all.extend(dataNotBest[keySingleParameter])
 		data.append(all)
 		legends = ["all"]
-		if len(dataBest[key])>0:
-			data.append(dataBest[key])
+		if len(dataBest[keySingleParameter])>0:
+			data.append(dataBest[keySingleParameter])
 			legends.append("")#workarround
 			legends.append("best")
-		if len(dataNotBest[key]) > 0:
-			data.append(dataNotBest[key])
+		if len(dataNotBest[keySingleParameter]) > 0:
+			data.append(dataNotBest[keySingleParameter])
 			legends.append("")#workarround
 			legends.append("notbest")
 
 		#put in columns
-		keySplited = key.split(joinkey)
+		keySingleSplited = keySingleParameter.split(joinkey)
 
 		##https://machinelearningmastery.com/nonparametric-statistical-significance-tests-in-python/
-		stat, p = scipy.stats.mannwhitneyu(dataBest[key], dataNotBest[key])
+		stat, p = scipy.stats.mannwhitneyu(dataBest[keySingleParameter], dataNotBest[keySingleParameter])
 
 		fbestFile.write("{},"
 						"{},{},{}," ## algo, property,value
@@ -209,23 +209,25 @@ def analyzeParameter(metricPerConfiguration, directory ="./plots/data/", name ="
 						"{}," #best
 						"{},"#not best
 						"{},{:.5f}"#mannwhitneyu
-						"\n".format(key, keySplited[0], keySplited[1], keySplited[2],
-											   len(dataBest[key]) / (len(dataBest[key]) + len(dataNotBest[key])),
-											   getStatsList(dataBest[key]),
-											   getStatsList(dataNotBest[key]),
+						"\n".format(keySingleParameter, keySingleSplited[0], keySingleSplited[1], keySingleSplited[2],
+											   len(dataBest[keySingleParameter]) / (len(dataBest[keySingleParameter]) + len(dataNotBest[keySingleParameter])),
+											   getStatsList(dataBest[keySingleParameter]),
+											   getStatsList(dataNotBest[keySingleParameter]),
 											   stat, p
 									  )
 						)
 
 		if len(all) > 0:
-			plotDistribution(data, "", "", "{}-{}".format(name,key), legends, "{}/plot_{}_param_{}.pdf".format(directorypar, name, key))
+			plotDistribution(data, "", "", "{}-{}".format(name,keySingleParameter), legends, "{}/plot_{}_param_{}.pdf".format(directorypar, name, keySingleParameter))
 
 	fbestFile.close()
-def getStatsList(list):
-	if(len(list)):
-		return "{},{},{},{}".format(len(list) , mean(list),np.median(list), stdev(list))
+
+'''return stats of a given list'''
+def getStatsList(aList):
+	if(len(aList)):
+		return "{},{},{},{}".format(len(aList), mean(aList), np.median(aList), stdev(aList))
 	else:
-		return "{},,,".format(len(list))
+		return "{},,,".format(len(aList))
 
 def plotDistribution(data, xlabel, ylabel, key, legends, filename):
 	fig, ax = plt.subplots()
@@ -242,6 +244,7 @@ def plotDistribution(data, xlabel, ylabel, key, legends, filename):
 	plt.savefig(filename)
 	plt.close()
 
+'''given a configuration returns some metrics (e.g.avg) about a measure (e.g., execution time)'''
 def getRowNumberBestNotBest(timesPerConfiguration, config):
 	best_ = plainDict(timesPerConfiguration[config]["best"])
 	meantbest = "" if len(best_) == 0 else mean(best_)
@@ -251,8 +254,6 @@ def getRowNumberBestNotBest(timesPerConfiguration, config):
 	mediannotbest = "" if len(notbest_) == 0 else np.median(notbest_)
 	stat, p = scipy.stats.mannwhitneyu(best_, notbest_)
 	content = "{},{},{},{},{},{}".format( meantbest, medianbest, meantnotbest, mediannotbest,stat, p)
-
-	##
 
 	return content, len(best_), len(notbest_)
 
@@ -291,37 +292,38 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 							 ):
 
 	# Stores metrics of the file under comparison
-	debugInfoByFile = {}
-
-	nractions = datasetofPair["NRACTIONS"]
-	pd_series = pd.Series(nractions)
+	infoByFile = {}
+	# Get all the nr Actions
+	allNrActions = datasetofPair["NRACTIONS"]
+	pd_series = pd.Series(allNrActions)
 	counts = pd_series.value_counts()
 	entropy = scipy.stats.entropy(counts)
 
 	#Take the min value of edit script size
-	minES = nractions.min(skipna=True)
+	minES = allNrActions.min(skipna=True)
 
 	# List with the best configurations (that with nr of actions equals to minES)
 	allBestConfigurationOfFile = []
 	totalRow = 0
 
 	# Retrieve metrics of the AST under comparison
-	size, height = getTreeSize(location, filename)
+	size, height = getTreeMetricsFromFile(location, filename)
 
-	if len(indexes) == 0:
+	## for the first call to this method, let's store the columns
+	if len(indexesOfColumns) == 0:
 		columns = datasetofPair.columns
 		i = 1
 		for c in columns:
-			indexes[c] = i
+			indexesOfColumns[c] = i
 			i+=1
 
 	# Navigates each configuration (one per row)
-	for rowConfiguration in datasetofPair.itertuples(): #datasetofPair.iterrows():
+	for rowConfiguration in datasetofPair.itertuples():
 
 		totalRow +=1
 
-		currentNrActions = rowConfiguration.NRACTIONS #rowConfiguration[1]['NRACTIONS']
-		currentTime = rowConfiguration.TIME #rowConfiguration[1]['TIME']
+		currentNrActions = rowConfiguration.NRACTIONS
+		currentTime = rowConfiguration.TIME
 
 		# Skip if the configuration does not produce results (timeout, failure, etc)
 		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
@@ -331,11 +333,11 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 		distance = int(currentNrActions) - minES
 
 		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationkey(rowConfiguration) #rowConfiguration[1]
+		rowConfigurationKey = getConfigurationkey(rowConfiguration)
 
+		# Initialize the structures
 		if rowConfigurationKey not in results:
 			results[rowConfigurationKey] = {}
-			overlap[rowConfigurationKey] = {}
 			debugBestbyConfiguration[rowConfigurationKey] = []
 
 			## time and sizes
@@ -352,11 +354,13 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 			heigthPerConfiguration[rowConfigurationKey]["notbest"] = {}
 
 			overlapPerAlgo[rowConfigurationKey] = {}
-			for algo in propertiesPerMatcher.keys():
-				overlapPerAlgo[rowConfigurationKey][algo] = {}
+			for algorithmName in propertiesPerMatcher.keys():
+				overlapPerAlgo[rowConfigurationKey][algorithmName] = {}
 
+		## Save the distance of the configuration
 		incrementOne(results[rowConfigurationKey], distance)
 
+		# the configuration is the best
 		if distance == 0:
 			# We save the configuration as best
 			allBestConfigurationOfFile.append(rowConfigurationKey)
@@ -378,27 +382,17 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 
 	## Stats per file
 	proportionBest = len(allBestConfigurationOfFile) / totalRow
-	if True:
-		debugInfoByFile[filename] = {}
-		debugInfoByFile[filename]["nrBest"] = len(allBestConfigurationOfFile)
-		debugInfoByFile[filename]["proportionBest"] = proportionBest
-		debugInfoByFile[filename]["entropyNrActions"] = entropy
-		debugInfoByFile[filename]["allBest"] = allBestConfigurationOfFile
 
+	## We store the information for the diff
+	infoByFile[filename] = {}
+	infoByFile[filename]["nrBest"] = len(allBestConfigurationOfFile)
+	infoByFile[filename]["proportionBest"] = proportionBest
+	infoByFile[filename]["entropyNrActions"] = entropy
+	infoByFile[filename]["allBest"] = allBestConfigurationOfFile
 
-	##Initialization of structure that counts the best per matcher
-	countOverlapAlgo = {}
-	for algo in propertiesPerMatcher.keys():
-		countOverlapAlgo[algo] = 0
 
 	## Computes which are the algoritms for the best
 	for oneBestConfiguration in allBestConfigurationOfFile:
-		# Store the proportion
-		incrementOne(overlap[oneBestConfiguration], proportionBest)
-
-		algorithm_name = oneBestConfiguration.split("_")[0]
-		countOverlapAlgo[algorithm_name] += 1
-
 		if oneBestConfiguration not in matrixOverlapConfiguration:
 			matrixOverlapConfiguration[oneBestConfiguration] = {}
 
@@ -406,13 +400,6 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 	# Store the proportion w.r.t other algorithms
 	# we create a matrix (matrixOverlapConfiguration) that compares each configuration
 	for oneBestConfiguration in allBestConfigurationOfFile:
-
-			if False:
-				algorithm_name = oneBestConfiguration.split("_")[0]
-				for anotherAlgo in propertiesPerMatcher.keys():
-					if anotherAlgo is not algorithm_name:
-						percentageOverlap = countOverlapAlgo[anotherAlgo]
-						incrementOne(overlapPerAlgo[oneBestConfiguration][anotherAlgo], percentageOverlap)
 
 			# computes when two configurations are both the BEST for a file.
 			for anotherBestConfig in allBestConfigurationOfFile:
@@ -423,23 +410,20 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 						matrixOverlapConfiguration[oneBestConfiguration][anotherBestConfig]+= 1
 
 
-	return debugInfoByFile
+	return infoByFile
 
-
-def getTreeSize(location, filename):
+'''get the informattion of the Tree given a diff id'''
+def getTreeMetricsFromFile(location, diffId):
 	import csv
-	with open('{}/metaInfo_{}'.format(location, filename), mode='r') as csv_file:
+	with open('{}/metaInfo_{}'.format(location, diffId), mode='r') as csv_file:
 		csv_reader = csv.DictReader(csv_file)
-		line_count = 0
 		for row in csv_reader:
 			size = row["L_SIZE"]
 			height = row["L_HEIGHT"]
 			return int(size), int(height)
-
-
 	return None, None
 
-def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, debug = False, directory ="./plots/data/", timesPerConfig = {}, sizePerConfig = {}, heightPerConfig = {}):
+def saveBestConfigurations(results, limitTop = 300000, directory ="./plots/data/", timesPerConfig = {}, sizePerConfig = {}, heightPerConfig = {}):
 	if not os.path.exists(directory):
 		os.makedirs(directory)
 
@@ -453,7 +437,7 @@ def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, 
 	# as results is a map where keys are distance, we sort according with the nr of occurrence of distance zero
 	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
 	print("Finishing processing")
-	top = 0
+	iConfiguration = 0
 	fbestConfig = open("{}/best_configurations_summary.csv".format(directory), "w")
 
 	header = getAllHyperparametersHeader()
@@ -474,30 +458,13 @@ def saveBestConfigurations(results, overlap, overlapPerAlgo, limitTop = 300000, 
 
 			fbestConfig.write("{},{},{},{},"
 							  "{},{},{}"
-							  ",{}\n".format(top, configuration, nrBest, allbest + allnotbest,
+							  ",{}\n".format(iConfiguration, configuration, nrBest, allbest + allnotbest,
 												  rowTimes, rowSizes,rowHeight
 											 		, ",".join(getValueOfHypeParameter(configuration,header))
 											 ))
 
-			if False:
-				lbest = sorted(plainDict(overlap[configuration]))
-				## We store the overlap
-				fOverlapConfig = open("{}/overlap_general_config_{}.csv".format(dir_over_gen, configuration), "w")
-				for b in lbest:
-					fOverlapConfig.write("{}\n".format(b))
-				fOverlapConfig.close()
-
-				## now overlap by algo
-				for algo in propertiesPerMatcher.keys():
-					fOverlapAlgoConfig = open("{}/overlap_config_{}_with_{}.csv".format(dir_over_crossed,configuration, algo), "w")
-					lbestalgo = sorted(plainDict(overlapPerAlgo[configuration][algo]))
-					for b in lbestalgo:
-						fOverlapAlgoConfig.write("{}\n".format(b))
-					fOverlapAlgoConfig.close()
-
-
-		top += 1
-		if (top == limitTop):
+		iConfiguration += 1
+		if (iConfiguration == limitTop):
 			break
 
 	fbestConfig.flush()
@@ -559,31 +526,30 @@ def saveInfoOfFiles(filename, debugInfoByFile, directory = "./plots/data/"):
 	fbestFile.close()
 	return listProportions
 
-
-def plainDict(dic = {}):
-	r = []
-	for k in dic.keys():
-		nr = dic[k]
+'''Given a dictionary, tthat counts the ocurrences of variables, returns a list'''
+def plainDict(dicOcurrences = {}):
+	aList = []
+	for k in dicOcurrences.keys():
+		nr = dicOcurrences[k]
 		for i in range(1, nr + 1):
-			r.append(k)
+			aList.append(k)
 
-	return r
+	return aList
 
+'''Increment the key the nr of units given by Value param'''
 def incrementOne(dict, key, value = 1):
 	if key not in dict:
 		dict[key] = value
 	else:
 		dict[key] += value
 
-indexes = {}
-
 '''Returns a key for the configuration'''
 def getConfigurationkey(row):
 
-		matcherName = row.MATCHER#row['MATCHER']
+		matcherName = row.MATCHER
 		key = matcherName
 		for property in propertiesPerMatcher[matcherName]:
-			index = indexes[property]
+			index = indexesOfColumns[property]
 			idexProperty = row[index]
 
 			key+="_"+"{:.1f}".format((idexProperty)).rstrip('0').rstrip('.')
