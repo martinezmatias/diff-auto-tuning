@@ -22,7 +22,7 @@ class MyTestCase(unittest.TestCase):
 		saveExecutionsIndexOfBatches("./results/out5")
 
 	def _test_ParserResults(self):
-		parserCSV("./results/out10bis1_4gt/")
+		plotExecutionTime("./results/out10bis1_4gt/")
 
 	def test_ComputeFitness(self):
 		computeFitnesss("./results/out10bis4_4gt/")
@@ -58,7 +58,7 @@ class MyTestCase(unittest.TestCase):
 		plt.show()
 
 	def _test_ParserResultsParallell(self):
-		parserCSV("../../results/executions/out_parallel_4/")
+		plotExecutionTime("../../results/executions/out_parallel_4/")
 
 	def _testPlot(self):
 		timesCompleteGroupId40 = [4701, 9565, 24477, 27142, 663751, 4120782, 54625, 9006, 470009, 1320863, 586, 1401150, 22043, 166708, 179,

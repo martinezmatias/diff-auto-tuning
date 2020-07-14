@@ -1,11 +1,10 @@
 
 import csv
 from DiffAlgorithmMetadata import *
-
+'''Return the list of the default configurations together with the index in the list of configuration ordered by a given criterion e.g. number of best'''
 def getPositionDefalt(fileLocation = "./plots/data/best_configurations_summary.csv"):
 	configs = list(defaultConfigurations.values())
-	print(configs)
-	found = []
+	indexesConfigurations = []
 
 	with open(fileLocation, mode='r') as csv_file:
 		csv_reader = csv.DictReader(csv_file)
@@ -14,15 +13,20 @@ def getPositionDefalt(fileLocation = "./plots/data/best_configurations_summary.c
 			configuration = row["configuration"]
 			if configuration in configs:
 				print("{} at {}".format(configuration, line_count))
-				found.append(configuration)
-			#print(configuration)
+				indexesConfigurations.append({"configuration":configuration, "index":line_count})
+
 			line_count += 1
 
 	print("\n---Results: ")
-	print("found {}".format(found))
-	notfound = list(filter(lambda x: x not in found, configs))
+	print("found {}".format(indexesConfigurations))
+	notfound = list(filter(lambda x: x not in indexesConfigurations, configs))
 	print("not found {}".format(notfound))
 
+	## we add the not found configuration.
+	for other in notfound:
+		indexesConfigurations.append({"configuration": other, "index": None})
+
+	return indexesConfigurations
 ##
 
-	print("End")
+#print(getPositionDefalt())

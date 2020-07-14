@@ -18,7 +18,7 @@ keysuccessfulByGroup = "successfulByGroup";
 allkeys = [keytimesoutByGroup, keysuccessfulByGroup, keyTimePairAnalysisByGroup, keydiffAnalyzedByGroup, keyTimeSingleConfigurationByGroup]
 #timesByDiffPair = {}
 
-def parserCSV(rootResults):
+def plotExecutionTime(rootResults):
 	print("Starting analyzing folder {}".format(rootResults))
 	files = (os.listdir(rootResults) )
 	files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults,x)), files))
