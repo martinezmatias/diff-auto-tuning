@@ -16,7 +16,7 @@ keysuccessfulByGroup = "successfulByGroup";
 
 
 allkeys = [keytimesoutByGroup, keysuccessfulByGroup, keyTimePairAnalysisByGroup, keydiffAnalyzedByGroup, keyTimeSingleConfigurationByGroup]
-#timesByDiffPair = {}
+
 
 def plotExecutionTime(rootResults):
 	print("Starting analyzing folder {}".format(rootResults))

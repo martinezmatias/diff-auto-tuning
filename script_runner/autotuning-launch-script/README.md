@@ -28,12 +28,12 @@ Each row and column is a configuration. Cells are the overlap.
 It stores measures (avg, median) for each metric.
 * It creatres `single_parameter_[METRIC]PerConfiguration.csv` similar to the previous one, but each focus on a single parameter.
 Each row summarizes all the configuration gaving a particular pair of hyperparameter and value.
-
+* It creates `distance_per_diff.csv` a matrix where the column are the configurations, the rows are the diff file and the cells are the distances
 
 ### Relation Time and Size
 
 Scripts `ResultsAnalyzeRelationTimeSize.py` computes the relation between time and size.
-Under construction.
+It produces two outputs: a) a csv that contains the regression line computed from the points(size, time) b) the plots (disable)
 
 ### Execution Times
 

@@ -25,7 +25,7 @@ class MyTestCase(unittest.TestCase):
 		plotExecutionTime("./results/out10bis1_4gt/")
 
 	def test_ComputeFitness(self):
-		computeFitnesss("./results/out10bis4_4gt/")
+		computeFitness("./results/out10bis4_4gt/")
 
 
 	def _test_AnalyzeTimeSize(self):

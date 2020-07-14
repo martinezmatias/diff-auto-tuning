@@ -27,3 +27,18 @@ defaultConfigurations = {
 "ChangeDistiller": "ChangeDistiller_0.5_4_0.6_0.4",
 "XyMatcher": "XyMatcher_2_0.5"
 			}
+
+
+'''Returns a key for the configuration'''
+def getConfigurationKeyFromCSV(row, indexesOfColumns):
+
+		matcherName = row.MATCHER
+		key = matcherName
+		for property in propertiesPerMatcher[matcherName]:
+			index = indexesOfColumns[property]
+			idexProperty = row[index]
+
+			key+="_"+"{:.1f}".format((idexProperty)).rstrip('0').rstrip('.')
+
+		return key
+

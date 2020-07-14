@@ -1,18 +1,43 @@
 import os
-from distutils.command.config import config
 from statistics import mean, stdev
 import matplotlib.pyplot as plt
-from sklearn.metrics import cohen_kappa_score
+from MetaDataReader import *
 import numpy as np
 import pandas
 from DiffAlgorithmMetadata import *
 import pandas as pd
 import scipy.stats
+from Utils import *
 
 indexesOfColumns = {}
+indexOfConfig = {}
+orderOfConfiguration = []
 
 '''Compute the fitness of all the data given as parameter'''
-def computeFitnesss(rootResults):
+
+
+def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, directory ="./plots/data/"):
+
+	if not os.path.exists(directory):
+		os.makedirs(directory)
+
+	csv__file = "{}/distance_per_diff.csv".format(directory)
+	fbestFile = open(csv__file, "w")
+
+	fbestFile.write("diff,{}\n".format(",".join(orderOfConfiguration)))
+
+	for diff in matrixOfDistancesPerDiff:
+		#print("diff {} {}".format(diff, len(matrixOfDistancesPerDiff[diff])) )
+		distances = matrixOfDistancesPerDiff[diff]
+		filtered = ["" if v is None else str(v) for v in distances]
+		data = ",".join(filtered)
+		fbestFile.write("{},{}\n".format(diff, data))
+		fbestFile.flush()
+
+	fbestFile.close()
+
+
+def computeFitness(rootResults):
 
 		files = (os.listdir(rootResults))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
@@ -29,6 +54,10 @@ def computeFitnesss(rootResults):
 		listProportions = []
 
 		matrixOverlapConfigurations = {}
+
+		#
+		nrMaxConfig = 3000
+		matrixOfDistancesPerDiff = {}
 
 		## Navigate group ids
 		for groupId in sorted(files, key=lambda x: int(x)):
@@ -50,6 +79,9 @@ def computeFitnesss(rootResults):
 				if not diff.endswith(".csv") or diff.startswith("metaInfo"):
 					continue
 				try:
+
+					matrixOfDistancesPerDiff[diff] = [None] * nrMaxConfig
+
 					print("groupid {} file {} /{}  total analyzed: {}".format(groupId,diffFromGroup, len(listdir)/2,totalDiffAnalyzed ))
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
@@ -59,7 +91,8 @@ def computeFitnesss(rootResults):
 											 timesPerConfiguration = timesPerConfiguration,
 											 sizePerConfiguration = sizePerConfiguration,
 											 heigthPerConfiguration= heightPerConfiguration,
-											 matrixOverlapConfiguration = matrixOverlapConfigurations
+											 matrixOverlapConfiguration = matrixOverlapConfigurations,
+											matrixOfDistancesPerDiff = matrixOfDistancesPerDiff
 											 )
 
 
@@ -99,6 +132,9 @@ def computeFitnesss(rootResults):
 		analyzeParameter(timesPerConfiguration, name="timesPerConfiguration")
 		analyzeParameter(sizePerConfiguration, name="sizePerConfiguration")
 		analyzeParameter(heightPerConfiguration, name="heightPerConfiguration")
+
+
+		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff)
 
 '''returns a list with all the parameters with the algorithm name as prefix'''
 def getAllHyperparametersHeader():
@@ -283,12 +319,13 @@ def saveMatrixOverlapConfig(matrixOverlapConfigurations, directory = "./plots/da
 	fbestFile.close()
 
 ''' Navigates the CSV of one diff, computes the best configurations and store some metrics '''
-def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "all", overlap = [],
+def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all", overlap = [],
 							 overlapPerAlgo = {}, debugBestbyConfiguration = {}, debug = True,
-							timesPerConfiguration = {},
-							sizePerConfiguration = {},
-							heigthPerConfiguration = {},
-							 matrixOverlapConfiguration = {}
+							 timesPerConfiguration = {},
+							 sizePerConfiguration = {},
+							 heigthPerConfiguration = {},
+							 matrixOverlapConfiguration = {},
+							 matrixOfDistancesPerDiff = {}
 							 ):
 
 	# Stores metrics of the file under comparison
@@ -307,15 +344,10 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 	totalRow = 0
 
 	# Retrieve metrics of the AST under comparison
-	size, height = getTreeMetricsFromFile(location, filename)
+	size, height = getTreeMetricsFromFile(location, diffId)
 
 	## for the first call to this method, let's store the columns
-	if len(indexesOfColumns) == 0:
-		columns = datasetofPair.columns
-		i = 1
-		for c in columns:
-			indexesOfColumns[c] = i
-			i+=1
+	columnsToMap(datasetofPair, indexesOfColumns=indexesOfColumns)
 
 	# Navigates each configuration (one per row)
 	for rowConfiguration in datasetofPair.itertuples():
@@ -333,8 +365,9 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 		distance = int(currentNrActions) - minES
 
 		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationkey(rowConfiguration)
+		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfColumns=indexesOfColumns)
 
+		index = None
 		# Initialize the structures
 		if rowConfigurationKey not in results:
 			results[rowConfigurationKey] = {}
@@ -357,6 +390,17 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 			for algorithmName in propertiesPerMatcher.keys():
 				overlapPerAlgo[rowConfigurationKey][algorithmName] = {}
 
+			index = len(indexOfConfig.keys())
+			indexOfConfig[rowConfigurationKey] = index
+			orderOfConfiguration.append(rowConfigurationKey)
+
+		else:
+			# the configuration was already seen, so it has an idex
+			index = indexOfConfig[rowConfigurationKey]
+
+		## save the distance of the config by diff
+		matrixOfDistancesPerDiff[diffId][index] = distance
+
 		## Save the distance of the configuration
 		incrementOne(results[rowConfigurationKey], distance)
 
@@ -371,7 +415,7 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 				incrementOne(sizePerConfiguration[rowConfigurationKey]["best"], size)
 				incrementOne(heigthPerConfiguration[rowConfigurationKey]["best"], height)
 			if debug:
-				debugBestbyConfiguration[rowConfigurationKey].append(filename)
+				debugBestbyConfiguration[rowConfigurationKey].append(diffId)
 
 		else:
 			# The configuration is not the best, we store the data  (time, size, height)
@@ -384,11 +428,11 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 	proportionBest = len(allBestConfigurationOfFile) / totalRow
 
 	## We store the information for the diff
-	infoByFile[filename] = {}
-	infoByFile[filename]["nrBest"] = len(allBestConfigurationOfFile)
-	infoByFile[filename]["proportionBest"] = proportionBest
-	infoByFile[filename]["entropyNrActions"] = entropy
-	infoByFile[filename]["allBest"] = allBestConfigurationOfFile
+	infoByFile[diffId] = {}
+	infoByFile[diffId]["nrBest"] = len(allBestConfigurationOfFile)
+	infoByFile[diffId]["proportionBest"] = proportionBest
+	infoByFile[diffId]["entropyNrActions"] = entropy
+	infoByFile[diffId]["allBest"] = allBestConfigurationOfFile
 
 
 	## Computes which are the algoritms for the best
@@ -412,16 +456,7 @@ def computeFitnessOfFilePair(location, results, filename,datasetofPair, key = "a
 
 	return infoByFile
 
-'''get the informattion of the Tree given a diff id'''
-def getTreeMetricsFromFile(location, diffId):
-	import csv
-	with open('{}/metaInfo_{}'.format(location, diffId), mode='r') as csv_file:
-		csv_reader = csv.DictReader(csv_file)
-		for row in csv_reader:
-			size = row["L_SIZE"]
-			height = row["L_HEIGHT"]
-			return int(size), int(height)
-	return None, None
+
 
 def saveBestConfigurations(results, limitTop = 300000, directory ="./plots/data/", timesPerConfig = {}, sizePerConfig = {}, heightPerConfig = {}):
 	if not os.path.exists(directory):
@@ -526,32 +561,4 @@ def saveInfoOfFiles(filename, debugInfoByFile, directory = "./plots/data/"):
 	fbestFile.close()
 	return listProportions
 
-'''Given a dictionary, tthat counts the ocurrences of variables, returns a list'''
-def plainDict(dicOcurrences = {}):
-	aList = []
-	for k in dicOcurrences.keys():
-		nr = dicOcurrences[k]
-		for i in range(1, nr + 1):
-			aList.append(k)
 
-	return aList
-
-'''Increment the key the nr of units given by Value param'''
-def incrementOne(dict, key, value = 1):
-	if key not in dict:
-		dict[key] = value
-	else:
-		dict[key] += value
-
-'''Returns a key for the configuration'''
-def getConfigurationkey(row):
-
-		matcherName = row.MATCHER
-		key = matcherName
-		for property in propertiesPerMatcher[matcherName]:
-			index = indexesOfColumns[property]
-			idexProperty = row[index]
-
-			key+="_"+"{:.1f}".format((idexProperty)).rstrip('0').rstrip('.')
-
-		return key
