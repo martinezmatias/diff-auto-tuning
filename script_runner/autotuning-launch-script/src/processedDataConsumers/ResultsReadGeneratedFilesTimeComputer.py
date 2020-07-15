@@ -3,7 +3,7 @@ import csv
 
 import scipy.stats
 
-from DiffAlgorithmMetadata import *
+from src.commons.DiffAlgorithmMetadata import *
 import numpy as np
 import matplotlib.pyplot as plt
 

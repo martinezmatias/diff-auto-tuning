@@ -1,13 +1,13 @@
 import os
 from statistics import mean, stdev
 import matplotlib.pyplot as plt
-from MetaDataReader import *
+from src.commons.MetaDataReader import *
 import numpy as np
 import pandas
-from DiffAlgorithmMetadata import *
+from src.commons.DiffAlgorithmMetadata import *
 import pandas as pd
 import scipy.stats
-from Utils import *
+from src.commons.Utils import *
 
 indexesOfColumns = {}
 indexOfConfig = {}
@@ -16,12 +16,12 @@ orderOfConfiguration = []
 '''Compute the fitness of all the data given as parameter'''
 
 
-def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, directory ="./plots/data/"):
+def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="../../plots/data/"):
 
-	if not os.path.exists(directory):
-		os.makedirs(directory)
+	if not os.path.exists(outDirectory):
+		os.makedirs(outDirectory)
 
-	csv__file = "{}/distance_per_diff.csv".format(directory)
+	csv__file = "{}/distance_per_diff.csv".format(outDirectory)
 	fbestFile = open(csv__file, "w")
 
 	fbestFile.write("diff,{}\n".format(",".join(orderOfConfiguration)))
@@ -37,7 +37,7 @@ def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, directory ="./p
 	fbestFile.close()
 
 
-def computeFitness(rootResults):
+def computeBestConfigurations(rootResults, out = "../../plots/data/"):
 
 		files = (os.listdir(rootResults))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
@@ -117,24 +117,23 @@ def computeFitness(rootResults):
 		plotPropertiesOfBestPerFilePair(listProportions)
 
 		saveBestConfigurations(results, timesPerConfig= timesPerConfiguration,
-						   sizePerConfig= sizePerConfiguration, heightPerConfig = heightPerConfiguration)
+						   sizePerConfig= sizePerConfiguration, heightPerConfig = heightPerConfiguration, outDirectory=out)
 
 
 		##Move to the main result file
-		saveNumberBestNotBest(timesPerConfiguration, name="timesPerConfiguration")
-		saveNumberBestNotBest(sizePerConfiguration, name="sizePerConfiguration")
-		saveNumberBestNotBest(heightPerConfiguration, name="heightPerConfiguration")
+		saveNumberBestNotBest(timesPerConfiguration, name="timesPerConfiguration", outDirectory=out)
+		saveNumberBestNotBest(sizePerConfiguration, name="sizePerConfiguration", outDirectory=out)
+		saveNumberBestNotBest(heightPerConfiguration, name="heightPerConfiguration", outDirectory=out)
 
 		# Save matrix overlap
-		saveMatrixOverlapConfig(matrixOverlapConfigurations)
+		saveMatrixOverlapConfig(matrixOverlapConfigurations,  outDirectory=out)
 
 		## Analyze parameter
-		analyzeParameter(timesPerConfiguration, name="timesPerConfiguration")
-		analyzeParameter(sizePerConfiguration, name="sizePerConfiguration")
-		analyzeParameter(heightPerConfiguration, name="heightPerConfiguration")
+		analyzeParameter(timesPerConfiguration, name="timesPerConfiguration",  outDirectory=out)
+		analyzeParameter(sizePerConfiguration, name="sizePerConfiguration", outDirectory=out)
+		analyzeParameter(heightPerConfiguration, name="heightPerConfiguration", outDirectory=out)
 
-
-		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff)
+		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory=out)
 
 '''returns a list with all the parameters with the algorithm name as prefix'''
 def getAllHyperparametersHeader():
@@ -167,11 +166,11 @@ def getValueOfHypeParameter(config, header):
 
 
 '''save the metrics of a given measure into a file'''
-def saveNumberBestNotBest(measurePerConfiguration, directory ="./plots/data/", name ="times"):
-	if not os.path.exists(directory):
-		os.makedirs(directory)
+def saveNumberBestNotBest(measurePerConfiguration, outDirectory ="./plots/data/", name ="times"):
+	if not os.path.exists(outDirectory):
+		os.makedirs(outDirectory)
 
-	fbestFile = open("{}/single_configs_{}.csv".format(directory, name), "w")
+	fbestFile = open("{}/single_configs_{}.csv".format(outDirectory, name), "w")
 	fbestFile.write("config,best_time_avg,best_time_median,notbest_time_avg,notbest_time_median,Mann-Whitney_U_stat,Mann-Whitney_U_p\n")
 
 	for config in measurePerConfiguration.keys():
@@ -181,13 +180,13 @@ def saveNumberBestNotBest(measurePerConfiguration, directory ="./plots/data/", n
 	fbestFile.close()
 
 '''Store for each parameter and value the total number of diff with those values  '''
-def analyzeParameter(metricPerConfiguration, directory ="./plots/data/", name ="times"):
+def analyzeParameter(metricPerConfiguration, outDirectory ="./plots/data/", name ="times"):
 
-	directorypar = "{}/parameters/".format(directory)
+	directorypar = "{}/parameters/".format(outDirectory)
 	if not os.path.exists(directorypar):
 		os.makedirs(directorypar)
 
-	fbestFile = open("{}/single_parameter_{}.csv".format(directory, name), "w")
+	fbestFile = open("{}/single_parameter_{}.csv".format(outDirectory, name), "w")
 	fbestFile.write("config,"
 					+ "algo,property,value,"
 					+"percentage_best,"
@@ -294,14 +293,14 @@ def getRowNumberBestNotBest(timesPerConfiguration, config):
 	return content, len(best_), len(notbest_)
 
 
-def saveMatrixOverlapConfig(matrixOverlapConfigurations, directory = "./plots/data"):
+def saveMatrixOverlapConfig(matrixOverlapConfigurations, outDirectory ="./plots/data"):
 
-	if not os.path.exists(directory):
-		os.makedirs(directory)
+	if not os.path.exists(outDirectory):
+		os.makedirs(outDirectory)
 
 	sortedConfig = sorted(matrixOverlapConfigurations.keys())
 
-	fbestFile = open("{}/matrix_overlap_configs.csv".format(directory), "w")
+	fbestFile = open("{}/matrix_overlap_configs.csv".format(outDirectory), "w")
 	fbestFile.write(",".join(sortedConfig))
 	fbestFile.write("\n")
 	for config in sortedConfig:
@@ -458,22 +457,22 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all
 
 
 
-def saveBestConfigurations(results, limitTop = 300000, directory ="./plots/data/", timesPerConfig = {}, sizePerConfig = {}, heightPerConfig = {}):
-	if not os.path.exists(directory):
-		os.makedirs(directory)
+def saveBestConfigurations(results, limitTop = 300000, outDirectory ="./plots/data/", timesPerConfig = {}, sizePerConfig = {}, heightPerConfig = {}):
+	if not os.path.exists(outDirectory):
+		os.makedirs(outDirectory)
 
-	dir_over_gen = "{}/overlap_general/".format(directory)
+	dir_over_gen = "{}/overlap_general/".format(outDirectory)
 	if not os.path.exists(dir_over_gen):
 		os.makedirs(dir_over_gen)
 
-	dir_over_crossed = "{}/overlap_crossed/".format(directory)
+	dir_over_crossed = "{}/overlap_crossed/".format(outDirectory)
 	if not os.path.exists(dir_over_crossed):
 		os.makedirs(dir_over_crossed)
 	# as results is a map where keys are distance, we sort according with the nr of occurrence of distance zero
 	keySorted = sorted(results.keys(), key=lambda x: (results[x][0] if 0 in results[x] else 0), reverse=True)
 	print("Finishing processing")
 	iConfiguration = 0
-	fbestConfig = open("{}/best_configurations_summary.csv".format(directory), "w")
+	fbestConfig = open("{}/best_configurations_summary.csv".format(outDirectory), "w")
 
 	header = getAllHyperparametersHeader()
 

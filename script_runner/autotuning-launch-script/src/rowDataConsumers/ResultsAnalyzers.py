@@ -1,4 +1,4 @@
-from StoreIndex import *
+from src.rowDataConsumers.StoreIndex import *
 import os
 import json
 import time

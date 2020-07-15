@@ -1,6 +1,7 @@
 
 import csv
-from DiffAlgorithmMetadata import *
+from src.commons.DiffAlgorithmMetadata import *
+
 '''Return the list of the default configurations together with the index in the list of configuration ordered by a given criterion e.g. number of best'''
 def getPositionDefalt(fileLocation = "./plots/data/best_configurations_summary.csv"):
 	configs = list(defaultConfigurations.values())

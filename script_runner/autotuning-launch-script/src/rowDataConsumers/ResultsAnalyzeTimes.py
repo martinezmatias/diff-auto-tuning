@@ -4,7 +4,7 @@ from statistics import mean, stdev
 import matplotlib.pyplot as plt
 from sklearn.metrics import cohen_kappa_score
 import numpy as np
-from DiffAlgorithmMetadata import *
+from src.commons.DiffAlgorithmMetadata import *
 import pandas
 
 keytimesoutByGroup = "timesoutByGroup";

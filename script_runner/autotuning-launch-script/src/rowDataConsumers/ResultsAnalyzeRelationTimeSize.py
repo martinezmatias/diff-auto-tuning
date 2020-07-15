@@ -1,10 +1,9 @@
 
 import os
-from MetaDataReader import  *
+from src.commons.MetaDataReader import  *
 import pandas
-from Utils import  *
-import scipy.stats
-from DiffAlgorithmMetadata import *
+from src.commons.Utils import  *
+from src.commons.DiffAlgorithmMetadata import *
 import numpy as np
 import matplotlib.pyplot as plt
 

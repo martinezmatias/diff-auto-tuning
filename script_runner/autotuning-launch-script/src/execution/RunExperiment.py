@@ -1,6 +1,6 @@
-from TaskLauncher import *
-from Config import *
-from StoreIndex import *
+from src.execution.TaskLauncher import *
+from src.execution.Config import *
+from src.rowDataConsumers.StoreIndex import *
 import sys
 
 if len(sys.argv) < 4:
