@@ -15,7 +15,7 @@ public class MainTest {
 				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
 				"-out=./out/", //
 				"-stop=1", //
-				"-subset=1", "-parallel=true" };
+				"-subset=1", "-paralleltype=MATCHER_LEVEL" };
 		Main.main(command);
 	}
 
@@ -26,7 +26,18 @@ public class MainTest {
 				"-out=./out/", //
 				"-stop=1", //
 				"-astmodel=JDT", //
-				"-subset=1", "-parallel=true" };
+				"-subset=1", "-paralleltype=MATCHER_LEVEL" };
+		Main.main(command);
+	}
+
+	@Test
+	public void testMain2_propertyLevel() {
+		String[] command = new String[] {
+				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+				"-out=./out/", //
+				"-stop=1", //
+				"-astmodel=JDT", //
+				"-subset=1", "-paralleltype=PROPERTY_LEVEL" };
 		Main.main(command);
 	}
 
@@ -49,7 +60,7 @@ public class MainTest {
 				"-subset=1", "-timeout=10", //
 				"-matchers=XyMatcher", //
 				"-matchers=blablabla", //
-				"-matchers=simpleGumtree", "-overwriteresults=true", "-parallel=true" };
+				"-matchers=simpleGumtree", "-overwriteresults=true", "-paralleltype=MATCHER_LEVEL" };
 		Main.main(command);
 	}
 

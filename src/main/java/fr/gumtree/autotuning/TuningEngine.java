@@ -110,6 +110,9 @@ public class TuningEngine {
 			new CompositeMatchers.XyMatcher(),
 
 	};
+	/**
+	 * Indicates the number of threads used in the property parallelization.
+	 */
 	private int nrThreads = 10;
 
 	private boolean overwriteresults = false;
@@ -356,7 +359,7 @@ public class TuningEngine {
 			if (parallel.equals(PARALLEL_EXECUTION.MATCHER_LEVEL))
 				result = analyzeDiffByMatcherThread(tl, tr, parallel, matchers);
 			else
-				result = analyzeDiff(tl, tr, parallel, matchers);
+				result = analyzeDiffByProperty(tl, tr, parallel, matchers);
 
 			long endMatching = (new Date()).getTime();
 
@@ -378,7 +381,8 @@ public class TuningEngine {
 		}
 	}
 
-	public Map<String, Object> analyzeDiff(ITree tl, ITree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
+	public Map<String, Object> analyzeDiffByProperty(ITree tl, ITree tr, PARALLEL_EXECUTION parallel,
+			Matcher[] matchers) {
 		List<Map<String, Object>> matcherResults = new ArrayList<>();
 
 		Map<String, Object> fileResult = new HashMap<>();

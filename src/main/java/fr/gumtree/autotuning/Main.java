@@ -28,8 +28,12 @@ public class Main implements Callable<Integer> {
 	int stop;
 	@Option(names = "-astmodel", required = false, defaultValue = "GTSPOON")
 	String astmodel;
-	@Option(names = "-parallel", defaultValue = "true")
-	boolean parallel;
+	@Option(names = "-paralleltype", defaultValue = "NONE")
+	String paralleltype;
+
+	@Option(names = "-nrthreads", defaultValue = "10")
+	int nrthreads;
+
 	// in seconds
 	@Option(names = "-timeout", defaultValue = "3000", descriptionKey = "timeout for a matcher (all config) in seconds")
 	long timeout;
@@ -93,12 +97,12 @@ public class Main implements Callable<Integer> {
 		this.astmodel = astmodel;
 	}
 
-	public boolean isParallel() {
-		return parallel;
+	public String getParallel() {
+		return paralleltype;
 	}
 
-	public void setParallel(boolean parallel) {
-		this.parallel = parallel;
+	public void setParallel(String parallel) {
+		this.paralleltype = parallel;
 	}
 
 	@Override
@@ -110,9 +114,11 @@ public class Main implements Callable<Integer> {
 
 		TuningEngine engine = new TuningEngine();
 		engine.setTimeOutSeconds(timeout);
+		engine.setNrThreads(nrthreads);
 		engine.setOverwriteResults(overwriteresults);
-		PARALLEL_EXECUTION execution = (parallel) ? PARALLEL_EXECUTION.MATCHER_LEVEL : PARALLEL_EXECUTION.NONE;
+		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
 		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, mode, execution, this.matchers);
+
 		System.out.println("-END-");
 		return null;
 	}
@@ -120,9 +126,9 @@ public class Main implements Callable<Integer> {
 	@Override
 	public String toString() {
 		return "Main [out=" + out + ", pathMegadiff=" + pathMegadiff + ", subsets=" + Arrays.toString(subsets)
-				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + parallel
+				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + paralleltype
 				+ ", timeout=" + timeout + ", matchers=" + Arrays.toString(this.matchers) + ", overwriteresults="
-				+ this.overwriteresults + "]";
+				+ this.overwriteresults + ", nrThreads=" + this.nrthreads + "]";
 	}
 
 	public long getTimeout() {
