@@ -24,7 +24,7 @@ public class ParametersResolvers {
 				new DoubleParameterDomain(ConfigurationOptions.GT_BUM_SMT_SBUP, Double.class, 0.4, 0.1, 1.0, 0.2));
 
 		parametersDomain.put(ConfigurationOptions.GT_XYM_SIM,
-				new DoubleParameterDomain(ConfigurationOptions.GT_XYM_SIM, Double.class, 0.5, 0.2, 1.0, 0.2));
+				new DoubleParameterDomain(ConfigurationOptions.GT_XYM_SIM, Double.class, 0.5, 0.1, 1.0, 0.1));
 
 		// CD
 		// CD TD
@@ -36,7 +36,7 @@ public class ParametersResolvers {
 				new DoubleParameterDomain(ConfigurationOptions.GT_CD_SSIM1, Double.class, 0.6, 0.2, 1.0, 0.2));
 
 		parametersDomain.put(ConfigurationOptions.GT_CD_SSIM2,
-				new DoubleParameterDomain(ConfigurationOptions.GT_CD_SSIM2, Double.class, 0.4, 0.1, 1.0, 0.2));
+				new DoubleParameterDomain(ConfigurationOptions.GT_CD_SSIM2, Double.class, 0.4, 0.2, 1.0, 0.2));
 		//
 		parametersDomain.put(ConfigurationOptions.GT_CD_ML,
 				new IntParameterDomain(ConfigurationOptions.GT_CD_ML, Integer.class, 4, 2, 6, 2));
