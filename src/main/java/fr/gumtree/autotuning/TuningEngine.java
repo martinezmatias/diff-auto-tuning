@@ -4,7 +4,6 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -30,7 +29,6 @@ import com.github.gumtreediff.actions.model.Move;
 import com.github.gumtreediff.actions.model.TreeDelete;
 import com.github.gumtreediff.actions.model.TreeInsert;
 import com.github.gumtreediff.actions.model.Update;
-import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
@@ -41,8 +39,7 @@ import com.github.gumtreediff.tree.TreeContext;
 import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
-import gumtree.spoon.AstComparator;
-import gumtree.spoon.builder.SpoonGumTreeBuilder;
+import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import gumtree.spoon.diff.Diff;
 import gumtree.spoon.diff.DiffImpl;
 import gumtree.spoon.diff.operations.Operation;
@@ -81,16 +78,15 @@ public class TuningEngine {
 	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
 	public static final String TIME_TREES_PARSING = "TIME_TREES_PARSING";
 
-	private AstComparator diff = new AstComparator();
-	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
+	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
 
 	long timeOutSeconds = 60 * 60; // 60 min
 
-	enum PARALLEL_EXECUTION {
+	public enum PARALLEL_EXECUTION {
 		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
 	}
 
-	enum ASTMODE {
+	public enum ASTMODE {
 		GTSPOON, JDT
 	};
 
@@ -134,17 +130,17 @@ public class TuningEngine {
 		}
 	}
 
-	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
-			PARALLEL_EXECUTION parallel) throws IOException {
-		this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.allMatchers);
+	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel)
+			throws IOException {
+		this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
 	}
 
-	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
-			PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
+	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel,
+			String[] matchersString) throws Exception {
 
 		if (matchersString == null || matchersString.length == 0) {
 			System.out.println("Using default matchers " + Arrays.toString(this.allMatchers));
-			this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, this.allMatchers);
+			this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
 		} else {
 			System.out.println("Using existing matchers " + Arrays.toString(matchersString));
 			List<Matcher> selectedMatchers = new ArrayList<Matcher>();
@@ -163,7 +159,7 @@ public class TuningEngine {
 			Matcher[] newMatchers = new Matcher[selectedMatchers.size()];
 			selectedMatchers.toArray(newMatchers);
 
-			this.navigateMegaDiff(out, path, subsets, begin, stop, astmodel, parallel, newMatchers);
+			this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, newMatchers);
 		}
 	}
 
@@ -175,8 +171,8 @@ public class TuningEngine {
 	 * @param stop    max numbers of diff to analyze per subset
 	 * @throws IOException
 	 */
-	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, ASTMODE astmodel,
-			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
+	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel,
+			Matcher[] matchers) throws IOException {
 		this.initCacheCombinationProperties();
 
 		System.out.println("Execution mode " + parallel);
@@ -232,7 +228,7 @@ public class TuningEngine {
 					String diffId = commit.getName() + "_" + fileModif.getName();
 
 					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
-							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
+							+ "_id_" + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
 
 					if (!overwriteresults && outResults.exists()) {
 						System.out.println("Already analyzed: " + nrCommit + ": " + outResults.getName());
@@ -244,8 +240,8 @@ public class TuningEngine {
 					long initdiff = (new Date()).getTime();
 
 					System.out.println("\n---diff " + nrCommit + "/" + commits.size() + " id " + diffId);
-					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel,
-							parallel, treeProperties, matchers);
+					Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, parallel,
+							treeProperties, matchers);
 
 					// This time includes the creation of tree
 					long timediff = (new Date()).getTime() - initdiff;
@@ -261,15 +257,12 @@ public class TuningEngine {
 					executionResultToCSV(outResults, fileResult);
 
 					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
-							+ "_id_" + diffId + "_" + astmodel.name() + ".csv");
+							+ "_id_" + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
 					metadataToCSV(treeFile, treeProperties, fileResult);
 				}
 			}
 		}
 		System.out.println("Finished all diff from index " + begin + " to " + stop);
-
-		// treeInfoToCSV(treeFile, treeProperties);
-		// System.out.println("Saving tree file data " + treeFile.getAbsolutePath());
 
 		long endTime = (new Date()).getTime();
 
@@ -278,7 +271,7 @@ public class TuningEngine {
 	}
 
 	public Map<String, Object> navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
-			ASTMODE astmodel, PARALLEL_EXECUTION parallel) throws IOException {
+			PARALLEL_EXECUTION parallel) throws IOException {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -303,8 +296,8 @@ public class TuningEngine {
 
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
-		Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, astmodel, parallel,
-				treeProperties, allMatchers);
+		Map<String, Object> fileResult = analyzeDiff(diffId, previousVersion, postVersion, parallel, treeProperties,
+				allMatchers);
 
 		fileResult.put(FILE, fileModif.getName());
 		fileResult.put(COMMIT, commit.getName());
@@ -332,25 +325,13 @@ public class TuningEngine {
 	 * @param fileResult
 	 * @return
 	 */
-	public Map<String, Object> analyzeDiff(String diffId, File previousVersion, File postVersion, ASTMODE model,
+	public Map<String, Object> analyzeDiff(String diffId, File previousVersion, File postVersion,
 			PARALLEL_EXECUTION parallel, Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
 		try {
-			ITree tl = null;
-			ITree tr = null;
+			ITree tl = this.treeBuilder.build(previousVersion);
+			ITree tr = this.treeBuilder.build(postVersion);
 			long init = (new Date()).getTime();
-			if (ASTMODE.GTSPOON.equals(model)) {
-				tl = scanner.getTree(diff.getCtType(previousVersion));
-				tr = scanner.getTree(diff.getCtType(postVersion));
-			} else if (ASTMODE.JDT.equals(model)) {
-				String lc = new String(Files.readAllBytes(previousVersion.toPath()));
-				tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-				String lr = new String(Files.readAllBytes(postVersion.toPath()));
-				tr = new JdtTreeGenerator().generateFrom().string(lr).getRoot();
-
-			} else {
-
-			}
 			long endTree = (new Date()).getTime();
 			treeProperties.put(diffId, new Pair<Map, Map>(extractTreeFeaturesMap(tl), extractTreeFeaturesMap(tr)));
 
@@ -1006,5 +987,13 @@ public class TuningEngine {
 
 	public void setOverwriteResults(boolean overrideResults) {
 		this.overwriteresults = overrideResults;
+	}
+
+	public ITreeBuilder getTreeBuilder() {
+		return treeBuilder;
+	}
+
+	public void setTreeBuilder(ITreeBuilder treeBuilder) {
+		this.treeBuilder = treeBuilder;
 	}
 }

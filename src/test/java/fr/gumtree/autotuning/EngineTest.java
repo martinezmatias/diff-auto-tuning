@@ -21,7 +21,6 @@ import com.github.gumtreediff.matchers.GumTreeProperties;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
 
-import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
 
 public class EngineTest {
@@ -39,7 +38,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
@@ -57,7 +56,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
@@ -77,7 +76,7 @@ public class EngineTest {
 		int megadiff_id = 1;
 
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL);
+				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -100,7 +99,7 @@ public class EngineTest {
 		int megadiff_id = 1;
 
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE);
+				PARALLEL_EXECUTION.NONE);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -130,7 +129,7 @@ public class EngineTest {
 		long tinit = (new Date()).getTime();
 
 		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.PROPERTY_LEVEL);
+				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		long tpropertyparalel = (new Date()).getTime() - tinit;
 
 		assertNotNull(result);
@@ -140,7 +139,7 @@ public class EngineTest {
 
 		tinit = (new Date()).getTime();
 		Map<String, Object> result2 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE);
+				PARALLEL_EXECUTION.NONE);
 		long tpnoneparalel = (new Date()).getTime() - tinit;
 
 		Pair<Long, Integer> r2 = getResults(result2);
@@ -161,7 +160,7 @@ public class EngineTest {
 		System.out.println("Matcher callable");
 		tinit = (new Date()).getTime();
 		Map<String, Object> result3 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				ASTMODE.GTSPOON, PARALLEL_EXECUTION.NONE);
+				PARALLEL_EXECUTION.NONE);
 		long tmatcherparallel = (new Date()).getTime() - tinit;
 
 		Pair<Long, Integer> r3 = getResults(result3);
@@ -228,7 +227,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
 
 	}
@@ -246,7 +245,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.MATCHER_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
 
 	}
@@ -264,7 +263,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup, ASTMODE.GTSPOON,
+		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.MATCHER_LEVEL);
 
 	}
@@ -279,8 +278,8 @@ public class EngineTest {
 
 		TuningEngine reader = new TuningEngine();
 
-		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, ASTMODE.GTSPOON,
-				PARALLEL_EXECUTION.PROPERTY_LEVEL, new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
+		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, PARALLEL_EXECUTION.PROPERTY_LEVEL,
+				new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
 	}
 
 	@Test

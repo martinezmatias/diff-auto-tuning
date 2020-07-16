@@ -47,7 +47,8 @@ public class MainTest {
 				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
 				"-out=./out/", //
 				"-stop=1", //
-				"-subset=1", "-timeout=10" };
+				"-astmodel=JDT", //
+				"-subset=1", "-timeout=10", "-overwriteresults=true" };
 		Main.main(command);
 	}
 
@@ -76,4 +77,21 @@ public class MainTest {
 				"-matchers", "simpleGumtree", "-overwriteresults=false" };
 		Main.main(command);
 	}
+
+	@Test
+	public void testMain6_matcher() {
+		String[] command = new String[] {
+				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+				"-out=./outxysimpletest/", //
+				"-stop=1", //
+				// "-begin=1",
+				"-subset=2",
+				// "-timeout=10", //
+				"-matchers", "ChangeDistiller", //
+				"-overwriteresults=true",
+				//
+				"-paralleltype=PROPERTY_LEVEL" };
+		Main.main(command);
+	}
+
 }

@@ -6,6 +6,8 @@ import java.util.concurrent.Callable;
 
 import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
+import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
+import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -110,14 +112,25 @@ public class Main implements Callable<Integer> {
 
 		System.out.println("Command:  " + toString());
 
-		ASTMODE mode = ASTMODE.valueOf(this.astmodel);
-
 		TuningEngine engine = new TuningEngine();
 		engine.setTimeOutSeconds(timeout);
 		engine.setNrThreads(nrthreads);
 		engine.setOverwriteResults(overwriteresults);
+
 		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
-		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, mode, execution, this.matchers);
+
+		ASTMODE model = ASTMODE.valueOf(this.astmodel);
+		ITreeBuilder treebuilder = null;
+		if (ASTMODE.GTSPOON.equals(model)) {
+			treebuilder = new SpoonTreeBuilder();
+		} else if (ASTMODE.JDT.equals(model)) {
+			treebuilder = new JDTTreeBuilder();
+		} else {
+			System.err.println("Mode not configured " + model);
+		}
+		engine.setTreeBuilder(treebuilder);
+
+		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, execution, this.matchers);
 
 		System.out.println("-END-");
 		return null;
