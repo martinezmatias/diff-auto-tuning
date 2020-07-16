@@ -13,11 +13,15 @@ def analyzeDataset(df, X, allconfig):
 
 	presentPerConfig = [0 for i in allconfig]
 
+	countRow = 0
 	for rowDiff in df.itertuples():
-		#print(rowDiff)
+
+		#if countRow % 100 == 0:
+		#	print("Row {}".format(countRow))
+		countRow+=1
 
 		if rowDiff[1]  in X:
-			print("{} in X".format(rowDiff[1]))
+			#print("{} in X".format(rowDiff[1]))
 			# the first two positions are the ID and diff name
 			shift = 2
 
@@ -42,7 +46,7 @@ def compareWithBest(rankedBestConfigs):
 
 	for i in range(0, len(rankedBestConfigs)):
 		currentConfig = rankedBestConfigs[i]
-		nameConfig = currentConfig[0]
+		nameConfig = currentConfig['c']
 		if nameConfig in configs:
 			rankingDefaultConfig.append((i, currentConfig))
 
@@ -53,9 +57,9 @@ def compareWithBest(rankedBestConfigs):
 		print(defaultC)
 
 
-def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_diff.csv", nrFold = 5):
+def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_diff.csv", kFold = 5):
 
-	k_fold = KFold(nrFold)
+	k_fold = KFold(kFold)
 
 	df = pandas.read_csv(pathResults, sep=",")
 
@@ -70,12 +74,13 @@ def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_d
 	allDiff = list(diffs.values)
 
 	resultsByKTraining = []
+	resultsByKTesting = []
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
 		X_train = []
 		X_test = []
-		print("Running fold {}".format(k))
+		print("\n---------Running fold {}".format(k))
 
 		# Create the training dataset
 		for i in train:
@@ -85,39 +90,56 @@ def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_d
 		for i in test:
 			X_test.append(allDiff[i])
 
+		print("\nTraining {} ".format(k))
 		# we  compute the list of best from the training
-		rankedBestTraining = findBestRanking(X_train, allConfig, df)
+		configsTraining,rankedBestTraining = findBestRanking(X_train, allConfig, df)
 
-		resultsByKTraining.append(rankedBestTraining)
+		print("Configs {}".format(configsTraining))
+		print("Ranked {}".format(rankedBestTraining))
 
-		rankedBestTesting = findBestRanking(X_test, allConfig, df)
-		resultsByKTraining.append(rankedBestTesting)
+		resultsByKTraining.append(configsTraining)
 
-		xbestTraining = [ x[2] for x in rankedBestTraining ]
-		ybestTest = [x[2] for x in rankedBestTesting]
+		print("\nTesting {} ".format(k))
 
+		configsTesting,rankedBestTesting = findBestRanking(X_test, allConfig, df)
+		resultsByKTesting.append(configsTesting)
 
-		print("Pearson's r {} ".format(scipy.stats.pearsonr(xbestTraining, ybestTest)))
-
-		print("Spearman's rho {} ".format(scipy.stats.spearmanr(xbestTraining, ybestTest)))
-
-		print("Kendall's tau {} ".format(scipy.stats.kendalltau(xbestTraining, ybestTest)))
+		computeCorrelation(configsTesting, configsTraining)
 
 		###maybe only compare top X
+		print("\nCheck with defaults: ")
 		compareWithBest(rankedBestTraining)
+
+		print("\nCheck k-fold rankings: ")
+
+		for i in range(0, len(resultsByKTesting)):
+			for j in range(0, len(resultsByKTesting)):
+				if i > j :
+					print("Correlation i:{} j:{} ".format(i,j))
+					computeCorrelation(resultsByKTesting[i], resultsByKTesting[j])
+
+
+def computeCorrelation(configsTesting, configsTraining):
+	xbestTraining = [x['i'] for x in configsTraining]
+	ybestTest = [x['i'] for x in configsTesting]
+	print("index training {}".format(xbestTraining))
+	print("index testing {}".format(ybestTest))
+	print("Pearson's r {} ".format(scipy.stats.pearsonr(xbestTraining, ybestTest)))
+	print("Spearman's rho {} ".format(scipy.stats.spearmanr(xbestTraining, ybestTest)))
+	print("Kendall's tau {} ".format(scipy.stats.kendalltau(xbestTraining, ybestTest)))
+
 
 def findBestRanking(X_train, allConfig, df):
 	valuesPerConfig, presentPerConfig = analyzeDataset(df, X_train, allConfig)
-	rankedBest = computeBest(allConfig, presentPerConfig, valuesPerConfig)
-	return rankedBest
+	configs, rankedBest = computeBest(allConfig, presentPerConfig, valuesPerConfig)
+	return configs, rankedBest
 
 
 def computeBest(allConfig, presentPerConfig, valuesPerConfig):
-	print(valuesPerConfig)
-	print(presentPerConfig)
+
 	averages = [0 for x in (allConfig)]
 	bestIn = [0 for x in (allConfig)]
-	bestOrder = []
+	configs= []
 	for i in range(0, len(allConfig)):
 		averages[i] = np.mean(valuesPerConfig[i])
 		zeros = list(filter(lambda x: x == 0, valuesPerConfig[i]))
@@ -125,9 +147,13 @@ def computeBest(allConfig, presentPerConfig, valuesPerConfig):
 			bestIn[i] = len(zeros) / presentPerConfig[i]
 		else:
 			bestIn[i] = 0
-		bestOrder.append(([allConfig[i], averages[i], bestIn[i]]))
-	print("av {}".format(averages))
-	print("best {}".format(bestIn))
-	bestOrder = sorted(bestOrder, key=lambda x: x[1])
-	print("zipped {}".format(bestOrder))
-	return bestOrder
+		configs.append({'c':allConfig[i], 'av':averages[i], 'bs':bestIn[i]})
+
+	##Sorting according number of best
+	bestOrder = sorted(configs, key=lambda x: x['bs'], reverse=True)
+	print("Bests ({}) {}".format(len(bestOrder),bestOrder))
+
+	for i in range(0, len(bestOrder)):
+		bestOrder[i]["i"] = i
+
+	return configs, bestOrder

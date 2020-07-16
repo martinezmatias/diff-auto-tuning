@@ -1,6 +1,7 @@
 import unittest
 from src.rowDataConsumers.ResultsAnalyzers import *
 from src.rowDataConsumers.ResultsAnalyzeBest import *
+from src.rowDataConsumers.ResultsAnalyzeBestFast import *
 from src.rowDataConsumers.ResultsAnalyzeTimes import *
 from src.processedDataConsumers.ResultsReadCheckPositionDefault import *
 from src.rowDataConsumers.ResultsAnalyzeRelationTimeSize import *
@@ -27,9 +28,13 @@ class MyTestCase(unittest.TestCase):
 	def _test_ComputeFitness(self):
 		computeBestConfigurations("../../results/out10bis5_4gt/")
 
-	def test_ComputeBestKFold(self):
-		computeBestConfigurationKFold()
+	def _test_ComputeFitnessFast(self):
+		#computeBestConfigurationsFast("../../results/out10bis5_4gt/")
+		computeBestConfigurationsFast("../../results/out4gtJDT_2/")
 
+	def test_ComputeBestKFold(self):
+		computeBestConfigurationKFold("../../plots/data/distance_per_diff_GTSpoon.csv",kFold=5)
+		#computeBestConfigurationKFold("../../plots/data/distance_per_diff.csv", kFold=2)
 
 	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis5_4gt/")
