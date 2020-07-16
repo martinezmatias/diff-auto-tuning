@@ -4,7 +4,7 @@ from src.rowDataConsumers.ResultsAnalyzeBest import *
 from src.rowDataConsumers.ResultsAnalyzeTimes import *
 from src.processedDataConsumers.ResultsReadCheckPositionDefault import *
 from src.rowDataConsumers.ResultsAnalyzeRelationTimeSize import *
-
+from src.processedDataConsumers.ResultKfoldValidation import *
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 from SALib.test_functions import Ishigami
@@ -24,8 +24,11 @@ class MyTestCase(unittest.TestCase):
 	def _test_ParserResults(self):
 		plotExecutionTime("./results/out10bis5_4gt/")
 
-	def test_ComputeFitness(self):
-		computeBestConfigurations("./results/out10bis5_4gt/")
+	def _test_ComputeFitness(self):
+		computeBestConfigurations("../../results/out10bis5_4gt/")
+
+	def test_ComputeBestKFold(self):
+		computeBestConfigurationKFold()
 
 
 	def _test_AnalyzeTimeSize(self):

@@ -27,3 +27,6 @@ print(best)
 # -> {'a': 1, 'c2': 0.01420615366247227}
 print(hyperopt.space_eval(space, best))
 # -> ('case 2', 0.01420615366247227}
+
+#https://scikit-learn.org/stable/modules/cross_validation.html
+#https://scikit-learn.org/stable/modules/grid_search.html#grid-search

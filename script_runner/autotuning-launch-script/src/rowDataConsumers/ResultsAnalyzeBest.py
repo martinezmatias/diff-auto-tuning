@@ -27,8 +27,9 @@ def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="
 	fbestFile.write("diff,{}\n".format(",".join(orderOfConfiguration)))
 
 	for diff in matrixOfDistancesPerDiff:
-		#print("diff {} {}".format(diff, len(matrixOfDistancesPerDiff[diff])) )
 		distances = matrixOfDistancesPerDiff[diff]
+		##truncate the list:
+		distances = distances[0: len(orderOfConfiguration)]
 		filtered = ["" if v is None else str(v) for v in distances]
 		data = ",".join(filtered)
 		fbestFile.write("{},{}\n".format(diff, data))
