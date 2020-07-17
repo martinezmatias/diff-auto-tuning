@@ -4,6 +4,7 @@ from src.rowDataConsumers.ResultsAnalyzeBest import *
 from src.rowDataConsumers.ResultsAnalyzeBestFast import *
 from src.rowDataConsumers.ResultsAnalyzeTimes import *
 from src.processedDataConsumers.ResultsReadCheckPositionDefault import *
+from src.processedDataConsumers.HyperOptDAT import *
 from src.rowDataConsumers.ResultsAnalyzeRelationTimeSize import *
 from src.processedDataConsumers.ResultKfoldValidation import *
 from SALib.sample import saltelli
@@ -32,9 +33,12 @@ class MyTestCase(unittest.TestCase):
 		#computeBestConfigurationsFast("../../results/out10bis5_4gt/")
 		computeBestConfigurationsFast("../../results/out4gtJDT_2/")
 
-	def test_ComputeBestKFold(self):
+	def _test_ComputeBestKFold(self):
 		computeBestConfigurationKFold("../../plots/data/distance_per_diff_GTSpoon.csv",kFold=5)
 		#computeBestConfigurationKFold("../../plots/data/distance_per_diff.csv", kFold=2)
+
+	def test_CompteHyperOpt(self):
+		executeHyperOpt("../../plots/data/distance_per_diff_GTSpoon.csv",kFold=5, max_evals=1000)
 
 	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis5_4gt/")
