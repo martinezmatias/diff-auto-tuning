@@ -7,30 +7,34 @@ from sklearn.model_selection import KFold, train_test_split
 import pandas
 import scipy
 
-def analyzeDataset(df, X, allconfig):
+'''
+df is the  dataframe with all data
+X: the list of the diffs to consider (because we may not be interested in analyzing all diffs, specially on the k-fold)
+allconfig: the key of all configurations 
+'''
+def analyzeConfigurationsFromDiffs(df, X, allconfig):
 
+	# This array stores, per configuration, a list with all the distance values
 	valuesPerConfig = [ [] for i in allconfig]
 
+	# This array stores, per configuration, the number of diffs analyzed
 	presentPerConfig = [0 for i in allconfig]
 
 	countRow = 0
 	for rowDiff in df.itertuples():
 
-		#if countRow % 100 == 0:
-		#	print("Row {}".format(countRow))
 		countRow+=1
 
 		if rowDiff[1]  in X:
-			#print("{} in X".format(rowDiff[1]))
-			# the first two positions are the ID and diff name
+			# the first two positions are the ID and diff name. So, we start in the Shift = 2 position
 			shift = 2
 
 			for i in range(0, len(allconfig)):
 				positionOfConfig = shift + i
 
-				v = rowDiff[positionOfConfig]
-				if not np.isnan(v):
-					valuesPerConfig[i].append(v)
+				distance = rowDiff[positionOfConfig]
+				if not np.isnan(distance):
+					valuesPerConfig[i].append(distance)
 					presentPerConfig[i]+=1
 
 
@@ -38,7 +42,6 @@ def analyzeDataset(df, X, allconfig):
 
 
 def compareWithBest(rankedBestConfigs):
-
 
 	configs = list(defaultConfigurations.values())
 
@@ -68,7 +71,7 @@ def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_d
 	# We get the name of the configurations
 	allConfig = columns[1:]
 
-	# ww get the first column, which has the diff names
+	# we get the first column, which has the diff names
 	diffs = df['diff']
 
 	allDiff = list(diffs.values)
@@ -130,7 +133,7 @@ def computeCorrelation(configsTesting, configsTraining):
 
 
 def findBestRanking(X_train, allConfig, df):
-	valuesPerConfig, presentPerConfig = analyzeDataset(df, X_train, allConfig)
+	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig)
 	configs, rankedBest = computeBest(allConfig, presentPerConfig, valuesPerConfig)
 	return configs, rankedBest
 
