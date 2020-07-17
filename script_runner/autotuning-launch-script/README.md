@@ -66,3 +66,13 @@ The axe X are the configuration, sorted by best from left to write.
 
 The file `DiffAlgorithmMetadata.py` contains the hyperparameters of each algorithm.
 
+
+## Last results
+
+### GTSpoon
+
+Total diff 32647 total config 66926352
+1443.085s
+
+Total diff 24850 total config 50942500
+
