@@ -9,7 +9,7 @@ def is_grid5k():
 
 def runProject(out, path, subset, begin=0, stop = 10000000, astmodel="GTSPOON", parallel=True, matchers = ""):
 
-	at_java_cmd = javahome + "/java  -cp {}  fr.gumtree.autotuning.Main -out={} -path={} -subset={} -begin={} -stop={} -astmodel={} -parallel={} {} ".format(liblocation, out, path, subset, begin, stop, astmodel, parallel, matchers)
+	at_java_cmd = javahome + "/java  -cp {}  fr.gumtree.autotuning.Main -out={} -path={} -subset={} -begin={} -stop={} -astmodel={} -paralleltype={} {} ".format(liblocation, out, path, subset, begin, stop, astmodel, parallel, matchers)
 
 	cmd = ""
 	try:
