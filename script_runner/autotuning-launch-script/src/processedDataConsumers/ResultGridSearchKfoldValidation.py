@@ -7,60 +7,8 @@ from sklearn.model_selection import KFold, train_test_split
 import pandas
 import scipy
 
-'''
-df is the  dataframe with all data
-X: the list of the diffs to consider (because we may not be interested in analyzing all diffs, specially on the k-fold)
-allconfig: the key of all configurations 
-'''
-def analyzeConfigurationsFromDiffs(df, X, allconfig):
 
-	# This array stores, per configuration, a list with all the distance values
-	valuesPerConfig = [ [] for i in allconfig]
-
-	# This array stores, per configuration, the number of diffs analyzed
-	presentPerConfig = [0 for i in allconfig]
-
-	countRow = 0
-	for rowDiff in df.itertuples():
-
-		countRow+=1
-
-		if rowDiff[1]  in X:
-			# the first two positions are the ID and diff name. So, we start in the Shift = 2 position
-			shift = 2
-
-			for i in range(0, len(allconfig)):
-				positionOfConfig = shift + i
-
-				distance = rowDiff[positionOfConfig]
-				if not np.isnan(distance):
-					valuesPerConfig[i].append(distance)
-					presentPerConfig[i]+=1
-
-
-	return valuesPerConfig, presentPerConfig
-
-
-def compareWithBest(rankedBestConfigs):
-
-	configs = list(defaultConfigurations.values())
-
-	rankingDefaultConfig = []
-
-	for i in range(0, len(rankedBestConfigs)):
-		currentConfig = rankedBestConfigs[i]
-		nameConfig = currentConfig['c']
-		if nameConfig in configs:
-			rankingDefaultConfig.append((i, currentConfig))
-
-	##
-	print("\nDefaults configs: ")
-	print(rankingDefaultConfig)
-	for defaultC in rankingDefaultConfig:
-		print(defaultC)
-
-
-def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_diff.csv", kFold = 5):
+def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5):
 
 	k_fold = KFold(kFold)
 
@@ -111,7 +59,7 @@ def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_d
 
 		###maybe only compare top X
 		print("\nCheck with defaults: ")
-		compareWithBest(rankedBestTraining)
+		compareDefaultWithBest(rankedBestTraining)
 
 		print("\nCheck k-fold rankings: ")
 
@@ -120,6 +68,61 @@ def computeBestConfigurationKFold(pathResults = "../../plots/data/distance_per_d
 				if i > j :
 					print("Correlation i:{} j:{} ".format(i,j))
 					computeCorrelation(resultsByKTesting[i], resultsByKTesting[j])
+
+		## TODO
+		##Comparison distribution best and default
+
+'''
+df is the  dataframe with all data
+X: the list of the diffs to consider (because we may not be interested in analyzing all diffs, specially on the k-fold)
+allconfig: the key of all configurations 
+'''
+def analyzeConfigurationsFromDiffs(df, X, allconfig):
+
+	# This array stores, per configuration, a list with all the distance values
+	valuesPerConfig = [ [] for i in allconfig]
+
+	# This array stores, per configuration, the number of diffs analyzed
+	presentPerConfig = [0 for i in allconfig]
+
+	countRow = 0
+	for rowDiff in df.itertuples():
+
+		countRow+=1
+
+		if rowDiff[1]  in X:
+			# the first two positions are the ID and diff name. So, we start in the Shift = 2 position
+			shift = 2
+
+			for i in range(0, len(allconfig)):
+				positionOfConfig = shift + i
+
+				distance = rowDiff[positionOfConfig]
+				if not np.isnan(distance):
+					valuesPerConfig[i].append(distance)
+					presentPerConfig[i]+=1
+
+
+	return valuesPerConfig, presentPerConfig
+
+
+def compareDefaultWithBest(rankedBestConfigs):
+
+	configs = list(defaultConfigurations.values())
+
+	rankingDefaultConfig = []
+
+	for i in range(0, len(rankedBestConfigs)):
+		currentConfig = rankedBestConfigs[i]
+		nameConfig = currentConfig['c']
+		if nameConfig in configs:
+			rankingDefaultConfig.append((i, currentConfig))
+
+	##
+	print("\nDefaults configs: ")
+	print(rankingDefaultConfig)
+	for defaultC in rankingDefaultConfig:
+		print(defaultC)
 
 
 def computeCorrelation(configsTesting, configsTraining):
@@ -134,11 +137,11 @@ def computeCorrelation(configsTesting, configsTraining):
 
 def findBestRanking(X_train, allConfig, df):
 	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig)
-	configs, rankedBest = computeBest(allConfig, presentPerConfig, valuesPerConfig)
+	configs, rankedBest = computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig)
 	return configs, rankedBest
 
 
-def computeBest(allConfig, presentPerConfig, valuesPerConfig):
+def computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig):
 
 	averages = [0 for x in (allConfig)]
 	bestIn = [0 for x in (allConfig)]

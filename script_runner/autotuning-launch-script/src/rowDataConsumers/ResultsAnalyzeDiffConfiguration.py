@@ -25,13 +25,6 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/"):
 		# map where the key is the distance, value is the nr of ocurrences
 		results = {}
 		problems = []
-
-
-
-		listProportions = []
-
-		matrixOverlapConfigurations = {}
-
 		#
 		nrMaxConfig = 3000
 		matrixOfDistancesPerDiff = {}
@@ -88,8 +81,7 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/"):
 
 
 ''' Navigates the CSV of one diff, computes the best configurations and store some metrics '''
-def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all", overlap = [],
-
+def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all",
 							 matrixOfDistancesPerDiff = {}
 							 ):
 

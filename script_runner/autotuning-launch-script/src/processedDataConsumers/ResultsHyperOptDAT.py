@@ -3,7 +3,7 @@ from hyperopt import tpe, hp, fmin, Trials
 import pandas
 import numpy as np
 from src.commons.DiffAlgorithmMetadata import *
-from src.processedDataConsumers.ResultKfoldValidation import *
+from src.processedDataConsumers.ResultGridSearchKfoldValidation import *
 
 
 rangeSBUP = [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
@@ -20,7 +20,7 @@ rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 
 notfound = []
 
-def executeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv" , kFold=5, runTpe = True, max_evals=1000):
+def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, runTpe = True, max_evals=1000):
 	print("GT space size: {}".format(len(rangeGT_BUM_SMT) * len(rangeGT_BUM_SZT) * len(rangeMH)))
 	print("SimpleGT space size: {}".format(len(rangeSBUP) * len(rangeMH)))
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
