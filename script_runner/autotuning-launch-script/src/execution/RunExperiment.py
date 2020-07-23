@@ -18,6 +18,11 @@ if len(sys.argv) > 4:
 else:
 	outDir = outResult
 
+if len(sys.argv) > 5:
+	paralelltype = sys.argv[5]
+else:
+	paralelltype = "PROPERTY_LEVEL"
+
 matchers = ""
 if len(sys.argv) > 5:
 	matP = sys.argv[5]
@@ -33,4 +38,4 @@ for i in range(1, 41):
 		maxid = begin
 	else:
 		maxid = maxid + 1
-	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=True, matchers=matchers)
+	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=paralelltype, matchers=matchers)
