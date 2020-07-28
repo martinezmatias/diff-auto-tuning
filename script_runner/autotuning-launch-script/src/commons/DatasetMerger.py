@@ -1,7 +1,7 @@
 import os
 import shutil
 
-def merge(location1, location2, destination, ignoreFromSource = ["XyMatcher"]):
+def merge(location1, location2, destination, ignoreFromSource = ["XyMatcher"], merge = True):
 		files = (os.listdir(location1))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(location1, x)), files))
 		totalDiffAnalyzed = 0
@@ -15,13 +15,13 @@ def merge(location1, location2, destination, ignoreFromSource = ["XyMatcher"]):
 
 			filesGroup1 = os.path.join(location1, groupId)
 			filesGroup2 = os.path.join(location2, groupId)
-			destination =  os.path.join(destination, groupId)
+			destinationGroup =  os.path.join(destination, groupId)
 
 			if not os.path.isdir(filesGroup1):
 				continue
 
-			if not os.path.exists(destination):
-				os.makedirs(destination)
+			if not os.path.exists(destinationGroup):
+				os.makedirs(destinationGroup)
 
 			##Navigates diff
 			listdir = os.listdir(filesGroup1)
@@ -33,7 +33,7 @@ def merge(location1, location2, destination, ignoreFromSource = ["XyMatcher"]):
 
 				csvFile2 = os.path.join(filesGroup2, diff)
 
-				csvout = os.path.join(destination, diff)
+				csvout = os.path.join(destinationGroup, diff)
 
 				if not os.path.exists(csvFile2):
 					#print("not exist {} ".format(csvout))
@@ -42,6 +42,10 @@ def merge(location1, location2, destination, ignoreFromSource = ["XyMatcher"]):
 					shutil.copyfile(csvFile1, csvout)
 					#
 				else:
+
+					if not merge:
+						continue
+
 					exists +=1
 					#print("exist exist {} ".format(csvout))
 
@@ -71,6 +75,4 @@ def merge(location1, location2, destination, ignoreFromSource = ["XyMatcher"]):
 
 
 		print("exists {} not exists {} ".format(exists, notexist))
-merge(location1="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/out10bis5_4gt",
-	  location2="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/outCD_2",
-	  destination="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/testmerge")
+

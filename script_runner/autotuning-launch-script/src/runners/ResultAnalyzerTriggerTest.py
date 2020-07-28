@@ -6,12 +6,16 @@ from src.rowDataConsumers.ResultsAnalyzeTimes import *
 from src.processedDataConsumers.ResultsReadCheckPositionDefault import *
 from src.processedDataConsumers.ResultsHyperOptDAT import *
 from src.rowDataConsumers.ResultsAnalyzeRelationTimeSize import *
+from src.rowDataConsumers.ResultsCountPairsAnalyzed import *
+from src.rowDataConsumers.ResultsCompareASTMetadata import *
 from src.processedDataConsumers.ResultGridSearchKfoldValidation import *
+from src.commons.DatasetMerger import *
+from src.processedDataConsumers.ResultsCompareDistribution import  *
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 from SALib.test_functions import Ishigami
 import numpy as np
-
+from src.processedDataConsumers.plotPerformance import *
 
 class MyTestCase(unittest.TestCase):
 
@@ -30,14 +34,31 @@ class MyTestCase(unittest.TestCase):
 		computeBestConfigurations("../../results/out10bis5_4gt/")
 
 	def _test_ComputeFitnessFast(self):
-		#computeBestConfigurationsFast("../../results/out10bis5_4gt/")
-		computeBestConfigurationsFast("../../results/out4gtJDT_2/")
+		#folderToAnalyze = "merge_gt6_cd_5"
+		folderToAnalyze = "merge_gtJDT_5_CDJDT_4"
+		computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix=folderToAnalyze)
 
-	def _test_ComputeBestKFold(self):
-		computeGridSearchKFold("../../plots/data/distance_per_diff_GTSpoon.csv", kFold=5)
-		#computeBestConfigurationKFold("../../plots/data/distance_per_diff.csv", kFold=2)
+	def test_ComputeBestKFold(self):
+		folderToAnalyze = "merge_gt6_cd_5"
+		kvalue = 5
+		allOptimized = []
+		allDefault = []
+		optimized, default = computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2")
+		allOptimized.append(optimized)
+		allDefault.append(default)
 
-	def test_CompteHyperOpt(self):
+		optimized, default =computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4")
+		allOptimized.append(optimized)
+		allDefault.append(default)
+
+		optimized, default =computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue,	algorithm="Xy", defaultId="XyMatcher_2_0.5")
+		allOptimized.append(optimized)
+		allDefault.append(default)
+
+		plotImprovements(improvements=allOptimized, defaults=allDefault)
+
+
+	def _test_CompteHyperOpt(self):
 		computeHyperOpt("../../plots/data/distance_per_diff_GTSpoon.csv", kFold=5, max_evals=1000)
 
 	def _test_AnalyzeTimeSize(self):
@@ -45,6 +66,39 @@ class MyTestCase(unittest.TestCase):
 
 	def _test_AnalyzeTimeSize(self):
 		getPositionDefalt(fileLocation="../../results/summary/best_configurations_summary.csv")
+
+	def _test_CompareDistributionBestDefault(self):
+		folderToAnalyze = "merge_gt6_cd_5"
+		compareDistributions(pathResults="../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2")
+
+	def _test_countAnalyzed(self):
+		countFilePairsAnalyzed("../../results/outCDJDT_4/")
+		countFilePairsAnalyzed("../../results/outCD_5/")
+		countFilePairsAnalyzed("../../results/outgtJDT_5/")
+		countFilePairsAnalyzed("../../results/outgt6/")
+
+	def _test_compareASTModel(self):
+		m1 = retrieveTreeMetric("../../results/out10bis5_4gt/", useSize=True)
+		m2 = retrieveTreeMetric ("../../results/out4gtJDT_3/", useSize=True)
+
+		compareTwoSamples(m1, m2, "size")
+
+
+	def _test_compareASTModelHeigth(self):
+		m1 = retrieveTreeMetric("../../results/out10bis5_4gt/", useSize=False)
+		m2 = retrieveTreeMetric ("../../results/out4gtJDT_3/", useSize=False)
+
+		compareTwoSamples(m1, m2, "heigth")
+
+	def _test_mergedatasetsSpoon(self):
+		merge(location1="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/outgt6/",
+			location2="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/outCD_5",
+			destination="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/merge_gt6_cd_5")
+
+	def _test_mergedatasetsJDT(self):
+		merge(location1="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/outgtJDT_5/",
+			location2="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/outCDJDT_4",
+			destination="/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/merge_gtJDT_5_CDJDT_4")
 
 	def _test_plot(self):
 		import matplotlib.pyplot as plt

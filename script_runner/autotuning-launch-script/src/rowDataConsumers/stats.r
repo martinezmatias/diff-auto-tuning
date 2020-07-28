@@ -16,3 +16,10 @@ wilcoxonR(x=m$v1, g=m$v2)
 
 library(effsize)
 cliff.delta(d = v1, f =  v2)
+
+
+v1 = as.numeric(readLines("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data/paired_values_heigth_1.csv"))#[limitd:limitup]
+v2 = as.numeric(readLines("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data/paired_values_heigth_2.csv"))#[limitd:limitup]
+wilcox.test(v1,v2, paired = TRUE)
+m = data.frame(v1, v2)
+wilcoxonR(x=m$v1, g=m$v2)

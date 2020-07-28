@@ -50,7 +50,8 @@ def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
 	# https://pingouin-stats.org/index.html
 	import pingouin as pg
-	print(pg.normality(xBest))
+	print("normality best: {}".format(pg.normality(xBest)))
+	print("normality default: {}".format(pg.normality(xDefault)))
 	#print(pg.multivariate_normality(xBest))
 	#https://pingouin-stats.org/api.html#effect-sizes
 	print("eff size % f" % pg.compute_effsize(xBest, xDefault))
@@ -63,17 +64,24 @@ def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
 	#https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kruskal.html
 
-def run(pathResults ="../../plots/data/distance_per_diff_GTSPOON.csv"):
+	saveFile("../../plots/data/paired_values_best_{}_1.csv".format(keyBestConfiguration), xBest)
+	saveFile("../../plots/data/paired_values_default_{}_2.csv".format(keyDefaultConfiguration), xDefault)
+
+def saveFile(filename, pvalues1):
+	fout1 = open(filename, 'w')
+	for i in pvalues1:
+		fout1.write("{}\n".format(i))
+	fout1.flush()
+	fout1.close()
+
+
+def compareDistributions(pathResults ="../../plots/data/distance_per_diff_GTSPOON.csv", keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2"):
 	df = pandas.read_csv(pathResults, sep=",")
 
 	columns = list(df.columns)
 
 	# We get the name of the configurations
-	allConfig = columns[1:]
 	print("columns {}".format(columns))
 
-	compareDistribution(df=df,keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2" )
+	compareDistribution(df=df,keyBestConfiguration=keyBestConfiguration, keyDefaultConfiguration=keyDefaultConfiguration)
 
-
-
-run()
