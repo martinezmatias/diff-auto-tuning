@@ -15,7 +15,7 @@ orderOfConfiguration = []
 
 '''Compute the fitness of all the data given as parameter'''
 
-def computeBestConfigurationsFast(rootResults, out = "../../plots/data/"):
+def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix = ""):
 
 		files = (os.listdir(rootResults))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
@@ -62,8 +62,8 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/"):
 											 )
 					totalConfigAnalyzed+= totalConfigAnalyzedFromDiff
 					#Testing
-					if diffFromGroup == 10:
-						break
+					#if diffFromGroup == 10:
+					#	break
 
 				except Exception as e:
 					print("Problems with {}".format(diff))
@@ -71,10 +71,10 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/"):
 					problems.append(diff)
 
 			 ##test
-			break
+			#break
 
 
-		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory=out)
+		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory=out, filesuffix = suffix)
 		print("Total diff {} total config {}".format(totalDiffAnalyzed, totalConfigAnalyzed))
 		print("END")
 
@@ -141,12 +141,12 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all
 
 	return totalRow
 
-def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="../../plots/data/"):
+def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="../../plots/data/", filesuffix = ""):
 
 	if not os.path.exists(outDirectory):
 		os.makedirs(outDirectory)
 
-	csv__file = "{}/distance_per_diff.csv".format(outDirectory)
+	csv__file = "{}/distance_per_diff_{}.csv".format(outDirectory, filesuffix)
 	fbestFile = open(csv__file, "w")
 
 	fbestFile.write("diff,{}\n".format(",".join(orderOfConfiguration)))

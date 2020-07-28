@@ -42,17 +42,25 @@ This script is very fast.
 The script `ResultGridSearchKfoldValidation.py`  method `computeGridSearchKFold`
 computes the grid search k-times.
 The input is the `distance_per_diff.csv` previously computed.
+It also compares with the default configuration.
 
 #### HyperOpt
 
 ResultsHyperOptDAT.py executes HyperOpt framework, in particular the TPE method.
 The input is the `distance_per_diff.csv` previously computed.
 
-###  Complete results
+
+#### Comparison of distributions
+
+`src/processedDataConsumers/ResultsCompareDistribution.py ` does a test for comparing the distribution of two configurations.
+The input is the `distance_per_diff.csv` previously computed.
+
+### Deprecated Scripts 
+####   Complete results (deprecated)
 
 From `ResultsAnalyzeBestComplete.py`  the method `computeBestConfigurations` summarize the results.
 It's an optional script. 
-This is a heavy scripts, that can take several hours to execute.
+This is a heavy scripts, not necessary to run, that can take several hours to execute.
 
 * It creates a `best_configurations_summary.csv` file with the metrics of each configuration, including the number of time the config is the best.
 Each  row is a configuration.
@@ -64,32 +72,38 @@ It stores measures (avg, median) for each metric.
 Each row summarizes all the configuration gaving a particular pair of hyperparameter and value.
 * It creates `distance_per_diff.csv` a matrix where the column are the configurations, the rows are the diff file and the cells are the distances
 
-### Relation Time and Size
+#### Relation Time and Size (deprecated)
 
 Scripts `ResultsAnalyzeRelationTimeSize.py` computes the relation between time and size.
 It produces two outputs: a) a csv that contains the regression line computed from the points(size, time) b) the plots (disable)
 
-### Execution Times
+#### Execution Times (deprecated)
 
 Script `ResultsAnalyzeTimes.py` generates violing plots the results according to the execution times grouped by diff algorithms and  Megadiff group id.
 
 
 # Script that consume and analyze generated summmary files (no row data)
 
-## Position of default configuration
+## Position of default configuration (deprecated)
 
 `ResultsReadCheckPositionDefault.py` returns the index of each default configuration.
+This script is invoked by the cross-validation script. It's not necessary to call it.
 
-## Relation of times between best and not best
+## Relation of times between best and not best (deprecated)
 
 `ResultsReadGeneratedFilesTimeComputer.py` analyzes the relation between the time of diff when a configuration is the best and when it's not the best.
 It creates a plot `plot_time_best_X` and print the correlation between best and not best times found by a diff algorithm X.
 The axe X are the configuration, sorted by best from left to write.
 
-## Configuration
+# Configuration
 
 The file `DiffAlgorithmMetadata.py` contains the hyperparameters of each algorithm.
 
+
+## Merge datasets:
+
+The script `src/commons/DatasetMerger.py` merges two different executions (e.g., two folders produced by DAT).
+In particular, as I executed GumTree and ChangeDistiller separatelly, this script merges the raw results.
 
 ## Last results
 
