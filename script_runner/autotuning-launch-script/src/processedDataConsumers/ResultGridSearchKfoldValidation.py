@@ -7,6 +7,7 @@ from sklearn.model_selection import KFold, train_test_split
 import pandas
 import scipy
 import numpy
+from scipy.stats import wilcoxon, kruskal
 
 
 def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None):
@@ -33,9 +34,10 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 	allDiff = list(diffs.values)
 
 	resultsByKTraining = []
-	resultsByKTesting = []
+	resultsByKTestingSorted = []
+	resultsByKTestingByConfig = []
 
-	avgBestOnTesting = {}
+	bestOnTestingByFold = {}
 	avgIndexOnTesting = {}
 
 	pearsonTraining = []
@@ -57,73 +59,114 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 
 		print("\nTraining {} ".format(k))
 
-		configsTraining,rankedBestTraining = findBestRanking(X_train, allConfig, df)
+		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df)
 
 		print("Configs {}".format(configsTraining))
-		print("Ranked {}".format(rankedBestTraining))
+		print("Ranked {}".format(rankedConfigsTraining))
 
-		resultsByKTraining.append(configsTraining)
+
+		resultsByKTraining.append(rankedConfigsTraining)
 
 		print("\nTesting {} ".format(k))
 
-		configsTesting,rankedBestTesting = findBestRanking(X_test, allConfig, df)
-		resultsByKTesting.append(configsTesting)
+		configsTesting,rankedConfigTesting = findBestRanking(X_test, allConfig, df)
+		resultsByKTestingSorted.append(rankedConfigTesting)
+		resultsByKTestingByConfig.append(configsTesting)
 
 		print("For information, Compute correlation between  training and testing")
 		computeCorrelation(configsTesting, configsTraining)
 
 
-		for config in rankedBestTesting:
-			if config['c'] not in avgBestOnTesting:
-				avgBestOnTesting[config['c']] = []
+		for config in rankedConfigTesting:
+			if config['c'] not in bestOnTestingByFold:
+				bestOnTestingByFold[config['c']] = []
 				avgIndexOnTesting[config['c']] = []
 
-			avgBestOnTesting[config['c']].append(config['bs'])
+			bestOnTestingByFold[config['c']].append(config['bs'])
 			avgIndexOnTesting[config['c']].append(config['i'])
 
 
 		###maybe only compare top X
 		print("\nCheck with defaults: ")
-		compareDefaultWithBest(rankedBestTraining)
+		compareDefaultWithBest(rankedConfigsTraining)
 
-
+	print("\n--End Kfold:")
 
 	## Once we finish, we compute the correlation between the rankings
 	print("\nCheck k-fold rankings: ")
-	for i in range(0, len(resultsByKTesting)):
-		for j in range(0, len(resultsByKTesting)):
+	for i in range(0, len(resultsByKTestingSorted)):
+		for j in range(0, len(resultsByKTestingSorted)):
 			if i > j :
 				print("Correlation between testing i:{} j:{} ".format(i,j))
-				rp, srho =  computeCorrelation(resultsByKTesting[i], resultsByKTesting[j])
+				rp, srho =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j])
 
 				pearsonTraining.append(rp[0])
 				spearmanTraining.append(srho[0])
 
-	print("\n getting the best:")
-	avgSum = {}
-	for i in avgBestOnTesting:
-		avgSum[i] = np.mean(avgBestOnTesting[i])
+	print("\n Getting the best:")
+	## As we have compute K folds, we summarize the performance
+	iK = 0
+	avgPerformanceTestingBestOnTraining = []
+	avgiTestingBestOnTraining = []
 
-		## TODO
-		##Comparison distribution best and default
-	bestsorted = sorted(avgSum.keys(), key= lambda x: avgSum[x], reverse=True)
+	for iResultsFold in resultsByKTraining:
+		print("\nAnalyzing kfold {}".format(iK))
+		## We retrieve the perfomrance on testing of  the best config from training
+		bestConfigInTraining = iResultsFold[0]
+		print("K: {} Best configuration given by the training: {}".format(iK, bestConfigInTraining))
 
-	#for b in bestsorted:
-	#	print("{} {} {} ".format(b, avgSum[b], np.mean(avgIndexOnTesting[b])))
-
-	print("\nperformance of best config avg {} {}".format( avgSum[bestsorted[0]], avgBestOnTesting[bestsorted[0]]))
-
-	if defaultId is not None:
-		print("\nperformance of default config avg {}, index {} ".format(avgSum[defaultId], np.mean(avgIndexOnTesting[defaultId])))
-		print("\nperformance of default config {}".format(avgBestOnTesting[defaultId]))
-
-
-	print("Pearson {}: {}".format(np.mean(pearsonTraining),pearsonTraining))
-	print("spearman {}: {}".format(np.mean(spearmanTraining),spearmanTraining))
+		bestConfigInTesting = None
+		#Now, we find it in the corresponding training
+		resultTestingOfK = resultsByKTestingSorted[iK]
+		for aConfigFromTesting in resultTestingOfK:
+			if aConfigFromTesting['c'] == bestConfigInTraining['c']:
+				bestConfigInTesting = aConfigFromTesting
 
 
-	print("\nend {} algoritm {}\n".format(pathResults, algorithm))
-	return avgBestOnTesting[bestsorted[0]], avgBestOnTesting[defaultId]
+
+		## find the default in Testing:
+		performanceDefaultOnTesting = bestOnTestingByFold[defaultId]
+		indexDefaultOnTesting = avgIndexOnTesting[defaultId]
+
+		if bestConfigInTesting is not None:
+			print("K: {} Default configuration performance {} index {}".format(iK, performanceDefaultOnTesting, indexDefaultOnTesting))
+			print("K: {} Best configuration given by the training on the testing: {}".format(iK, bestConfigInTesting))
+
+			avgPerformanceTestingBestOnTraining.append(bestConfigInTesting['bs'])
+			avgiTestingBestOnTraining .append(bestConfigInTesting['i'])
+
+		iK += 1
+
+
+	print("avg performance on testing of best in training {}: {}".format(np.mean(avgPerformanceTestingBestOnTraining), avgPerformanceTestingBestOnTraining))
+	print("avg index on testing of best in training {}: {}".format(np.mean(avgiTestingBestOnTraining),
+																		 avgiTestingBestOnTraining))
+
+
+	return avgPerformanceTestingBestOnTraining,  bestOnTestingByFold[defaultId]
+	#avgPerformanceByFold = {}
+	#for i in bestOnTestingByFold:
+	#	avgPerformanceByFold[i] = np.mean(bestOnTestingByFold[i])
+
+	#bestsorted = sorted(avgPerformanceByFold.keys(), key= lambda x: avgPerformanceByFold[x], reverse=True)
+
+	## Retrieve best from training on the testing, that's the value we need to report
+
+
+	#print("\nperformance of best config on  TRAINING avg {} {}".format( avgPerformanceByFold[bestsorted[0]], bestOnTestingByFold[bestsorted[0]]))
+
+	#if defaultId is not None:
+	#	print("\nperformance of default config avg {}, index {} ".format(avgPerformanceByFold[defaultId], np.mean(avgIndexOnTesting[defaultId])))
+	#	print("\nperformance of default config {}".format(bestOnTestingByFold[defaultId]))
+
+
+	#print("Pearson {}: {}".format(np.mean(pearsonTraining),pearsonTraining))
+	#print("spearman {}: {}".format(np.mean(spearmanTraining),spearmanTraining))
+
+
+	#print("\nend {} algoritm {}\n".format(pathResults, algorithm))
+	#return bestOnTestingByFold[bestsorted[0]], bestOnTestingByFold[defaultId]
+
 
 def saveBest(out, data, typeset,k, algo = "",name = "" ):
 
@@ -195,9 +238,9 @@ def compareDefaultWithBest(rankedBestConfigs):
 	return allDefaults
 
 
-def computeCorrelation(configsTesting, configsTraining):
-	xbestTraining = [x['i'] for x in configsTraining]
-	ybestTest = [x['i'] for x in configsTesting]
+def computeCorrelation(configsTesting, configsTraining, field = 'i'):
+	xbestTraining = [x[field] for x in configsTraining]
+	ybestTest = [x[field] for x in configsTesting]
 	print("index training {}".format(xbestTraining))
 	print("index testing {}".format(ybestTest))
 	rp = scipy.stats.pearsonr(xbestTraining, ybestTest)
@@ -205,6 +248,23 @@ def computeCorrelation(configsTesting, configsTraining):
 	srho = scipy.stats.spearmanr(xbestTraining, ybestTest)
 	print("Spearman's rho {} ".format(srho))
 	print("Kendall's tau {} ".format(scipy.stats.kendalltau(xbestTraining, ybestTest)))
+	import pingouin as pg
+
+	stats = pg.wilcoxon(xbestTraining, ybestTest, tail='two-sided')
+	print("pingouin wilcoxon:\n {}".format(stats))
+
+	stat, p = wilcoxon(xbestTraining, ybestTest)
+
+	print(' wilcoxon stat=%.3f, p=%.3f' % (stat, p))
+
+	stat, p = kruskal(xbestTraining, ybestTest)
+
+	print(' kruskal stat=%.3f, p=%.3f' % (stat, p))
+
+	print("eff size % f" % pg.compute_effsize(xbestTraining, ybestTest))
+	# https://pingouin-stats.org/generated/pingouin.mwu.html#pingouin.mwu
+	stats = pg.mwu(xbestTraining, ybestTest, tail='two-sided')
+	print("pingouin MWU:\n {}".format(stats))
 
 	return rp, srho
 

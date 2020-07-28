@@ -21,8 +21,8 @@ def plotImprovements(improvements, defaults):
 	set_box_color(bpr, '#2C7BB6')
 
 	# draw temporary red and blue lines and use them to create a legend
-	plt.plot([], c='#D7191C', label='Default')
-	plt.plot([], c='#2C7BB6', label='Optimized')
+	plt.plot([], c='#D7191C', label='Default (Left)')
+	plt.plot([], c='#2C7BB6', label='Optimized (Right)')
 	plt.legend()
 
 	plt.xticks(range(0, len(ticks) * 2, 2), ticks)

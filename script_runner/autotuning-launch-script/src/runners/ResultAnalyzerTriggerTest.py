@@ -38,9 +38,9 @@ class MyTestCase(unittest.TestCase):
 		folderToAnalyze = "merge_gtJDT_5_CDJDT_4"
 		computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix=folderToAnalyze)
 
-	def test_ComputeBestKFold(self):
+	def test_ComputeBestKFoldComplete(self):
 		folderToAnalyze = "merge_gt6_cd_5"
-		kvalue = 5
+		kvalue = 2
 		allOptimized = []
 		allDefault = []
 		optimized, default = computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2")
@@ -57,6 +57,18 @@ class MyTestCase(unittest.TestCase):
 
 		plotImprovements(improvements=allOptimized, defaults=allDefault)
 
+	def _test_ComputeBestKFoldSingle(self):
+		folderToAnalyze = "merge_gt6_cd_5"
+		kvalue = 2
+		allOptimized = []
+		allDefault = []
+	#	optimized, default = computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2")
+	#	allOptimized.append(optimized)
+	#	allDefault.append(default)
+
+		optimized, default =computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4")
+		allOptimized.append(optimized)
+		allDefault.append(default)
 
 	def _test_CompteHyperOpt(self):
 		computeHyperOpt("../../plots/data/distance_per_diff_GTSpoon.csv", kFold=5, max_evals=1000)
