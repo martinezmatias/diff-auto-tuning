@@ -12,7 +12,7 @@ from scipy.stats import wilcoxon, kruskal
 
 def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None):
 
-	print("Running {} algoritm {}".format(pathResults, algorithm))
+	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
 	k_fold = KFold(kFold)
 
 	df = pandas.read_csv(pathResults, sep=",")
@@ -106,8 +106,8 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 	print("\n Getting the best:")
 	## As we have compute K folds, we summarize the performance
 	iK = 0
-	avgPerformanceTestingBestOnTraining = []
-	avgiTestingBestOnTraining = []
+	performanceTestingBestOnTraining = []
+	indexTestingBestOnTraining = []
 
 	for iResultsFold in resultsByKTraining:
 		print("\nAnalyzing kfold {}".format(iK))
@@ -116,7 +116,7 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 		print("K: {} Best configuration given by the training: {}".format(iK, bestConfigInTraining))
 
 		bestConfigInTesting = None
-		#Now, we find it in the corresponding training
+		#Now, we find it in the corresponding training (not necesary is the best i.e. the first one)
 		resultTestingOfK = resultsByKTestingSorted[iK]
 		for aConfigFromTesting in resultTestingOfK:
 			if aConfigFromTesting['c'] == bestConfigInTraining['c']:
@@ -125,25 +125,29 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 
 
 		## find the default in Testing:
-		performanceDefaultOnTesting = bestOnTestingByFold[defaultId]
+		performanceDefaultOnTesting = bestOnTestingByFold[defaultId] ## each position has the data of one fold
 		indexDefaultOnTesting = avgIndexOnTesting[defaultId]
 
 		if bestConfigInTesting is not None:
-			print("K: {} Default configuration performance {} index {}".format(iK, performanceDefaultOnTesting, indexDefaultOnTesting))
+			print("K: {} Default configuration performance {} index {}".format(iK, performanceDefaultOnTesting[iK], indexDefaultOnTesting[iK]))
 			print("K: {} Best configuration given by the training on the testing: {}".format(iK, bestConfigInTesting))
 
-			avgPerformanceTestingBestOnTraining.append(bestConfigInTesting['bs'])
-			avgiTestingBestOnTraining .append(bestConfigInTesting['i'])
+			performanceTestingBestOnTraining.append(bestConfigInTesting['bs'])
+			indexTestingBestOnTraining.append(bestConfigInTesting['i'])
 
 		iK += 1
 
+	print("avg performance on testing of Default {}: {}".format(np.mean(performanceDefaultOnTesting),
+																 performanceDefaultOnTesting))
+	print("avg index on testing of best in Default {}: {}".format(np.mean(indexDefaultOnTesting),
+																   indexDefaultOnTesting))
 
-	print("avg performance on testing of best in training {}: {}".format(np.mean(avgPerformanceTestingBestOnTraining), avgPerformanceTestingBestOnTraining))
-	print("avg index on testing of best in training {}: {}".format(np.mean(avgiTestingBestOnTraining),
-																		 avgiTestingBestOnTraining))
+	print("avg performance on testing of best in training {}: {}".format(np.mean(performanceTestingBestOnTraining), performanceTestingBestOnTraining))
+	print("avg index on testing of best in training {}: {}".format(np.mean(indexTestingBestOnTraining),
+																		 indexTestingBestOnTraining))
 
 
-	return avgPerformanceTestingBestOnTraining,  bestOnTestingByFold[defaultId]
+	return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId]
 	#avgPerformanceByFold = {}
 	#for i in bestOnTestingByFold:
 	#	avgPerformanceByFold[i] = np.mean(bestOnTestingByFold[i])
@@ -250,21 +254,26 @@ def computeCorrelation(configsTesting, configsTraining, field = 'i'):
 	print("Kendall's tau {} ".format(scipy.stats.kendalltau(xbestTraining, ybestTest)))
 	import pingouin as pg
 
+
 	stats = pg.wilcoxon(xbestTraining, ybestTest, tail='two-sided')
 	print("pingouin wilcoxon:\n {}".format(stats))
 
 	stat, p = wilcoxon(xbestTraining, ybestTest)
 
-	print(' wilcoxon stat=%.3f, p=%.3f' % (stat, p))
+	print('scipy wilcoxon:\ stat=%.3f, p=%.3f' % (stat, p))
 
 	stat, p = kruskal(xbestTraining, ybestTest)
 
-	print(' kruskal stat=%.3f, p=%.3f' % (stat, p))
+	print('scipy kruskal:\ stat=%.3f, p=%.3f' % (stat, p))
 
 	print("eff size % f" % pg.compute_effsize(xbestTraining, ybestTest))
 	# https://pingouin-stats.org/generated/pingouin.mwu.html#pingouin.mwu
 	stats = pg.mwu(xbestTraining, ybestTest, tail='two-sided')
 	print("pingouin MWU:\n {}".format(stats))
+
+	stat, p = scipy.stats.mannwhitneyu(xbestTraining, ybestTest)
+
+	print('scipy mannwhitneyu:\ stat=%.3f, p=%.3f' % (stat, p))
 
 	return rp, srho
 

@@ -40,7 +40,7 @@ class MyTestCase(unittest.TestCase):
 
 	def test_ComputeBestKFoldComplete(self):
 		folderToAnalyze = "merge_gt6_cd_5"
-		kvalue = 2
+		kvalue = 10
 		allOptimized = []
 		allDefault = []
 		optimized, default = computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2")
