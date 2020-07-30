@@ -15,7 +15,7 @@ orderOfConfiguration = []
 
 '''Compute the fitness of all the data given as parameter'''
 
-def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix = ""):
+def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix = "", key = None):
 
 		files = (os.listdir(rootResults))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
@@ -58,7 +58,8 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix
 					diffFromGroup += 1
 					totalDiffAnalyzed += 1
 					totalConfigAnalyzedFromDiff = computeFitnessOfFilePair(filesGroup, results,diff, df,
-											matrixOfDistancesPerDiff = matrixOfDistancesPerDiff
+											matrixOfDistancesPerDiff = matrixOfDistancesPerDiff,
+																		   key=key
 											 )
 					totalConfigAnalyzed+= totalConfigAnalyzedFromDiff
 					#Testing
@@ -81,7 +82,7 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix
 
 
 ''' Navigates the CSV of one diff, computes the best configurations and store some metrics '''
-def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all",
+def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key =None,
 							 matrixOfDistancesPerDiff = {}
 							 ):
 
@@ -102,7 +103,9 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all
 	# Navigates each configuration (one per row)
 	for rowConfiguration in datasetofPair.itertuples():
 
-		totalRow +=1
+		matcherName = rowConfiguration.MATCHER
+		if key is not None and isinstance(matcherName, str) and key not in matcherName:
+			continue
 
 		currentNrActions = rowConfiguration.NRACTIONS
 		currentTime = rowConfiguration.TIME
@@ -110,6 +113,8 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all
 		# Skip if the configuration does not produce results (timeout, failure, etc)
 		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
 			continue
+
+		totalRow +=1
 
 		# compute the fitness of the current configuration
 		distance = int(currentNrActions) - minES

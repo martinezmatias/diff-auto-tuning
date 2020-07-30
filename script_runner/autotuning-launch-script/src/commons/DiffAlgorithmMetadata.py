@@ -30,11 +30,15 @@ defaultConfigurations = {
 			}
 
 
-'''Returns a key for the configuration'''
+'''Returns a key for the configuration
+The CSV does not have a key: it has columns where the concrete values or null.
+Thus, this method creates the key according to the metadata
+'''
 def getConfigurationKeyFromCSV(row, indexesOfColumns):
 
 		matcherName = row.MATCHER
 		key = matcherName
+		## for each property related to the matcher
 		for property in propertiesPerMatcher[matcherName]:
 			index = indexesOfColumns[property]
 			idexProperty = row[index]

@@ -8,14 +8,20 @@ import pandas
 import scipy
 import numpy
 from scipy.stats import wilcoxon, kruskal
+import pingouin as pg
+from sklearn.utils import shuffle
 
-
-def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None):
+def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None, random_seed = 0):
 
 	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
-	k_fold = KFold(kFold)
+	k_fold = KFold(kFold, random_state=0)
 
 	df = pandas.read_csv(pathResults, sep=",")
+
+	print("DS size before {} ".format(df.size))
+	## let's shuffle the results, otherwise they are grouped by megadiff group id
+	df = df.sample(frac=1, random_state=random_seed).reset_index(drop=True)
+	print("DS size after {} ".format(df.size))
 
 	columns = list(df.columns)
 
@@ -28,6 +34,12 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 			if algorithm in aConfig:
 				allConfig.append(aConfig)
 
+	indexOfConfig = {}
+	# we start in 1 because the first is the diff
+	for i in range(1, len(columns)):
+		indexOfConfig[columns[i]] = i
+
+	print("All configs considered with algo {}:{}".format(algorithm, len(allConfig)))
 	# we get the first column, which has the diff names
 	diffs = df['diff']
 
@@ -40,8 +52,15 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 	bestOnTestingByFold = {}
 	avgIndexOnTesting = {}
 
-	pearsonTraining = []
-	spearmanTraining = []
+	rp_index = []
+	srho_index = []
+	pmann_index = []
+	pwilcoxon_index = []
+
+	rp_performance = []
+	srho_performance= []
+	pmann_performance = []
+	pwilcoxon_performance = []
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
@@ -59,23 +78,22 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 
 		print("\nTraining {} ".format(k))
 
-		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df)
+		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
 
-		print("Configs {}".format(configsTraining))
-		print("Ranked {}".format(rankedConfigsTraining))
+		print("Configs ({}) {}".format(len(configsTraining),configsTraining))
+		print("Ranked ({}) {}".format(len(rankedConfigsTraining), rankedConfigsTraining))
 
 
 		resultsByKTraining.append(rankedConfigsTraining)
 
 		print("\nTesting {} ".format(k))
 
-		configsTesting,rankedConfigTesting = findBestRanking(X_test, allConfig, df)
+		configsTesting,rankedConfigTesting = findBestRanking(X_test, allConfig, df, indexOfConfig)
 		resultsByKTestingSorted.append(rankedConfigTesting)
 		resultsByKTestingByConfig.append(configsTesting)
 
-		print("For information, Compute correlation between  training and testing")
-		computeCorrelation(configsTesting, configsTraining)
-
+		#print("For information, Compute correlation between  training and testing")
+		#computeCorrelation(configsTesting, configsTraining)
 
 		for config in rankedConfigTesting:
 			if config['c'] not in bestOnTestingByFold:
@@ -97,11 +115,19 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 	for i in range(0, len(resultsByKTestingSorted)):
 		for j in range(0, len(resultsByKTestingSorted)):
 			if i > j :
-				print("Correlation between testing i:{} j:{} ".format(i,j))
-				rp, srho =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j])
+				print("\nCorrelation between testing i:{} j:{} ".format(i,j))
+				rp, srho, pmann, pwilcoxon =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j], field = 'i')
+				rp_index.append(rp[0])
+				srho_index.append(srho[0])
+				pmann_index.append(pmann)
+				pwilcoxon_index .append(pwilcoxon)
 
-				pearsonTraining.append(rp[0])
-				spearmanTraining.append(srho[0])
+				rp, srho, pmann, pwilcoxon = computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j],  field = 'bs')
+				rp_performance.append(rp[0])
+				srho_performance.append(srho[0])
+				pmann_performance.append(pmann)
+				pwilcoxon_performance.append(pwilcoxon)
+
 
 	print("\n Getting the best:")
 	## As we have compute K folds, we summarize the performance
@@ -121,8 +147,6 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 		for aConfigFromTesting in resultTestingOfK:
 			if aConfigFromTesting['c'] == bestConfigInTraining['c']:
 				bestConfigInTesting = aConfigFromTesting
-
-
 
 		## find the default in Testing:
 		performanceDefaultOnTesting = bestOnTestingByFold[defaultId] ## each position has the data of one fold
@@ -146,8 +170,16 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 	print("avg index on testing of best in training {}: {}".format(np.mean(indexTestingBestOnTraining),
 																		 indexTestingBestOnTraining))
 
+	print("avg  rp_index: {} {}".format(np.mean(rp_index),rp_index))
+	print("avg  srho_index: {} {}".format(np.mean(srho_index), srho_index))
+	print("avg  pmann_index: {} {}".format(np.mean(pmann_index), pmann_index))
+	print("avg  pwilcoxon_index: {} {}".format(np.mean(pwilcoxon_index), pwilcoxon_index))
+	print("avg  rp_performance: {} {}".format(np.mean(rp_performance), rp_performance))
+	print("avg  srho_performance: {} {}".format(np.mean(srho_performance), srho_performance))
+	print("avg  pmann_performance: {} {}".format(np.mean(pmann_performance), pmann_performance))
+	print("avg  pwilcoxon_performance: {} {}".format(np.mean(pwilcoxon_performance), pwilcoxon_performance))
 
-	return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId]
+	return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId] , rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance
 	#avgPerformanceByFold = {}
 	#for i in bestOnTestingByFold:
 	#	avgPerformanceByFold[i] = np.mean(bestOnTestingByFold[i])
@@ -188,10 +220,10 @@ df is the  dataframe with all data
 X: the list of the diffs to consider (because we may not be interested in analyzing all diffs, specially on the k-fold)
 allconfig: the key of all configurations 
 '''
-def analyzeConfigurationsFromDiffs(df, X, allconfig):
+def analyzeConfigurationsFromDiffs(df, setofDiffToConsider, allconfig, indexOfColumns):
 
 	# This array stores, per configuration, a list with all the distance values
-	valuesPerConfig = [ [] for i in allconfig]
+	valuesPerConfig = [[] for i in allconfig]
 
 	# This array stores, per configuration, the number of diffs analyzed
 	presentPerConfig = [0 for i in allconfig]
@@ -200,14 +232,19 @@ def analyzeConfigurationsFromDiffs(df, X, allconfig):
 	for rowDiff in df.itertuples():
 
 		countRow+=1
-
-		if rowDiff[1]  in X:
-			# the first two positions are the ID and diff name. So, we start in the Shift = 2 position
-			shift = 2
+		# in the DataFrame row the first two positions are the tuple id and diff name.
+		## example #<class 'tuple'>: (22671, 'nr_98_id_1_010de14013c38b7f82e4755270e88a8249f3a825_SimpleConveyer_GTSPOON.csv', 2.0, 16.0, 80.0, 80.0,192.0, ...
+		diff_ID = rowDiff[1]
+		if diff_ID in setofDiffToConsider:
+			# in the DataFrame row the first two positions are the tuple id and diff name. So, we start in the Shift = 1 position
+			shift = 1
 
 			for i in range(0, len(allconfig)):
-				positionOfConfig = shift + i
-
+				currentConfig = allconfig[i]
+				indexOfcurrent =  indexOfColumns[currentConfig]
+				positionOfConfig = shift + indexOfcurrent
+				if i < 10:
+					print("{} {} ".format(currentConfig, positionOfConfig))
 				distance = rowDiff[positionOfConfig]
 				if not np.isnan(distance):
 					valuesPerConfig[i].append(distance)
@@ -243,42 +280,42 @@ def compareDefaultWithBest(rankedBestConfigs):
 
 
 def computeCorrelation(configsTesting, configsTraining, field = 'i'):
+	print("\nField: {}".format(field))
 	xbestTraining = [x[field] for x in configsTraining]
 	ybestTest = [x[field] for x in configsTesting]
-	print("index training {}".format(xbestTraining))
-	print("index testing {}".format(ybestTest))
+	print("index ({}) left {}".format(len(xbestTraining), ",".join(["%.3f"%x for x in xbestTraining])))
+	print("index ({}) right {}".format(len(ybestTest),",".join(["%.3f"%x for x in ybestTest])))
 	rp = scipy.stats.pearsonr(xbestTraining, ybestTest)
 	print("Pearson's r {} ".format(rp))
 	srho = scipy.stats.spearmanr(xbestTraining, ybestTest)
 	print("Spearman's rho {} ".format(srho))
 	print("Kendall's tau {} ".format(scipy.stats.kendalltau(xbestTraining, ybestTest)))
-	import pingouin as pg
 
 
-	stats = pg.wilcoxon(xbestTraining, ybestTest, tail='two-sided')
-	print("pingouin wilcoxon:\n {}".format(stats))
+	stat, pwil = wilcoxon(xbestTraining, ybestTest, alternative='two-sided')
 
-	stat, p = wilcoxon(xbestTraining, ybestTest)
+	print('scipy wilcoxon: stat=%.3f, p=%.3f' % (stat, pwil))
 
-	print('scipy wilcoxon:\ stat=%.3f, p=%.3f' % (stat, p))
+#	stats = pg.wilcoxon(xbestTraining, ybestTest, tail='two-sided')
+#	print("pingouin wilcoxon:\n {}".format(stats))
 
-	stat, p = kruskal(xbestTraining, ybestTest)
 
-	print('scipy kruskal:\ stat=%.3f, p=%.3f' % (stat, p))
+	#stat, p = kruskal(xbestTraining, ybestTest)
+	#print('scipy kruskal:\ stat=%.3f, p=%.3f' % (stat, p))
 
-	print("eff size % f" % pg.compute_effsize(xbestTraining, ybestTest))
+	#print("eff size % f" % pg.compute_effsize(xbestTraining, ybestTest))
 	# https://pingouin-stats.org/generated/pingouin.mwu.html#pingouin.mwu
-	stats = pg.mwu(xbestTraining, ybestTest, tail='two-sided')
-	print("pingouin MWU:\n {}".format(stats))
+#	stats = pg.mwu(xbestTraining, ybestTest, tail='two-sided')
+#	print("pingouin MWU:\n {}".format(stats))
 
-	stat, p = scipy.stats.mannwhitneyu(xbestTraining, ybestTest)
+	stat, pmann= scipy.stats.mannwhitneyu(xbestTraining, ybestTest, alternative='two-sided')
 
-	print('scipy mannwhitneyu:\ stat=%.3f, p=%.3f' % (stat, p))
+	print('scipy mannwhitneyu: stat=%.3f, p=%.3f' % (stat, pmann))
 
-	return rp, srho
+	return rp, srho, pmann, pwil
 
-def findBestRanking(X_train, allConfig, df):
-	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig)
+def findBestRanking(X_train, allConfig, df, indexOfColumns):
+	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig, indexOfColumns)
 	configs, rankedBest = computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig)
 	return configs, rankedBest
 
