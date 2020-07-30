@@ -347,7 +347,7 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all
 	size, height = getTreeMetricsFromFile(location, diffId)
 
 	## for the first call to this method, let's store the columns
-	columnsToMap(datasetofPair, indexesOfColumns=indexesOfColumns)
+	columnsToMap(datasetofPair, indexesOfPropertiesInTable=indexesOfColumns)
 
 	# Navigates each configuration (one per row)
 	for rowConfiguration in datasetofPair.itertuples():
@@ -365,7 +365,7 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key ="all
 		distance = int(currentNrActions) - minES
 
 		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfColumns=indexesOfColumns)
+		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfColumns)
 
 		index = None
 		# Initialize the structures

@@ -30,20 +30,22 @@ defaultConfigurations = {
 			}
 
 
-'''Returns a key for the configuration
+'''Returns a key for the configuration. It's the combination of the values for each property
 The CSV does not have a key: it has columns where the concrete values or null.
 Thus, this method creates the key according to the metadata
 '''
-def getConfigurationKeyFromCSV(row, indexesOfColumns):
+def getConfigurationKeyFromCSV(row, indexesOfPropertiesOnTable):
 
 		matcherName = row.MATCHER
 		key = matcherName
 		## for each property related to the matcher
 		for property in propertiesPerMatcher[matcherName]:
-			index = indexesOfColumns[property]
-			idexProperty = row[index]
+			# get the position of that property in the
+			index = indexesOfPropertiesOnTable[property]
+			#Get the value on that index
+			valueOfProperty = row[index]
 
-			key+="_"+"{:.1f}".format((idexProperty)).rstrip('0').rstrip('.')
+			key+="_"+"{:.1f}".format((valueOfProperty)).rstrip('0').rstrip('.')
 
 		return key
 

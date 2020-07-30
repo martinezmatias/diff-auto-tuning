@@ -38,6 +38,11 @@ class MyTestCase(unittest.TestCase):
 		folderToAnalyze = "merge_gtJDT_5_CDJDT_4"
 		computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix=folderToAnalyze)
 
+	def _test_ComputeFitnessFastTest(self):
+		#folderToAnalyze = "merge_gt6_cd_5"
+		folderToAnalyze = "merge_gtJDT_5_CDJDT_4"
+		computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix="{}_test".format(folderToAnalyze), key="Gumtree")
+
 	def test_ComputeFitnessFastPerAlgorithm(self):
 
 		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",  "merge_gt6_cd_5"]:
@@ -48,7 +53,7 @@ class MyTestCase(unittest.TestCase):
 										  suffix="{}_Gumtree".format(folderToAnalyze), key="Gumtree")
 
 
-	def test_ComputeBestKFoldComplete(self):
+	def _test_ComputeBestKFoldComplete(self):
 		folderToAnalyze = "merge_gt6_cd_5"
 		kvalue = 2
 		random_seed_value = 0

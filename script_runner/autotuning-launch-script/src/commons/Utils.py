@@ -17,10 +17,10 @@ def incrementOne(dict, key, value = 1):
 		dict[key] += value
 
 '''fills the map with the index (value) of each column (key) according to the row passed as parameter'''
-def columnsToMap(row, indexesOfColumns):
-	if len(indexesOfColumns) == 0:
+def columnsToMap(row, indexesOfPropertiesInTable):
+	if len(indexesOfPropertiesInTable) == 0:
 		columns = row.columns
 		i = 1
 		for c in columns:
-			indexesOfColumns[c] = i
+			indexesOfPropertiesInTable[c] = i
 			i += 1

@@ -52,7 +52,7 @@ def analyzeTimeSize(rootResults, dirOut ="./plots/data/", plot = False):
 
 
 				## for the first call to this method, let's store the columns
-				columnsToMap(df, indexesOfColumns=indexesOfColumns)
+				columnsToMap(df, indexesOfPropertiesInTable=indexesOfColumns)
 
 				for rowConfiguration in df.itertuples():
 					totalRow += 1

@@ -9,13 +9,13 @@ import pandas as pd
 import scipy.stats
 from src.commons.Utils import *
 
-indexesOfColumns = {}
-indexOfConfig = {}
-orderOfConfiguration = []
 
 '''Compute the fitness of all the data given as parameter'''
 
 def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix = "", key = None):
+		indexesOfPropertiesInTable = {}
+		indexOfConfig = {}
+		orderOfConfiguration = []
 
 		files = (os.listdir(rootResults))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
@@ -26,7 +26,7 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix
 		results = {}
 		problems = []
 		#
-		nrMaxConfig = 3000
+		nrMaxConfig = 4000
 		matrixOfDistancesPerDiff = {}
 
 		## Navigate group ids
@@ -51,15 +51,15 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix
 				try:
 
 					matrixOfDistancesPerDiff[diff] = [None] * nrMaxConfig
-
-					print("groupid {} file {} /{}  total analyzed: {}".format(groupId,diffFromGroup, len(listdir)/2,totalDiffAnalyzed ))
+					if diffFromGroup % 100 == 0:
+						print("groupid {} file {} /{}  total analyzed: {}".format(groupId,diffFromGroup, len(listdir)/2,totalDiffAnalyzed ))
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
 					totalDiffAnalyzed += 1
 					totalConfigAnalyzedFromDiff = computeFitnessOfFilePair(filesGroup, results,diff, df,
 											matrixOfDistancesPerDiff = matrixOfDistancesPerDiff,
-																		   key=key
+																		   key=key, indexesOfPropertiesInTable=indexesOfPropertiesInTable, indexOfConfig=indexOfConfig, orderOfConfiguration=orderOfConfiguration
 											 )
 					totalConfigAnalyzed+= totalConfigAnalyzedFromDiff
 					#Testing
@@ -71,56 +71,67 @@ def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix
 					print(e.with_traceback())
 					problems.append(diff)
 
-			 ##test
+				#test
 			#break
 
 
-		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory=out, filesuffix = suffix)
+		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory=out, filesuffix = suffix, orderOfConfiguration=orderOfConfiguration)
 		print("Total diff {} total config {}".format(totalDiffAnalyzed, totalConfigAnalyzed))
 		print("END")
 
 
 
 ''' Navigates the CSV of one diff, computes the best configurations and store some metrics '''
-def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key =None,
-							 matrixOfDistancesPerDiff = {}
+def computeFitnessOfFilePair(location, results, diffId, dataFrame, key = None,
+							 matrixOfDistancesPerDiff = {}, indexesOfPropertiesInTable = {}, indexOfConfig = {}, orderOfConfiguration = []
 							 ):
 
 	# Get all the nr Actions
-	allNrActions = datasetofPair["NRACTIONS"]
+	allNrActions = dataFrame["NRACTIONS"]
 
-
-	#Take the min value of edit script size
-	minES = allNrActions.min(skipna=True)
 
 	# List with the best configurations (that with nr of actions equals to minES)
 	allBestConfigurationOfFile = []
 	totalRow = 0
 
 	## for the first call to this method, let's store the columns
-	columnsToMap(datasetofPair, indexesOfColumns=indexesOfColumns)
+	columnsToMap(dataFrame, indexesOfPropertiesInTable=indexesOfPropertiesInTable)
 
-	# Navigates each configuration (one per row)
-	for rowConfiguration in datasetofPair.itertuples():
+	## we store the configuration to be analyzed together with it NrActions
+	configurationsFiltered = {}
+	minES = 1000000
+
+	# Navigates each configuration (one per row).
+	#Filters those condif we target and store the distance
+	for rowConfiguration in dataFrame.itertuples():
 
 		matcherName = rowConfiguration.MATCHER
 		if key is not None and isinstance(matcherName, str) and key not in matcherName:
 			continue
 
 		currentNrActions = rowConfiguration.NRACTIONS
-		currentTime = rowConfiguration.TIME
 
 		# Skip if the configuration does not produce results (timeout, failure, etc)
 		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
 			continue
 
+		# get a key of the configuration (concatenation of its parameters)
+		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
+		# We store the number of actions
+		configurationsFiltered[rowConfigurationKey] = currentNrActions
+		# check if that number is the min
+		if currentNrActions < minES:
+			minES = currentNrActions
+
 		totalRow +=1
+
+	# Now, computes the distance of each configuration (between those filtered!)
+	for rowConfigurationKey in configurationsFiltered.keys():
+
+		currentNrActions = configurationsFiltered[rowConfigurationKey]
 
 		# compute the fitness of the current configuration
 		distance = int(currentNrActions) - minES
-
-		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfColumns=indexesOfColumns)
 
 		index = None
 		# Initialize the structures
@@ -146,7 +157,7 @@ def computeFitnessOfFilePair(location, results, diffId, datasetofPair, key =None
 
 	return totalRow
 
-def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="../../plots/data/", filesuffix = ""):
+def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="../../plots/data/", filesuffix = "", orderOfConfiguration = []):
 
 	if not os.path.exists(outDirectory):
 		os.makedirs(outDirectory)
