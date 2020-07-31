@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 
-def plotImprovements(improvements, defaults):
+def plotImprovements(improvements, defaults, key):
 	#data_a = [[1,2,5], [5,7,2,2,5], [7,2,5]]
 	#data_b = [[6,4,2], [1,2,5,3,2], [2,3,5,1]]
 
@@ -29,5 +29,4 @@ def plotImprovements(improvements, defaults):
 	plt.xlim(-2, len(ticks)*2)
 	plt.ylim(0, 1)
 	plt.tight_layout()
-	plt.savefig('boxcomparePerformance.pdf')
-	plt.show()
+	plt.savefig('boxcomparePerformance_{}.pdf'.format(key))

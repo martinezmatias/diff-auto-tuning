@@ -11,7 +11,7 @@ from scipy.stats import wilcoxon, kruskal
 import pingouin as pg
 from sklearn.utils import shuffle
 
-def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None, random_seed = 0):
+def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = "../../plots/data/"):
 
 	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
 	k_fold = KFold(kFold, random_state=0)
@@ -80,8 +80,8 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 
 		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
 
-		print("Configs ({}) {}".format(len(configsTraining),configsTraining))
-		print("Ranked ({}) {}".format(len(rankedConfigsTraining), rankedConfigsTraining))
+		#print("Configs ({}) {}".format(len(configsTraining),configsTraining))
+		#print("Ranked ({}) {}".format(len(rankedConfigsTraining), rankedConfigsTraining))
 
 
 		resultsByKTraining.append(rankedConfigsTraining)
@@ -92,6 +92,7 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 		resultsByKTestingSorted.append(rankedConfigTesting)
 		resultsByKTestingByConfig.append(configsTesting)
 
+		saveBest(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance")
 		#print("For information, Compute correlation between  training and testing")
 		#computeCorrelation(configsTesting, configsTraining)
 
@@ -171,49 +172,64 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 																		 indexTestingBestOnTraining))
 
 	print("avg  rp_index: {} {}".format(np.mean(rp_index),rp_index))
+
+	saveList(out, datasetname=datasetname,  algorithm=algorithm, data=rp_index,name="rp_index" )
 	print("avg  srho_index: {} {}".format(np.mean(srho_index), srho_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm,  data=srho_index,name="srho_index" )
 	print("avg  pmann_index: {} {}".format(np.mean(pmann_index), pmann_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_index,name="pmann_index" )
 	print("avg  pwilcoxon_index: {} {}".format(np.mean(pwilcoxon_index), pwilcoxon_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_index,name="pwilcoxon_index" )
 	print("avg  rp_performance: {} {}".format(np.mean(rp_performance), rp_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=rp_performance,name="rp_performance" )
 	print("avg  srho_performance: {} {}".format(np.mean(srho_performance), srho_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=srho_performance,name="srho_performance" )
 	print("avg  pmann_performance: {} {}".format(np.mean(pmann_performance), pmann_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_performance,name="pmann_performance" )
 	print("avg  pwilcoxon_performance: {} {}".format(np.mean(pwilcoxon_performance), pwilcoxon_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_performance,name="pwilcoxon_performance" )
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceTestingBestOnTraining,
+			 name="performanceTestingBestOnTraining")
+
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
+			 name="performanceTestingDefaultOnTraining")
+
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance" )
+
 
 	return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId] , rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance
-	#avgPerformanceByFold = {}
-	#for i in bestOnTestingByFold:
-	#	avgPerformanceByFold[i] = np.mean(bestOnTestingByFold[i])
-
-	#bestsorted = sorted(avgPerformanceByFold.keys(), key= lambda x: avgPerformanceByFold[x], reverse=True)
-
-	## Retrieve best from training on the testing, that's the value we need to report
-
-
-	#print("\nperformance of best config on  TRAINING avg {} {}".format( avgPerformanceByFold[bestsorted[0]], bestOnTestingByFold[bestsorted[0]]))
-
-	#if defaultId is not None:
-	#	print("\nperformance of default config avg {}, index {} ".format(avgPerformanceByFold[defaultId], np.mean(avgIndexOnTesting[defaultId])))
-	#	print("\nperformance of default config {}".format(bestOnTestingByFold[defaultId]))
-
-
-	#print("Pearson {}: {}".format(np.mean(pearsonTraining),pearsonTraining))
-	#print("spearman {}: {}".format(np.mean(spearmanTraining),spearmanTraining))
-
-
-	#print("\nend {} algoritm {}\n".format(pathResults, algorithm))
-	#return bestOnTestingByFold[bestsorted[0]], bestOnTestingByFold[defaultId]
-
 
 def saveBest(out, data, typeset,k, algo = "",name = "" ):
 
 
-	filename = "{}/best_{}_{}_{}_{}.csv".format(name, typeset, k, algo)
+	filename = "{}/summary_performance_{}_{}_K_{}_{}.csv".format(out, name, typeset, k, algo)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
 	fout1.flush()
 	fout1.close()
 
+def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" ):
+
+
+	filename = "{}/summary_avg_performance_{}_{}_{}.csv".format(out, name, typeset,  algo)
+	fout1 = open(filename, 'w')
+	for conf in data.keys():
+			fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
+	fout1.flush()
+	fout1.close()
+
+
+def saveList(out,datasetname, data, algorithm, name):
+
+	filename = "{}/summary_{}_{}_{}.csv".format(out,datasetname, algorithm, name)
+	fout1 = open(filename, 'w')
+	for conf in data:
+			fout1.write("{}\n".format(conf))
+	fout1.flush()
+	fout1.close()
 
 '''
 df is the  dataframe with all data
@@ -243,8 +259,8 @@ def analyzeConfigurationsFromDiffs(df, setofDiffToConsider, allconfig, indexOfCo
 				currentConfig = allconfig[i]
 				indexOfcurrent =  indexOfColumns[currentConfig]
 				positionOfConfig = shift + indexOfcurrent
-				if i < 10:
-					print("{} {} ".format(currentConfig, positionOfConfig))
+				#if i < 10:
+				#	print("{} {} ".format(currentConfig, positionOfConfig))
 				distance = rowDiff[positionOfConfig]
 				if not np.isnan(distance):
 					valuesPerConfig[i].append(distance)
@@ -281,10 +297,13 @@ def compareDefaultWithBest(rankedBestConfigs):
 
 def computeCorrelation(configsTesting, configsTraining, field = 'i'):
 	print("\nField: {}".format(field))
-	xbestTraining = [x[field] for x in configsTraining]
-	ybestTest = [x[field] for x in configsTesting]
-	print("index ({}) left {}".format(len(xbestTraining), ",".join(["%.3f"%x for x in xbestTraining])))
-	print("index ({}) right {}".format(len(ybestTest),",".join(["%.3f"%x for x in ybestTest])))
+	xbestTraining = [round(x[field],4) for x in configsTraining]
+	ybestTest = [round(x[field],4) for x in configsTesting]
+	#print("index ({}) left {}".format(len(xbestTraining), ",".join(["%.3f"%x for x in xbestTraining])))
+	#print("index ({}) right {}".format(len(ybestTest),",".join(["%.3f"%x for x in ybestTest])))
+	#print("index ({}) left {}".format(len(xbestTraining), xbestTraining))
+	#print("index ({}) right {}".format(len(ybestTest), ybestTest))
+
 	rp = scipy.stats.pearsonr(xbestTraining, ybestTest)
 	print("Pearson's r {} ".format(rp))
 	srho = scipy.stats.spearmanr(xbestTraining, ybestTest)
@@ -336,7 +355,7 @@ def computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig):
 
 	##Sorting according number of best
 	bestOrder = sorted(configs, key=lambda x: x['bs'], reverse=True)
-	print("Bests ({}) {}".format(len(bestOrder),bestOrder))
+	#print("Bests ({}) {}".format(len(bestOrder),bestOrder))
 
 	for i in range(0, len(bestOrder)):
 		bestOrder[i]["i"] = i

@@ -43,60 +43,63 @@ class MyTestCase(unittest.TestCase):
 		folderToAnalyze = "merge_gtJDT_5_CDJDT_4"
 		computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix="{}_test".format(folderToAnalyze), key="Gumtree")
 
-	def test_ComputeFitnessFastPerAlgorithm(self):
+	def _test_ComputeFitnessFastPerAlgorithm(self):
 
 		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",  "merge_gt6_cd_5"]:
-			computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix="{}_Xy".format(folderToAnalyze), key = "Xy")
-			computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze),
-										  suffix="{}_ChangeDistiller".format(folderToAnalyze), key="ChangeDistiller")
-			computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze),
-										  suffix="{}_Gumtree".format(folderToAnalyze), key="Gumtree")
+			for algorithm in ["Gumtree", "ChangeDistiller", "Xy"]:
+				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix="{}_{}".format(folderToAnalyze,algorithm), key = algorithm)
+				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze),
+											  suffix="{}_{}".format(folderToAnalyze, algorithm), key=algorithm)
+				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze),
+											  suffix="{}_{}".format(folderToAnalyze, algorithm), key=algorithm)
 
 
 	def _test_ComputeBestKFoldComplete(self):
-		folderToAnalyze = "merge_gt6_cd_5"
-		kvalue = 2
-		random_seed_value = 0
-		allOptimized = []
-		allDefault = []
-		optimizedgt, defaultgt,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance = computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2", random_seed=random_seed_value)
-		allOptimized.append(optimizedgt)
-		allDefault.append(defaultgt)
+		for folderToAnalyze in [#"merge_gtJDT_5_CDJDT_4",
+								"merge_gt6_cd_5"]:
+			print("\nanalyzing {}".format(folderToAnalyze))
+			kvalue = 10
+			random_seed_value = 0
+			allOptimized = []
+			allDefault = []
+			optimizedgt, defaultgt,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance = computeGridSearchKFold("../../plots/data/distance_per_diff_{}_Gumtree.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			allOptimized.append(optimizedgt)
+			allDefault.append(defaultgt)
 
-		optimizedcd, defaultcd,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=random_seed_value)
-		allOptimized.append(optimizedcd)
-		allDefault.append(defaultcd)
+			optimizedcd, defaultcd,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}_ChangeDistiller.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			allOptimized.append(optimizedcd)
+			allDefault.append(defaultcd)
 
-		optimizedxy, defaultxy,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue,	algorithm="Xy", defaultId="XyMatcher_2_0.5", random_seed=random_seed_value)
-		allOptimized.append(optimizedxy)
-		allDefault.append(defaultxy)
+			optimizedxy, defaultxy,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}_Xy.csv".format(folderToAnalyze), kFold=kvalue,	algorithm="Xy", defaultId="XyMatcher_2_0.5", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			allOptimized.append(optimizedxy)
+			allDefault.append(defaultxy)
 
-		print("END: printing summary")
+			print("END: printing summary")
 
-		print("optimizedgt: {}".format(optimizedgt))
-		print("defaultgt: {}".format(defaultgt))
-		print("optimizedcd: {}".format(optimizedcd))
-		print("defaultcd: {}".format(defaultcd))
-		print("optimizedxy: {}".format(optimizedxy))
-		print("defaultxy: {}".format(defaultxy))
+			print("optimizedgt: {}".format(optimizedgt))
+			print("defaultgt: {}".format(defaultgt))
+			print("optimizedcd: {}".format(optimizedcd))
+			print("defaultcd: {}".format(defaultcd))
+			print("optimizedxy: {}".format(optimizedxy))
+			print("defaultxy: {}".format(defaultxy))
 
-		plotImprovements(improvements=allOptimized, defaults=allDefault)
+			plotImprovements(improvements=allOptimized, defaults=allDefault, key = folderToAnalyze)
+			print("\nanalyzing {}".format(folderToAnalyze))
 
 	def _test_ComputeBestKFoldSingle(self):
 		folderToAnalyze = "merge_gt6_cd_5"
 		kvalue = 2
-		allOptimized = []
-		allDefault = []
-	#	optimized, default = computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2")
-	#	allOptimized.append(optimized)
-	#	allDefault.append(default)
 
-		optimized, default,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0)
-		allOptimized.append(optimized)
-		allDefault.append(default)
+		#optimized, default,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =\
+		computeGridSearchKFold("../../plots/data/distance_per_diff_{}_ChangeDistiller.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0,  datasetname=folderToAnalyze)
 
-	def _test_CompteHyperOpt(self):
-		computeHyperOpt("../../plots/data/distance_per_diff_GTSpoon.csv", kFold=5, max_evals=1000)
+
+	def test_CompteHyperOpt(self):
+		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
+								"merge_gt6_cd_5"]:
+			print("\nanalyzing {}".format(folderToAnalyze))
+			
+			computeHyperOpt("../../plots/data/distance_per_diff_GTSpoon.csv", kFold=2, max_evals=100)
 
 	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis5_4gt/")
