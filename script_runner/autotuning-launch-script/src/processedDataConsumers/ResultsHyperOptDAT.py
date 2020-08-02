@@ -22,7 +22,7 @@ rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 
 notfound = []
 
-def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = "allalgo",  out = "../../plots/data/"):
+def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = "../../plots/data/"):
 	print("GT space size: {}".format(len(rangeGT_BUM_SMT) * len(rangeGT_BUM_SZT) * len(rangeMH)))
 	print("SimpleGT space size: {}".format(len(rangeSBUP) * len(rangeMH)))
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
@@ -92,7 +92,7 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 
 		print("Total Testing configs {}".format(len(configsTrainingMaps.keys())))
 
-		spaceAlgorithms = createSpace()
+		spaceAlgorithms = createSpace(algorithm=algorithm)
 		search_space = { "space": hp.choice('algorithm_type', spaceAlgorithms),
 		## A hack to pass the fitness of each configuration to the object function
 		'data' :  configsTrainingMaps
@@ -132,9 +132,9 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 
 		performanceBestInTesting.append(bestPercentage)
 
-	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, franctiondataset = fractiondata)
+	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata)
 
-def createSpace():
+def createSpace(algorithm = None):
 	spaceAlgorithms = [
 		{  # ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
 			'algorithm': 'SimpleGumtree',
@@ -167,12 +167,15 @@ def createSpace():
 			"XyMatcher_GT_XYM_SIM": hp.choice("XyMatcher_GT_XYM_SIM", rangeXYSIM),
 		},
 	]
+	if algorithm is not None:
+		spaceAlgorithms =  list(filter(lambda x: algorithm in x['algorithm'], spaceAlgorithms))
+
 	return spaceAlgorithms
 
 
-def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset):
+def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals):
 
-	filename = "{}/hyper_op_{}_{}_f_{}.csv".format(out,datasetname, algorithm, franctiondataset)
+	filename = "{}/hyper_op_{}_{}_evals_{}_f_{}.csv".format(out,datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
 	fout1 = open(filename, 'w')
 	for i in range(0, len(bestTraining)):
 			fout1.write("{},{},{},{}\n".format(i,names[i], bestTraining[i],bestTesting[i]))

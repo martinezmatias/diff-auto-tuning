@@ -46,12 +46,9 @@ class MyTestCase(unittest.TestCase):
 	def _test_ComputeFitnessFastPerAlgorithm(self):
 
 		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",  "merge_gt6_cd_5"]:
-			for algorithm in ["Gumtree", "ChangeDistiller", "Xy"]:
+			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
 				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix="{}_{}".format(folderToAnalyze,algorithm), key = algorithm)
-				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze),
-											  suffix="{}_{}".format(folderToAnalyze, algorithm), key=algorithm)
-				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze),
-											  suffix="{}_{}".format(folderToAnalyze, algorithm), key=algorithm)
+
 
 
 	def _test_ComputeBestKFoldComplete(self):
@@ -94,12 +91,28 @@ class MyTestCase(unittest.TestCase):
 		computeGridSearchKFold("../../plots/data/distance_per_diff_{}_ChangeDistiller.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0,  datasetname=folderToAnalyze)
 
 
-	def test_CompteHyperOpt(self):
-		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
-								"merge_gt6_cd_5"]:
-			print("\nanalyzing {}".format(folderToAnalyze))
-			
-			computeHyperOpt("../../plots/data/distance_per_diff_GTSpoon.csv", kFold=2, max_evals=100)
+	def test_CompteHyperOpt_range(self):
+		evals_range = [10, 20, 50, 100, 200, 500]
+		ratio = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
+		for i_eval in evals_range:
+			kfold = 10
+			for i_ratio in ratio:
+				for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
+										"merge_gt6_cd_5"]:
+					for algorithm in ["Gumtree", "ChangeDistiller",
+									  "XyMatcher"]:
+						print("\nanalyzing {}".format(folderToAnalyze))
+						computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
+
+	def _test_CompteHyperOpt(self):
+			''''only 1000 '''''
+			kfold = 10
+			for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
+									"merge_gt6_cd_5"]:
+				for algorithm in ["Gumtree", "ChangeDistiller",
+								  "XyMatcher"]:
+					print("\nanalyzing {}".format(folderToAnalyze))
+					computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=1000,fractiondata= 1,  dataset = folderToAnalyze, algorithm = algorithm)
 
 	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis5_4gt/")
