@@ -10,6 +10,7 @@ from src.rowDataConsumers.ResultsCountPairsAnalyzed import *
 from src.rowDataConsumers.ResultsCompareASTMetadata import *
 from src.processedDataConsumers.ResultGridSearchKfoldValidation import *
 from src.commons.DatasetMerger import *
+from src.commons.TestStats import *
 from src.processedDataConsumers.ResultsCompareDistribution import  *
 from SALib.sample import saltelli
 from SALib.analyze import sobol
@@ -91,9 +92,9 @@ class MyTestCase(unittest.TestCase):
 		computeGridSearchKFold("../../plots/data/distance_per_diff_{}_ChangeDistiller.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0,  datasetname=folderToAnalyze)
 
 
-	def test_CompteHyperOpt_range(self):
-		evals_range = [10, 20, 50, 100, 200, 500]
-		ratio = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
+	def _test_CompteHyperOpt_range(self):
+		evals_range = [1, 5, 10, 20, 50, 100, 200, 500] #[10, 20, 50, 100, 200, 500]
+		ratio = [0.001, 0.0025, 0.005, 0.0001,0.00025] #[0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
 		for i_eval in evals_range:
 			kfold = 10
 			for i_ratio in ratio:
@@ -104,7 +105,7 @@ class MyTestCase(unittest.TestCase):
 						print("\nanalyzing {}".format(folderToAnalyze))
 						computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
 
-	def _test_CompteHyperOpt(self):
+	def _test_CompteHyperOpt_single_by_algo(self):
 			''''only 1000 '''''
 			kfold = 10
 			for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
@@ -113,6 +114,62 @@ class MyTestCase(unittest.TestCase):
 								  "XyMatcher"]:
 					print("\nanalyzing {}".format(folderToAnalyze))
 					computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=1000,fractiondata= 1,  dataset = folderToAnalyze, algorithm = algorithm)
+
+	def _test_CompteHyperOpt_single(self):
+			''''only 1000 '''''
+			kfold = 10
+			for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
+									"merge_gt6_cd_5"]:
+
+					print("\nanalyzing {}".format(folderToAnalyze))
+					computeHyperOpt("../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), kFold=kfold, max_evals=1000,fractiondata= 1,  dataset = folderToAnalyze, algorithm = None)
+
+
+	def test_Evolution_HyperOpt(self):
+		evals_range = [10, 20, 50, 100, 200]
+		ratio = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
+		totalAlgorithm = {}
+		timeAlgorithm = {}
+
+		totalAlgorithm["Gumtree"] = 2050
+		totalAlgorithm["ChangeDistiller"] = 375
+		totalAlgorithm["XyMatcher"] = 50
+		totalExecuted = 40000
+
+		##In seconds
+		timeAlgorithm["Gumtree"] = 0.5
+		timeAlgorithm["ChangeDistiller"] = 1
+		timeAlgorithm["XyMatcher"] = 0.01
+
+		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
+										"merge_gt6_cd_5"]:
+			print("\nanalyzing {}".format(folderToAnalyze))
+
+			for algorithm in ["Gumtree", "ChangeDistiller",
+									  "XyMatcher"]:
+						print("\nanalyzing {} {}".format(algorithm, [ int(x * totalExecuted) for x in ratio ] ))
+
+						timesOfAlgo = []
+						performancesOfAlgo = []
+
+						for i_eval in evals_range:
+							rations_collected = []
+							for i_ratio in ratio:
+								totaldiffexecuted = int(i_ratio * totalExecuted) * i_eval
+								#computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
+								path ="../../plots/data/hyper_op_{}_{}_evals_{}_f_{}.csv".format(folderToAnalyze, algorithm, i_eval, i_ratio)
+								performances = readCSVToFloatList(path, indexToKeep=3)
+								avgperformance = np.mean(performances)
+								rations_collected.append(avgperformance)
+
+								time = totaldiffexecuted * timeAlgorithm[algorithm]
+								timesOfAlgo.append(time)
+								performancesOfAlgo.append(avgperformance)
+
+							print("Ratios collected algo {} eval {} avg {} ".format(algorithm, i_eval, rations_collected))
+
+						plt.scatter(timesOfAlgo,performancesOfAlgo)
+						plt.show()
 
 	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis5_4gt/")

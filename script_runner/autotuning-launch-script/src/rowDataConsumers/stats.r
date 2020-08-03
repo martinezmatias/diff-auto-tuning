@@ -35,8 +35,7 @@ m = data.frame(v1, v2)
 wilcoxonR(x=m$v1, g=m$v2)
 
 
-ggplot(m) +
-  aes(x = v1, y = v2) +
-  geom_boxplot(fill = "#0c4c8a") +
-  theme_minimal()
+ggplot(m, aes(x=v1, y=v2)) + 
+  geom_boxplot(fill="slateblue", alpha=0.2) + 
+  xlab("cyl")
 

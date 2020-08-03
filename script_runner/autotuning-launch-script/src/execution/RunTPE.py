@@ -28,7 +28,7 @@ for i_eval in evals_range:
 
 def runHO(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = "../../plots/data/"):
 
-	at_java_cmd =  + "python3 -m src.execution.TPELauncher {} {} {} {} {} {}".format(pathResults, algorithm, kfold, max_evals, fractiondata, dataset)
+	at_java_cmd =  + "python3 -m src.execution.TPELauncher {} {} {} {} {} {}".format(pathResults, algorithm, kFold, max_evals, fractiondata, dataset)
 
 	cmd = ""
 	try:
@@ -37,8 +37,8 @@ def runHO(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, 
 
 			cmd = "oarsub -l nodes=1,walltime=%s -O %s -E %s \"%s\"" % (
 				GRID5K_TIME_OUT,
-				"./logs/out_{}_{}_{}_{}_{}.txt".format(algorithm, kfold, max_evals, fractiondata, dataset),
-				"./logs/error_{}_{}_{}_{}_{}.txt".format(algorithm, kfold, max_evals, fractiondata, dataset),
+				"./logs/out_{}_{}_{}_{}_{}.txt".format(algorithm, kFold, max_evals, fractiondata, dataset),
+				"./logs/error_{}_{}_{}_{}_{}.txt".format(algorithm, kFold, max_evals, fractiondata, dataset),
 				at_java_cmd)
 
 			#cmd = at_java_cmd

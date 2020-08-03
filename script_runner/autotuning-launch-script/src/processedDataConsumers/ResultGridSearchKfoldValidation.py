@@ -93,8 +93,7 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 		resultsByKTestingByConfig.append(configsTesting)
 
 		saveBest(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance")
-		#print("For information, Compute correlation between  training and testing")
-		#computeCorrelation(configsTesting, configsTraining)
+
 
 		for config in rankedConfigTesting:
 			if config['c'] not in bestOnTestingByFold:
@@ -113,8 +112,8 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 
 	## Once we finish, we compute the correlation between the rankings
 	print("\nCheck k-fold rankings: ")
-	for i in range(0, len(resultsByKTestingSorted)):
-		for j in range(0, len(resultsByKTestingSorted)):
+	for i in range(0, len(resultsByKTestingByConfig)):
+		for j in range(0, len(resultsByKTestingByConfig)):
 			if i > j :
 				print("\nCorrelation between testing i:{} j:{} ".format(i,j))
 				rp, srho, pmann, pwilcoxon =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j], field = 'i')
@@ -192,9 +191,16 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceTestingBestOnTraining,
 			 name="performanceTestingBestOnTraining")
 
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexTestingBestOnTraining,
+			 name="indexTestingBestOnTraining")
+
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
 			 name="performanceTestingDefaultOnTraining")
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexDefaultOnTesting[defaultId],
+			 name="indexTestingDefaultOnTraining")
+
 
 	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance" )
 
