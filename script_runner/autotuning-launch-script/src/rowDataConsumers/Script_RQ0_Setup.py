@@ -4,7 +4,7 @@ from src.commons.DatasetMerger import *
 from src.commons.Datalocation import *
 class TestSetup(unittest.TestCase):
 
-	def _test_countAnalyzed(self):
+	def test_countAnalyzed(self):
 		countFilePairsAnalyzed(RESULTS_ROW_ASTSPOON)
 		countFilePairsAnalyzed(RESULTS_ROW_ASTJDT)
 

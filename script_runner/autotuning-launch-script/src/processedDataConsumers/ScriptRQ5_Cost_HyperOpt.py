@@ -3,8 +3,9 @@ from src.processedDataConsumers.EngineHyperOptDAT import *
 from src.commons.Datalocation import *
 class TestRQ5(unittest.TestCase):
 	def _test_CompteHyperOpt_range(self):
-		evals_range = [1, 5, 10, 20, 50, 100, 200, 500] #[10, 20, 50, 100, 200, 500]
-		ratio = [0.001, 0.0025, 0.005, 0.0001,0.00025] #[0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
+		evals_range = [1, 5, 10, 20, 50, 100, 200, 500, 1000] #[10, 20, 50, 100, 200, 500]
+		ratio = [0.001, 0.0025, 0.005, 0.0001,0.00025]
+		#[0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
 		for i_eval in evals_range:
 			kfold = 10
 			for i_ratio in ratio:
