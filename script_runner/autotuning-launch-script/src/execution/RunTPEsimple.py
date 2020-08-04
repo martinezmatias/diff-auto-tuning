@@ -33,8 +33,8 @@ def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", ru
 
 			cmd = "oarsub -l nodes=1,walltime=%s -O %s -E %s \"%s\"" % (
 				GRID5K_TIME_OUT,
-				"./logs/out_{}_{}_{}_{}_{}.txt".format( "hyperop" if runTpe else "random" , dataset),
-				"./logs/error{}_{}_{}_{}_{}.txt".format("hyperop" if runTpe else "random", dataset),
+				"./logs/out_{}_{}.txt".format( "hyperop" if runTpe else "random" , dataset),
+				"./logs/error_{}_{}.txt".format("hyperop" if runTpe else "random", dataset),
 				at_pythom_cmd)
 
 		else:
