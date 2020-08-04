@@ -10,14 +10,18 @@ class TestSetup(unittest.TestCase):
 
 
 	def _test_mergedatasetsSpoon(self):
-		merge(location1="{}/outgt6/".format(RESULTS_ROW_LOCATION),
-			location2="{}/outCD_5".format(RESULTS_ROW_LOCATION),
-			destination="{}/merge_gt6_cd_5".format(RESULTS_ROW_LOCATION))
+		ds1 = "outgt6"
+		ds2 = "outCD_5"
+		merge(location1="{}/{}/".format(RESULTS_ROW_LOCATION, ds1),
+			location2="{}/{}".format(RESULTS_ROW_LOCATION, ds2),
+			destination="{}/merge_{}_{}".format(RESULTS_ROW_LOCATION, ds1, ds2))
 
 	def _test_mergedatasetsJDT(self):
-		merge(location1="{}/outgtJDT_5/".format(RESULTS_ROW_LOCATION),
-			location2="{}/outCDJDT_4".format(RESULTS_ROW_LOCATION),
-			destination="{}/merge_gtJDT_5_CDJDT_4".format(RESULTS_ROW_LOCATION))
+		ds1 = "outgtJDT_5"
+		ds2 = "outCDJDT_4"
+		merge(location1="{}/{}/".format(RESULTS_ROW_LOCATION, ds1),
+			location2="{}/{}".format(RESULTS_ROW_LOCATION, ds2),
+			destination="{}/merge_{}_{}".format(RESULTS_ROW_LOCATION, ds1, ds2))
 
 if __name__ == '__main__':
 	unittest.main()

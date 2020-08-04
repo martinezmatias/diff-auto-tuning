@@ -19,7 +19,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	k_fold = KFold(kFold, random_state=0)
 
 	df = pandas.read_csv(pathResults, sep=",")
-
+	print("Dataset fraction used {}".format(fration))
 	print("DS size before {} ".format(df.size))
 	## let's shuffle the results, otherwise they are grouped by megadiff group id
 	df = df.sample(frac=fration, random_state=random_seed).reset_index(drop=True)
@@ -52,7 +52,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	resultsByKTestingByConfig = []
 
 	bestOnTestingByFold = {}
-	avgIndexOnTesting = {}
+	allIndexOnTesting = {}
 
 	rp_index = []
 	srho_index = []
@@ -78,13 +78,13 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		for i in test:
 			X_test.append(allDiff[i])
 
-		print("\nTraining {} ".format(k))
+		print("\nTraining {} size {}".format(k, len(X_train)))
 
 		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
 
 		resultsByKTraining.append(rankedConfigsTraining)
 
-		print("\nTesting {} ".format(k))
+		print("\nTesting {} size {}".format(k, len(X_test)))
 
 		configsTesting,rankedConfigTesting = findBestRanking(X_test, allConfig, df, indexOfConfig)
 		resultsByKTestingSorted.append(rankedConfigTesting)
@@ -96,10 +96,10 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		for config in rankedConfigTesting:
 			if config['c'] not in bestOnTestingByFold:
 				bestOnTestingByFold[config['c']] = []
-				avgIndexOnTesting[config['c']] = []
+				allIndexOnTesting[config['c']] = []
 
 			bestOnTestingByFold[config['c']].append(config['bs'])
-			avgIndexOnTesting[config['c']].append(config['i'])
+			allIndexOnTesting[config['c']].append(config['i'])
 
 
 		###maybe only compare top X
@@ -148,7 +148,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 		## find the default in Testing:
 		performanceDefaultOnTesting = bestOnTestingByFold[defaultId] ## each position has the data of one fold
-		indexDefaultOnTesting = avgIndexOnTesting[defaultId]
+		indexDefaultOnTesting = allIndexOnTesting[defaultId]
 
 		if bestConfigInTesting is not None:
 			print("K: {} Default configuration performance {} index {}".format(iK, performanceDefaultOnTesting[iK], indexDefaultOnTesting[iK]))
@@ -196,7 +196,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
 			 name="performanceTestingDefaultOnTraining")
 
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexDefaultOnTesting[defaultId],
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allIndexOnTesting[defaultId],
 			 name="indexTestingDefaultOnTraining")
 
 
