@@ -25,7 +25,7 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 	print("SimpleGT space size: {}".format(len(rangeSBUP) * len(rangeMH)))
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
 	print("XY space size: {}".format(len(rangeXYSIM) * len(rangeMH)))
-
+	print("Run TPE? {}".format(runTpe))
 	df = pandas.read_csv(pathResults, sep=",")
 	print("dataset before random {}".format(df.shape))
 
@@ -137,7 +137,7 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 
 		performanceBestInTesting.append(bestPercentage)
 
-	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata)
+	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe)
 
 def createSpace(algorithm = None):
 	spaceAlgorithms = [
@@ -178,9 +178,9 @@ def createSpace(algorithm = None):
 	return spaceAlgorithms
 
 
-def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals):
+def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
 
-	filename = "{}/hyper_op_{}_{}_evals_{}_f_{}.csv".format(out,datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
+	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(out, "hyper_op" if isTPE else "random_op" , datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
 	fout1 = open(filename, 'w')
 	for i in range(0, len(bestTraining)):
 			fout1.write("{},{},{},{}\n".format(i,names[i], bestTraining[i],bestTesting[i]))
