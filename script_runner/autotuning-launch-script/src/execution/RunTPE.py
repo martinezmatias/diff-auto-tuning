@@ -69,5 +69,5 @@ def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", kF
 def is_grid5k():
     return os.path.exists("/usr/bin/oarsub")
 
-main(onlyTest=True)
+main(onlyTest=False)
 print("END")
