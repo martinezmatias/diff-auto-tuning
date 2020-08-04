@@ -5,6 +5,7 @@ import numpy as np
 from src.commons.DiffAlgorithmMetadata import *
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.commons.DiffAlgorithmMetadata import *
+from src.commons.Datalocation import *
 
 rangeSBUP = [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
 rangeMH = [ round(x,2) for x in np.arange(1,6,1)]
@@ -20,7 +21,7 @@ rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 
 notfound = []
 
-def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = "../../plots/data/"):
+def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = RESULTS_PROCESSED_LOCATION ):
 	print("GT space size: {}".format(len(rangeGT_BUM_SMT) * len(rangeGT_BUM_SZT) * len(rangeMH)))
 	print("SimpleGT space size: {}".format(len(rangeSBUP) * len(rangeMH)))
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
@@ -115,7 +116,7 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 
 		eval = hyperopt.space_eval(search_space, best)
 		keyConfig = recreateConfigurationKey(eval)
-		print("eval {} {}".format(len(eval),eval))
+		#print("eval {} {}".format(len(eval),eval))
 		bestConfigs.append(keyConfig)
 
 		if keyConfig not in configsTrainingMaps:
@@ -186,6 +187,7 @@ def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franc
 			fout1.write("{},{},{},{}\n".format(i,names[i], bestTraining[i],bestTesting[i]))
 	fout1.flush()
 	fout1.close()
+	print("Save data on {}".format(filename))
 
 def objectiveFunctionDAT(params):
 

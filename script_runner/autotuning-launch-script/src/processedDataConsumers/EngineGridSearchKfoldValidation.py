@@ -1,6 +1,6 @@
 import numpy as np
 import matplotlib.pyplot as plt
-
+import seaborn as sns
 from sklearn import datasets
 from src.commons.DiffAlgorithmMetadata import *
 from sklearn.model_selection import KFold, train_test_split
@@ -11,8 +11,9 @@ from scipy.stats import wilcoxon, kruskal
 import pingouin as pg
 from sklearn.utils import shuffle
 from src.commons.Utils import  *
+from src.commons.Datalocation import  *
 
-def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = "../../plots/data/"):
+def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
 
 	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
 	k_fold = KFold(kFold, random_state=0)
@@ -21,7 +22,7 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 
 	print("DS size before {} ".format(df.size))
 	## let's shuffle the results, otherwise they are grouped by megadiff group id
-	df = df.sample(frac=1, random_state=random_seed).reset_index(drop=True)
+	df = df.sample(frac=fration, random_state=random_seed).reset_index(drop=True)
 	print("DS size after {} ".format(df.size))
 
 	columns = list(df.columns)
@@ -80,10 +81,6 @@ def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv"
 		print("\nTraining {} ".format(k))
 
 		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
-
-		#print("Configs ({}) {}".format(len(configsTraining),configsTraining))
-		#print("Ranked ({}) {}".format(len(rankedConfigsTraining), rankedConfigsTraining))
-
 
 		resultsByKTraining.append(rankedConfigsTraining)
 
@@ -217,27 +214,28 @@ def saveBest(out, data, typeset,k, algo = "",name = "" ):
 			fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
 	fout1.flush()
 	fout1.close()
+	print("Save results at {}".format(filename))
 
 def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" ):
 
 
-	filename = "{}/summary_avg_performance_{}_{}_{}.csv".format(out, name, typeset,  algo)
+	filename = "{}/summary_avg_performance_{}_{}_{}.csv".format(out, name, typeset,  "allAlgorithms" if algo is None else  algo)
 	fout1 = open(filename, 'w')
 	for conf in data.keys():
 			fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
 	fout1.flush()
 	fout1.close()
-
+	print("Save results at {}".format(filename))
 
 def saveList(out,datasetname, data, algorithm, name):
 
-	filename = "{}/summary_{}_{}_{}.csv".format(out,datasetname, algorithm, name)
+	filename = "{}/summary_{}_{}_{}.csv".format(out,datasetname, "allAlgorithms" if algorithm is None else  algorithm, name)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{}\n".format(conf))
 	fout1.flush()
 	fout1.close()
-
+	print("Save results at {}".format(filename))
 '''
 df is the  dataframe with all data
 X: the list of the diffs to consider (because we may not be interested in analyzing all diffs, specially on the k-fold)

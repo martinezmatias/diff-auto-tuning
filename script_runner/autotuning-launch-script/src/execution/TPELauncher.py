@@ -1,9 +1,9 @@
 
 import sys
 from src.processedDataConsumers.EngineHyperOptDAT import *
+from src.commons.Datalocation import *
 
-
-folderToAnalyze = sys.argv[1]
+distancespath = sys.argv[1]
 
 algorithm = sys.argv[2]
 
@@ -17,4 +17,4 @@ datasetname = sys.argv[6]
 
 runTPE = str(sys.argv[7])
 
-computeHyperOpt(folderToAnalyze, kFold=kfold, max_evals=i_eval ,fractiondata= i_ratio,  dataset = datasetname, algorithm = algorithm, runTpe= (runTPE.lower() == "true") )
+computeHyperOpt(pathResults=distancespath, kFold=kfold, max_evals=i_eval ,fractiondata= i_ratio,  dataset = datasetname, algorithm = algorithm, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION )

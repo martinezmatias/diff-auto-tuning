@@ -12,7 +12,7 @@ class TestRQ5(unittest.TestCase):
 					for algorithm in ["Gumtree", "ChangeDistiller",
 									  "XyMatcher"]:
 						print("\nanalyzing {}".format(folderToAnalyze))
-						computeHyperOpt("{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm, runTpe=True)
+						computeHyperOpt(pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm, runTpe=True,  out=RESULTS_PROCESSED_LOCATION )
 
 
 	''''this method reads the results of hyperopt and plots the evolution'''
