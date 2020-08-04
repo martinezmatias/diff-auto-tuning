@@ -1,22 +1,13 @@
 import unittest
-from src.rowDataConsumers.ResultsAnalyzers import *
-from src.rowDataConsumers.ResultsAnalyzeBestComplete import *
-from src.rowDataConsumers.ResultsAnalyzeDiffConfiguration import *
-from src.rowDataConsumers.ResultsAnalyzeTimes import *
-from src.processedDataConsumers.ResultsReadCheckPositionDefault import *
-from src.processedDataConsumers.EngineHyperOptDAT import *
-from src.rowDataConsumers.ResultsAnalyzeRelationTimeSize import *
-from src.rowDataConsumers.ResultsCountPairsAnalyzed import *
-from src.rowDataConsumers.EngineCompareASTMetadata import *
-from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
-from src.commons.DatasetMerger import *
-from src.commons.TestStats import *
-from src.processedDataConsumers.ResultsCompareDistribution import  *
+from src.rowDataConsumers.deprecated.ResultsAnalyzers import *
+from src.rowDataConsumers.deprecated.ResultsAnalyzeBestComplete import *
+from src.rowDataConsumers.deprecated.ResultsAnalyzeTimes import *
+from src.processedDataConsumers.deprecated.ResultsReadCheckPositionDefault import *
+from src.rowDataConsumers.deprecated.ResultsAnalyzeRelationTimeSize import *
 from SALib.sample import saltelli
 from SALib.analyze import sobol
 from SALib.test_functions import Ishigami
-import numpy as np
-from src.processedDataConsumers.plotPerformance import *
+
 
 class MyTestCase(unittest.TestCase):
 
@@ -38,12 +29,6 @@ class MyTestCase(unittest.TestCase):
 	def _test_AnalyzeTimeSize(self):
 		analyzeTimeSize("./results/out10bis5_4gt/")
 
-	def _test_AnalyzeTimeSize(self):
-		getPositionDefalt(fileLocation="../../results/summary/best_configurations_summary.csv")
-
-	def _test_CompareDistributionBestDefault(self):
-		folderToAnalyze = "merge_gt6_cd_5"
-		compareDistributions(pathResults="../../plots/data/distance_per_diff_{}.csv".format(folderToAnalyze), keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2")
 
 	def _test_ParserResultsParallell(self):
 		plotExecutionTime("../../results/executions/out_parallel_4/")

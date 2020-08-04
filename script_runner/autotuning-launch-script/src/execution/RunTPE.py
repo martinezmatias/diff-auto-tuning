@@ -1,17 +1,20 @@
 from src.processedDataConsumers.EngineHyperOptDAT import *
 import subprocess
 from src.execution.Config import  *
-evals_range = [10, 20, 50, 100, 200, 500]
-ratio = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
-for i_eval in evals_range:
-	kfold = 10
-	for i_ratio in ratio:
-		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
-								"merge_gt6_cd_5"]:
-			for algorithm in ["Gumtree", "ChangeDistiller",
-							  "XyMatcher"]:
-				print("\nanalyzing {}".format(folderToAnalyze))
-				runHO(pathResults= "../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval ,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
+from src.commons.Datalocation import *
+
+
+def main():
+	evals_range = [10, 20, 50, 100, 200, 500]
+	ratio = [0.01, 0.025, 0.05, 0.1, 0.2, 0.5]
+	for i_eval in evals_range:
+		kfold = 10
+		for i_ratio in ratio:
+			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
+				for algorithm in ["Gumtree", "ChangeDistiller",
+								  "XyMatcher"]:
+					print("\nanalyzing {}".format(folderToAnalyze))
+					runHO(pathResults= "{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval ,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
 
 
 #folderToAnalyze = sys.argv[1]
@@ -63,3 +66,6 @@ def runHO(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, 
 
 def is_grid5k():
     return os.path.exists("/usr/bin/oarsub")
+
+main()
+print("END")

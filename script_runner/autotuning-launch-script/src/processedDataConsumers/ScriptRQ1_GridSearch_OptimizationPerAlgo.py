@@ -1,39 +1,39 @@
 import unittest
-import unittest
 
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
-from src.processedDataConsumers.plotPerformance import *
-from src.rowDataConsumers.ResultsAnalyzeDiffConfiguration import *
+from src.processedDataConsumers.deprecated.plotPerformance import *
+from src.rowDataConsumers.RQ0_Setup_ComputeFitnessOfConfiguationsFromRowData import *
+from src.commons.Datalocation import *
 
-class MyTestCase(unittest.TestCase):
+class TestGrid(unittest.TestCase):
 	def test_something(self):
 		self.assertEqual(True, False)
 
 
 	def _test_ComputeFitnessFastPerAlgorithm(self):
 
-		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",  "merge_gt6_cd_5"]:
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT,  NAME_FOLDER_ASTSPOON]:
 			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
-				computeBestConfigurationsFast("../../results/{}/".format(folderToAnalyze), suffix="{}_{}".format(folderToAnalyze,algorithm), key = algorithm)
+				computeFitness("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
 	def test_ComputeBestKFoldComplete(self):
-		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
-								#"merge_gt6_cd_5"
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
+								NAME_FOLDER_ASTSPOON
 								]:
 			print("\nanalyzing {}".format(folderToAnalyze))
 			kvalue = 10
 			random_seed_value = 0
 			allOptimized = []
 			allDefault = []
-			optimizedgt, defaultgt,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance = computeGridSearchKFold("../../plots/data/distance_per_diff_{}_Gumtree.csv".format(folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			optimizedgt, defaultgt,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance = computeGridSearchKFold("{}/distance_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2", random_seed=random_seed_value, datasetname=folderToAnalyze)
 			allOptimized.append(optimizedgt)
 			allDefault.append(defaultgt)
 
-			optimizedcd, defaultcd,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}_ChangeDistiller.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			optimizedcd, defaultcd,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("{}/distance_per_diff_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=random_seed_value, datasetname=folderToAnalyze)
 			allOptimized.append(optimizedcd)
 			allDefault.append(defaultcd)
 
-			optimizedxy, defaultxy,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("../../plots/data/distance_per_diff_{}_Xy.csv".format(folderToAnalyze), kFold=kvalue,	algorithm="Xy", defaultId="XyMatcher_2_0.5", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			optimizedxy, defaultxy,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("{}/distance_per_diff_{}_Xy.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kvalue,	algorithm="Xy", defaultId="XyMatcher_2_0.5", random_seed=random_seed_value, datasetname=folderToAnalyze)
 			allOptimized.append(optimizedxy)
 			allDefault.append(defaultxy)
 
@@ -54,51 +54,50 @@ class MyTestCase(unittest.TestCase):
 		kvalue = 2
 
 		#optimized, default,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =\
-		computeGridSearchKFold("../../plots/data/distance_per_diff_{}_ChangeDistiller.csv".format(folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0,  datasetname=folderToAnalyze)
+		computeGridSearchKFold("{}/distance_per_diff_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0,  datasetname=folderToAnalyze)
 
 
 
 	'''For Table of  RQ 1'''
 	def _test_ComparisonBest_TableRQ1(self):
-		computeBestAndDefaultByFoldFiles("GumTree",
-										 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_Gumtree_performanceTestingBestOnTraining.csv"
-										 , "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_Gumtree_performanceTestingDefaultOnTraining.csv")
 
-		computeBestAndDefaultByFoldFiles("ChangeDistiller",
-										 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_ChangeDistiller_performanceTestingBestOnTraining.csv"
-										 ,
-										 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_ChangeDistiller_performanceTestingDefaultOnTraining.csv")
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
+			for algorithm in ["Gumtree", "ChangeDistiller", "Xy"]:
 
-		computeBestAndDefaultByFoldFiles("Xy",
-										 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_Xy_performanceTestingBestOnTraining.csv"
-										 ,
-										 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_Xy_performanceTestingDefaultOnTraining.csv")
+				computeBestAndDefaultByFoldFiles("GumTree",
+												 "{}/summary_{}_{}_performanceTestingBestOnTraining.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm)
+												 , "{}/summary_{}_{}_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm))
+
+
 
 	'''For Table of  RQ 1'''
 	def _test_ComparisonBest_PlotRQ1(self):
-		plotDistributionAvg("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_avg_performance_performance_merge_gtJDT_5_CDJDT_4_GumTree.csv",
-							"/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_avg_performance_performance_merge_gtJDT_5_CDJDT_4_ChangeDistiller.csv",
-							"/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_avg_performance_performance_merge_gtJDT_5_CDJDT_4_Xy.csv",
-							 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_Gumtree_performanceTestingDefaultOnTraining.csv",
-							 "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_ChangeDistiller_performanceTestingDefaultOnTraining.csv",
-							"/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_Xy_performanceTestingDefaultOnTraining.csv")
+		dataset = NAME_FOLDER_ASTSPOON
+		plotDistributionAvg("{}/summary_avg_performance_performance_{}_GumTree.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
+							"{}/summary_avg_performance_performance_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
+							"{}/summary_avg_performance_performance_{}_Xy.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
+							 "{}/summary_{}_Gumtree_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
+							 "{}/summary_{}_ChangeDistiller_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
+							"{}/summary_{}_Xy_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, dataset))
 
 	'''Deprecated, not used any more, those metrics are computed based on the  summary_avg_performance_performance'''
 	def _testCheckTest(self):
+		dataset = NAME_FOLDER_ASTSPOON
 		for algo in ["Gumtree", "ChangeDistiller", "Xy"]:
 			for t in ["pmann", "pwilcoxon"]:
 				for p in ["performance", "index"]:
 					countHigherValuesFile(
-						"/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_{}_{}_{}.csv".format(algo, t,p), thr=0.05)
+						"{}/summary_{}_{}_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, dataset, algo, t,p), thr=0.05)
 			print("-----")
 
 	'''Deprecated, not used any more, those metrics are computed based on the  summary_avg_performance_performance'''
 	def _testCorrelation(self):
+		dataset = NAME_FOLDER_ASTSPOON
 		for algo in ["Gumtree", "ChangeDistiller", "Xy"]:
 			for t in ["rp", "srho"]:
 				for p in ["performance", "index"]:
 					countHigherValuesFile(
-						"/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_merge_gtJDT_5_CDJDT_4_{}_{}_{}.csv".format(algo, t,p), thr=0.90)
+						"{}/summary_{}_{}_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,dataset, algo, t,p), thr=0.90)
 			print("-----")
 
 if __name__ == '__main__':

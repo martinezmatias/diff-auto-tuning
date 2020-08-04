@@ -4,6 +4,17 @@ import matplotlib.pyplot as plt
 import numpy as np
 from src.commons.CohenEffectSize import *
 from scipy.stats import wilcoxon, kruskal
+from src.commons.Datalocation import *
+def compareDistributions(pathResults ="{}/distance_per_diff_GTSPOON.csv".format(RESULTS_PROCESSED_LOCATION), keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2"):
+	df = pandas.read_csv(pathResults, sep=",")
+
+	columns = list(df.columns)
+
+	# We get the name of the configurations
+	print("columns {}".format(columns))
+
+	compareDistribution(df=df,keyBestConfiguration=keyBestConfiguration, keyDefaultConfiguration=keyDefaultConfiguration)
+
 
 def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
@@ -64,8 +75,8 @@ def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
 	#https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kruskal.html
 
-	saveFile("../../plots/data/paired_values_best_{}_1.csv".format(keyBestConfiguration), xBest)
-	saveFile("../../plots/data/paired_values_default_{}_2.csv".format(keyDefaultConfiguration), xDefault)
+	saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
+	saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
 
 def saveFile(filename, pvalues1):
 	fout1 = open(filename, 'w')
@@ -75,13 +86,4 @@ def saveFile(filename, pvalues1):
 	fout1.close()
 
 
-def compareDistributions(pathResults ="../../plots/data/distance_per_diff_GTSPOON.csv", keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2"):
-	df = pandas.read_csv(pathResults, sep=",")
-
-	columns = list(df.columns)
-
-	# We get the name of the configurations
-	print("columns {}".format(columns))
-
-	compareDistribution(df=df,keyBestConfiguration=keyBestConfiguration, keyDefaultConfiguration=keyDefaultConfiguration)
 

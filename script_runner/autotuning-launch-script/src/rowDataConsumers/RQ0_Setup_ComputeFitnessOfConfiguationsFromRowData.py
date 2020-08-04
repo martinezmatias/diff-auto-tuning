@@ -8,11 +8,11 @@ from src.commons.DiffAlgorithmMetadata import *
 import pandas as pd
 import scipy.stats
 from src.commons.Utils import *
-
+from src.commons.Datalocation import *
 
 '''Compute the fitness of all the data given as parameter'''
 
-def computeBestConfigurationsFast(rootResults, out = "../../plots/data/", suffix = "", key = None):
+def computeFitness(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix ="", key = None):
 		indexesOfPropertiesInTable = {}
 		indexOfConfig = {}
 		orderOfConfiguration = []

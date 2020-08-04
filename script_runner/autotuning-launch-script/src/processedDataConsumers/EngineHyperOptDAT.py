@@ -218,7 +218,7 @@ def recreateConfigurationKey(params):
 	print("key {}".format(keyConfig))
 	return keyConfig
 
-def analyzeHyperop(path, algo):
+def analyzeResultsHyperop(path, algo):
 	print(algo)
 	#the zero is the config
 	#the one is the performance on training

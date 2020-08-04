@@ -1,6 +1,6 @@
 import unittest
 from src.processedDataConsumers.EngineHyperOptDAT import *
-
+from src.commons.Datalocation import *
 class TestRQ5(unittest.TestCase):
 	def _test_CompteHyperOpt_range(self):
 		evals_range = [1, 5, 10, 20, 50, 100, 200, 500] #[10, 20, 50, 100, 200, 500]
@@ -8,12 +8,11 @@ class TestRQ5(unittest.TestCase):
 		for i_eval in evals_range:
 			kfold = 10
 			for i_ratio in ratio:
-				for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
-										"merge_gt6_cd_5"]:
+				for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 					for algorithm in ["Gumtree", "ChangeDistiller",
 									  "XyMatcher"]:
 						print("\nanalyzing {}".format(folderToAnalyze))
-						computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
+						computeHyperOpt("{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
 
 
 	''''this method reads the results of hyperopt and plots the evolution'''
@@ -33,8 +32,7 @@ class TestRQ5(unittest.TestCase):
 		timeAlgorithm["ChangeDistiller"] = 1
 		timeAlgorithm["XyMatcher"] = 0.01
 
-		for folderToAnalyze in ["merge_gtJDT_5_CDJDT_4",
-										"merge_gt6_cd_5"]:
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 			print("\nanalyzing {}".format(folderToAnalyze))
 
 			for algorithm in ["Gumtree", "ChangeDistiller",
@@ -48,8 +46,7 @@ class TestRQ5(unittest.TestCase):
 							rations_collected = []
 							for i_ratio in ratio:
 								totaldiffexecuted = int(i_ratio * totalExecuted) * i_eval
-								#computeHyperOpt("../../plots/data/distance_per_diff_{}_{}.csv".format(folderToAnalyze, algorithm), kFold=kfold, max_evals=i_eval,fractiondata= i_ratio,  dataset = folderToAnalyze, algorithm = algorithm)
-								path ="../../plots/data/hyper_op_{}_{}_evals_{}_f_{}.csv".format(folderToAnalyze, algorithm, i_eval, i_ratio)
+								path ="{}/hyper_op_{}_{}_evals_{}_f_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm, i_eval, i_ratio)
 								performances = readCSVToFloatList(path, indexToKeep=3)
 								avgperformance = np.mean(performances)
 								rations_collected.append(avgperformance)
