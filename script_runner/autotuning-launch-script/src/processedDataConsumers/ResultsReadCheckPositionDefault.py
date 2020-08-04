@@ -28,6 +28,4 @@ def getPositionDefalt(fileLocation = "./plots/data/best_configurations_summary.c
 		indexesConfigurations.append({"configuration": other, "index": None})
 
 	return indexesConfigurations
-##
 
-#print(getPositionDefalt())

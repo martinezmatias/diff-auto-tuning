@@ -1,6 +1,6 @@
 
 import sys
-from src.processedDataConsumers.ResultsHyperOptDAT import *
+from src.processedDataConsumers.EngineHyperOptDAT import *
 
 
 folderToAnalyze = sys.argv[1]

@@ -10,6 +10,7 @@ import numpy
 from scipy.stats import wilcoxon, kruskal
 import pingouin as pg
 from sklearn.utils import shuffle
+from src.commons.Utils import  *
 
 def computeGridSearchKFold(pathResults ="../../plots/data/distance_per_diff.csv", kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = "../../plots/data/"):
 
@@ -367,3 +368,172 @@ def computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig):
 		bestOrder[i]["i"] = i
 
 	return configs, bestOrder
+
+
+
+def computeBestAndDefaultByFoldFiles(algoName, fileBest, fileDefault):
+	computeBestAndDefaultByFold(algoName, readFileToFloatList(fileBest), readFileToFloatList(fileDefault))
+
+'''Plots the numbers form rq1'''
+def computeBestAndDefaultByFold(algoName, allBest = [], allDefault = []):
+	print("\nComparing performance of best and default by fold. k={}".format(len(allBest)))
+	print("{}: allBest mean {:.2f}\% (st {:.2f})".format(algoName, np.mean(allBest)* 100, np.std(allBest)* 100))
+	print("{}: allDefault mean {:.2f}\% st {:.2f})".format(algoName, np.mean(allDefault)* 100, np.std(allDefault)* 100))
+	improvements = []
+	for i in range(0,len(allBest)):
+		improvements.append(allBest[i] - allDefault[i])
+
+	print("{}: improvement mean {:.2f}\% (st {:.2f})".format(algoName, np.mean(improvements) * 100, np.std(improvements)* 100))
+	stat, pwil = wilcoxon(allBest, allDefault, alternative='two-sided')
+
+	print('scipy wilcoxon: stat=%.3f, p=%.3f' % (stat, pwil))
+'''plots the distribution for RQ1'''
+def plotDistributionAvg( fileGT, fileCD, fileXY, defaultGT, defaultCD, defaultXy, model = "JDT"):
+
+	allGT = readCSVToFloatList(fileGT)
+	allCD = readCSVToFloatList(fileCD)
+	allXY = readCSVToFloatList(fileXY)
+
+	alldefaultGT = readFileToFloatList(defaultGT)
+	alldefaultCD= readFileToFloatList(defaultCD)
+	alldefaultXy= readFileToFloatList(defaultXy)
+
+	defaultGt= np.mean(alldefaultGT)
+	defaultCD= np.mean(alldefaultCD)
+	defaultXY = np.mean(alldefaultXy)
+	#plt.boxplot(gt)
+	#plt.plot(1, 0.54, 'X', alpha=1)
+	#plt.show()
+
+
+	#plt.hist(gt)
+	#plt.show()
+	algos = [allGT, allCD, allXY]
+	ax = sns.violinplot(data = algos,split=True,orient = "v" ,inner="quartile", cut=0, )
+	ax.set_xticklabels(['GumTree', 'ChangeDistiller', 'Xy'])
+	plt.plot(0, defaultGt, 'X', alpha=1, color='red', markersize=20 )
+	plt.plot(1, defaultCD, 'X', alpha=1, color='red', markersize=20 )
+	plt.plot(2, defaultXY, 'X', alpha=1, color='red', markersize=20 )
+	plt.xticks(fontsize=20)
+	plt.yticks(fontsize=20)
+	#plt.xlabel("Diff Algorithm", fontproperties=20)
+	plt.ylabel("Performance", fontsize=14)
+	plt.savefig("distr_avg_performance_{}.pdf".format(model))
+	plt.show()
+
+def countHigherValuesFile(path, thr = 0.05):
+	print("\nAnalyzing {}".format(path))
+	countHigherValues(readFileToFloatList(path), thr)
+
+def countHigherValues(all, thr = 0.05):
+
+	sup = list(filter(lambda x: x>thr, all))
+
+	print("Total {} Sup {} ({:.2f}%)".format(len(all),len(sup), (len(sup)/len(all)*100)))
+
+
+def runReadResultsCrossValidation(path = "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data_monday/summary_performance_performance_{}_K_{}_{}.csv", dataset ="merge_gtJDT_5_CDJDT_4", onlytop = False ):
+
+		corr_thr = 0.90
+		dist_thr=0.05
+
+
+		for algo in ["Gumtree", "ChangeDistiller", "Xy"]:
+			person_sup = 0
+			mann_sup = 0
+			wilcoxon_sup = 0
+			total = 0
+			slopes =  []
+			std_errs = []
+			r_values = []
+			for i in range(0, 10):
+				for j in range(0, 10):
+					if i> j:
+						total +=1
+						print("\nAlgo {} i {} j {}".format(algo, i, j))
+						ki = path.format(dataset, i, algo)
+						kj = path.format(dataset,j, algo)
+
+						## let'salso check the names column zero to be sure
+						li = readCSVToFloatList(ki, indexToKeep=2)
+						lj = readCSVToFloatList(kj, indexToKeep=2)
+
+						decimals = 2
+						li = ([round(x,decimals) for x in   li])
+						lj = ([round(x,decimals) for x in   lj])
+
+
+						ci = readCSVToStringList(ki, indexToKeep=0)
+						cj = readCSVToStringList(kj, indexToKeep=0)
+						## Remove outliers
+						if onlytop:
+							soli = []
+							solj = []
+							mli = np.mean(li)
+							mlj = np.mean(lj)
+
+							sdli = np.std(li)
+							sdlj = np.std(lj)
+
+							for l in range(0, len(ci)):
+								#if not isOutlier(value=li[l], mean=mli, std=sdli) and not isOutlier(value=lj[l], mean=mlj, std=sdlj):
+								if li[l] >= 2 * sdli  and lj[l]>= 2 * sdlj:
+
+									soli.append(li[l])
+									solj.append(lj[l])
+
+							print("Size after removing outliers {}".format(len(soli)))
+
+							li= soli
+							lj = solj
+
+							print(li)
+							print(lj)
+
+						for l in range(0, len(ci)):
+							if not ci[l] == cj[l]:
+
+								print("error {}".format(l) )
+								return
+							#print("{} {} ".format(ci[l],cj[l]))
+
+						print("Size data {}".format(len(li)))
+						rp = scipy.stats.pearsonr(li, lj)
+						print("Pearson's r {} ".format(rp))
+
+						if rp[0] >corr_thr:
+							person_sup+=1
+
+						srho = scipy.stats.spearmanr(li, lj)
+						print("Spearman's rho {} ".format(srho))
+
+						#m, b  = np.polyfit(li, lj, 1)
+						from scipy import stats
+						slope, intercept, r_value, p_value, std_err = stats.linregress(li, lj)
+						print("linear regression slope {}, intercept {}, r_value {}, p_value {}, std_err {}".format(slope, intercept, r_value, p_value, std_err ))
+						slopes.append(slope)
+						std_errs.append(std_err)
+						r_values.append(r_value)
+						stat, pwil = wilcoxon(li, lj, alternative='two-sided')
+
+						print('scipy wilcoxon: stat=%.3f, p=%.3f' % (stat, pwil))
+
+						if pwil >dist_thr:
+							wilcoxon_sup+=1
+
+						stat, pmann = scipy.stats.mannwhitneyu(li, lj, alternative='two-sided')
+
+						print('scipy mannwhitneyu: stat=%.3f, p=%.3f' % (stat, pmann))
+						if pmann > dist_thr:
+							mann_sup += 1
+
+			print("\nSummary {} total {} pperson {} ({}) , mann {} ({}) , wilcoxon {} ({}) ".format(algo, total, person_sup , 100*(person_sup/total), mann_sup, 100*(mann_sup/total), wilcoxon_sup, 100*(wilcoxon_sup/total)))
+
+			print("avg r-values st slopes st   std err st ")
+			print("& {:.5f} & {:.5f} & {:.5f} & {:.5f} & {:.5f} & {:.5f}\\".format(np.mean(r_values), np.std(r_values),np.mean(slopes), np.std(std_errs), np.mean(std_errs),np.std(std_errs)))
+		print("\n----End {}".format(algo))
+
+def isOutlier(value, mean,  std, m = 2):
+	return abs(value - mean) > m * std
+
+

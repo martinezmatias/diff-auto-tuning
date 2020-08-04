@@ -24,3 +24,47 @@ def columnsToMap(row, indexesOfPropertiesInTable):
 		for c in columns:
 			indexesOfPropertiesInTable[c] = i
 			i += 1
+
+
+def readFileToFloatList(file):
+	file1 = open(file, 'r')
+	Lines = file1.readlines()
+	results = []
+	for line in Lines:
+		results.append(float(line.strip()))
+
+	file1.close()
+	return results
+
+def readCSVToFloatList(file, indexToKeep = 1):
+	file1 = open(file, 'r')
+	Lines = file1.readlines()
+	results = []
+	for line in Lines:
+		divided = line.strip().split(",")
+		results.append(float(divided[indexToKeep]))
+
+	file1.close()
+	return results
+
+def readCSVtoAll(file):
+	file1 = open(file, 'r')
+	Lines = file1.readlines()
+	results = []
+	for line in Lines:
+		divided = line.strip().split(",")
+		results.append(divided)
+
+	file1.close()
+	return results
+
+def readCSVToStringList(file, indexToKeep = 1):
+	file1 = open(file, 'r')
+	Lines = file1.readlines()
+	results = []
+	for line in Lines:
+		divided = line.strip().split(",")
+		results.append(str(divided[indexToKeep]))
+
+	file1.close()
+	return results

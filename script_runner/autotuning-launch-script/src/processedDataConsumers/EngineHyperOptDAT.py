@@ -3,7 +3,7 @@ from hyperopt import tpe, hp, fmin, Trials
 import pandas
 import numpy as np
 from src.commons.DiffAlgorithmMetadata import *
-from src.processedDataConsumers.ResultGridSearchKfoldValidation import *
+from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.commons.DiffAlgorithmMetadata import *
 
 rangeSBUP = [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
@@ -17,8 +17,6 @@ rangeSSIM1= [ round(x,2) for x in np.arange(0.2,1.1,0.2)]
 rangeSSIM2= [ round(x,2) for x in np.arange(0.2,1.1,0.2)]
 
 rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
-
-
 
 notfound = []
 
@@ -56,6 +54,9 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 	performanceBestInTraining = []
 	performanceBestInTesting = []
 	bestConfigs = []
+
+	if df.shape[0] <= 10:
+		return
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
@@ -116,6 +117,10 @@ def computeHyperOpt(pathResults ="../../../../plots/data/distance_per_diff.csv",
 		keyConfig = recreateConfigurationKey(eval)
 		print("eval {} {}".format(len(eval),eval))
 		bestConfigs.append(keyConfig)
+
+		if keyConfig not in configsTrainingMaps:
+			continue
+
 		dataOfConfig = configsTrainingMaps[keyConfig]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
 		bestPercentage = dataOfConfig['bs']
@@ -212,3 +217,12 @@ def recreateConfigurationKey(params):
 	keyConfig = "_".join(key)
 	print("key {}".format(keyConfig))
 	return keyConfig
+
+def analyzeHyperop(path, algo):
+	print(algo)
+	#the zero is the config
+	#the one is the performance on training
+	#the second is the performance on testing
+	performances = readCSVToFloatList(path, indexToKeep=2)
+	#print("& {:.5f}\% & {:.5f} ".format(np.mean(performances)* 100, np.std(performances)* 100))
+	print("& {:.2f}\%  (st {:.2f})".format(np.mean(performances)* 100, np.std(performances)* 100))
