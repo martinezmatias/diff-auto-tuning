@@ -2,6 +2,7 @@ import hyperopt
 from hyperopt import tpe, hp, fmin, Trials
 import pandas
 import numpy as np
+import os
 from src.commons.DiffAlgorithmMetadata import *
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.commons.DiffAlgorithmMetadata import *
@@ -29,6 +30,10 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 	print("Run TPE? {}".format(runTpe))
 	df = pandas.read_csv(pathResults, sep=",")
 	print("dataset before random {}".format(df.shape))
+
+	if alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe):
+		print("Config already analyzed")
+		return None
 
 	df = df.sample(frac=fractiondata, random_state=random_seed).reset_index(drop=True)
 
@@ -109,10 +114,10 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 
 		)
 
-		print("best {}".format(best))
-		print(trials.trials)
-		print(trials.results)
-		print(trials.argmin)
+		#print("best {}".format(best))
+		#print(trials.trials)
+		#print(trials.results)
+		#print(trials.argmin)
 
 		eval = hyperopt.space_eval(search_space, best)
 		keyConfig = recreateConfigurationKey(eval)
@@ -178,6 +183,11 @@ def createSpace(algorithm = None):
 
 	return spaceAlgorithms
 
+def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
+
+	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(out, "hyper_op" if isTPE else "random_op" , datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
+
+	return  os.path.exists(filename)
 
 def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
 
