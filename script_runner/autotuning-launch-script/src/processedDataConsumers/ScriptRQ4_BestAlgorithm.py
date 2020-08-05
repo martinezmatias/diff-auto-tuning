@@ -12,10 +12,10 @@ class TestRQ4(unittest.TestCase):
 	'''This script is similar to RQ 1, but the call it once, with a single distance matrix (fitness) considering all algorithms.'''
 	def test_ComputeBestKFoldComplete(self):
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
-								#NAME_FOLDER_ASTSPOON
+								NAME_FOLDER_ASTSPOON
 								]:
 			print("\nAnalyzing {}".format(folderToAnalyze))
-			kvalue = 2
+			kvalue = 10
 			random_seed_value = 0
 			allOptimized = []
 			allDefault = []

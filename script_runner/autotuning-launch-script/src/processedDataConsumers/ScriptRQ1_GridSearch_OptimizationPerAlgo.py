@@ -6,17 +6,15 @@ from src.rowDataConsumers.RQ0_Setup_ComputeFitnessOfConfiguationsFromRowData imp
 from src.commons.Datalocation import *
 
 class TestGrid(unittest.TestCase):
-	def test_something(self):
-		self.assertEqual(True, False)
 
 
-	def _test_ComputeFitnessFastPerAlgorithm(self):
+	def _test_A_ComputeFitnessFastPerAlgorithm(self):
 
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,  NAME_FOLDER_ASTSPOON]:
 			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
 				computeFitness("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
-	def test_ComputeBestKFoldComplete(self):
+	def test_B_ComputeBestKFoldComplete(self):
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
 								NAME_FOLDER_ASTSPOON
 								]:
@@ -49,17 +47,9 @@ class TestGrid(unittest.TestCase):
 			plotImprovements(improvements=allOptimized, defaults=allDefault, key = folderToAnalyze)
 			print("\nanalyzing {}".format(folderToAnalyze))
 
-	def _test_ComputeBestKFoldSingle(self):
-		folderToAnalyze = "merge_gt6_cd_5"
-		kvalue = 2
-
-		#optimized, default,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =\
-		computeGridSearchKFold("{}/distance_per_diff_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=0,  datasetname=folderToAnalyze)
-
-
 
 	'''For Table of  RQ 1'''
-	def _test_ComparisonBest_TableRQ1(self):
+	def _test_C_ComparisonBest_TableRQ1(self):
 
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 			for algorithm in ["Gumtree", "ChangeDistiller", "Xy"]:
@@ -71,7 +61,7 @@ class TestGrid(unittest.TestCase):
 
 
 	'''For Table of  RQ 1'''
-	def _test_ComparisonBest_PlotRQ1(self):
+	def _test_D_ComparisonBest_PlotRQ1(self):
 		dataset = NAME_FOLDER_ASTSPOON
 		plotDistributionAvg("{}/summary_avg_performance_performance_{}_GumTree.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
 							"{}/summary_avg_performance_performance_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
