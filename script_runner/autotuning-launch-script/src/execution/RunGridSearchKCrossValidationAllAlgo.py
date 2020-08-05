@@ -39,8 +39,8 @@ def runGridSearchK(pathResults ="../../../../plots/data/distance_per_diff.csv", 
 
 			cmd = "oarsub -l nodes=1,walltime=%s -O %s -E %s \"%s\"" % (
 				GRID5K_TIME_OUT,
-				"./logs/out_{}_{}_{}_{}_{}_{}.txt".format( "gridsearch"  ,"allAlgo" if algorithm is None else algorithm, kFold, fractiondata, dataset),
-				"./logs/error{}_{}_{}_{}_{}_{}.txt".format(",fractiondata" , "allAlgo"  if algorithm is None else algorithm, kFold, fractiondata, dataset),at_pythom_cmd)
+				"./logs/out_{}_{}_{}_{}_{}.txt".format( "gridsearch"  ,"allAlgo" if algorithm is None else algorithm, kFold, fractiondata, dataset),
+				"./logs/error{}_{}_{}_{}_{}.txt".format(",fractiondata" , "allAlgo"  if algorithm is None else algorithm, kFold, fractiondata, dataset),at_pythom_cmd)
 
 		else:
 			cmd = at_pythom_cmd
