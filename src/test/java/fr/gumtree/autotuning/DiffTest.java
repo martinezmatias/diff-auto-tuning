@@ -5,11 +5,13 @@ import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.util.List;
 
 import org.junit.Test;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
@@ -122,6 +124,150 @@ public class DiffTest {
 		actionsAll = result.getAllOperations();
 
 		assertNotEquals(1, actionsAll.size());
+
+	}
+
+	@Test
+	public void testDiffForTest() throws Exception {
+		// merge_gtJDT_5_CDJDT_4/1/nr_911_id_1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_JDT.csv
+		File rootMegadiff = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+		assertTrue(rootMegadiff.exists());
+
+		String fl = rootMegadiff.getAbsolutePath()
+				+ "/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java";
+		String fr = rootMegadiff.getAbsolutePath()
+				+ "/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_t.java";
+		System.out.println(fl);
+		ITree tl = null;
+		ITree tr = null;
+
+		tl = scanner.getTree(diff.getCtType(new File(fl)));
+		tr = scanner.getTree(diff.getCtType(new File(fr)));
+
+		Diff result = null;
+
+		result = new DiffImpl(new TreeContext()// scanner.getTreeContext()
+				, tl, tr); // new ChawatheScriptGenerator(), new CompositeMatchers.XyMatcher(), new
+
+		List<Operation> actionsAll = result.getAllOperations();
+
+		System.out.println(actionsAll);
+	}
+
+	@Test
+	public void testDiffForTestJDT() throws Exception {
+		/**
+		 * ./gumtree webdiff
+		 * /Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java
+		 * /Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_t.java
+		 * --port 4568
+		 */
+		File rootMegadiff = new File(
+				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+		assertTrue(rootMegadiff.exists());
+
+		String fl = rootMegadiff.getAbsolutePath()
+				+ "/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java";
+		String fr = rootMegadiff.getAbsolutePath()
+				+ "/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_t.java";
+		System.out.println(fl);
+
+		String lc = new String(Files.readAllBytes(new File(fl).toPath()));
+		ITree tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+		lc = new String(Files.readAllBytes(new File(fr).toPath()));
+		ITree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+		Diff result = null;
+
+		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(),
+				new CompositeMatchers.ClassicGumtree(), new GumTreeProperties());
+
+		List<Operation> actionsAll = result.getAllOperations();
+
+		System.out.println("Size  " + actionsAll.size());
+		System.out.println("All " + actionsAll);
+
+		assertEquals(63, actionsAll.size());
+
+		System.out.println(actionsAll);
+
+		System.out.println("After configuring");
+		GumTreeProperties properies = new GumTreeProperties();
+		//
+		properies.getProperties().clear();
+		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.5);
+		properies.put(ConfigurationOptions.GT_BUM_SZT, 1000);
+		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+
+		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(),
+				new CompositeMatchers.ClassicGumtree(), properies);
+
+		actionsAll = result.getAllOperations();
+		System.out.println(actionsAll.size());
+		System.out.println(actionsAll);
+
+		assertEquals(63, actionsAll.size());
+
+		properies.getProperties().clear();
+		properies.put(ConfigurationOptions.GT_BUM_SMT, 1);
+		properies.put(ConfigurationOptions.GT_BUM_SZT, 900);
+		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+
+		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(),
+				new CompositeMatchers.ClassicGumtree(), properies);
+
+		actionsAll = result.getAllOperations();
+		System.out.println("\n" + properies.getProperties());
+		System.out.println("Size  " + actionsAll.size());
+		System.out.println("All " + actionsAll);
+
+		assertEquals(118, actionsAll.size());
+
+		properies.getProperties().clear();
+		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.7);
+		properies.put(ConfigurationOptions.GT_BUM_SZT, 1900);
+		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+
+		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(),
+				new CompositeMatchers.ClassicGumtree(), properies);
+
+		actionsAll = result.getAllOperations();
+		System.out.println("\n" + properies.getProperties());
+		System.out.println("Size  " + actionsAll.size());
+		System.out.println("All " + actionsAll);
+
+		assertEquals(1, actionsAll.size());
+
+		properies.getProperties().clear();
+		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.1);
+		properies.put(ConfigurationOptions.GT_BUM_SZT, 100);
+		properies.put(ConfigurationOptions.GT_STM_MH, 3);
+
+		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(),
+				new CompositeMatchers.ClassicGumtree(), properies);
+
+		actionsAll = result.getAllOperations();
+		System.out.println("\n" + properies.getProperties());
+		System.out.println("Size  " + actionsAll.size());
+		System.out.println("All " + actionsAll);
+
+		assertEquals(147, actionsAll.size());
+		// Default 2.1.1
+		properies.getProperties().clear();
+		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.5);
+		properies.put(ConfigurationOptions.GT_BUM_SZT, 1000);
+		properies.put(ConfigurationOptions.GT_STM_MH, 1);
+
+		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(),
+				new CompositeMatchers.ClassicGumtree(), properies);
+
+		actionsAll = result.getAllOperations();
+		System.out.println(actionsAll.size());
+		System.out.println(actionsAll);
+
+		assertEquals(7, actionsAll.size());
 
 	}
 
