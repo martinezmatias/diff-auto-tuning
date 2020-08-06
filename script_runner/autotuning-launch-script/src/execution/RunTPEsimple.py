@@ -24,7 +24,7 @@ def main(onlyTest = False):
 
 def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", runTpe = True,  dataset ="alldata", out ="../../plots/data/"):
 
-	at_pythom_cmd =  "python3 -m src.execution.TPELauncherSimple {} {} {}".format(pathResults,  dataset, runTpe)
+	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5_TPELauncher {} {} {}".format(pathResults,  dataset, runTpe)
 
 	cmd = ""
 	try:
