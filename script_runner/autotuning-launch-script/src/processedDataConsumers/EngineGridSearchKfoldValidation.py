@@ -90,7 +90,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		resultsByKTestingSorted.append(rankedConfigTesting)
 		resultsByKTestingByConfig.append(configsTesting)
 
-		saveBest(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance")
+		saveBest(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance", fraction=fration )
 
 
 		for config in rankedConfigTesting:
@@ -170,45 +170,45 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	print("avg  rp_index: {} {}".format(np.mean(rp_index),rp_index))
 
-	saveList(out, datasetname=datasetname,  algorithm=algorithm, data=rp_index,name="rp_index" )
+	saveList(out, datasetname=datasetname,  algorithm=algorithm, data=rp_index,name="rp_index", fraction=fration )
 	print("avg  srho_index: {} {}".format(np.mean(srho_index), srho_index))
-	saveList(out, datasetname=datasetname, algorithm=algorithm,  data=srho_index,name="srho_index" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm,  data=srho_index,name="srho_index", fraction=fration  )
 	print("avg  pmann_index: {} {}".format(np.mean(pmann_index), pmann_index))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_index,name="pmann_index" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_index,name="pmann_index", fraction=fration  )
 	print("avg  pwilcoxon_index: {} {}".format(np.mean(pwilcoxon_index), pwilcoxon_index))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_index,name="pwilcoxon_index" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_index,name="pwilcoxon_index", fraction=fration  )
 	print("avg  rp_performance: {} {}".format(np.mean(rp_performance), rp_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=rp_performance,name="rp_performance" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=rp_performance,name="rp_performance", fraction=fration  )
 	print("avg  srho_performance: {} {}".format(np.mean(srho_performance), srho_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=srho_performance,name="srho_performance" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=srho_performance,name="srho_performance", fraction=fration  )
 	print("avg  pmann_performance: {} {}".format(np.mean(pmann_performance), pmann_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_performance,name="pmann_performance" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_performance,name="pmann_performance", fraction=fration  )
 	print("avg  pwilcoxon_performance: {} {}".format(np.mean(pwilcoxon_performance), pwilcoxon_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_performance,name="pwilcoxon_performance" )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_performance,name="pwilcoxon_performance", fraction=fration  )
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceTestingBestOnTraining,
-			 name="performanceTestingBestOnTraining")
+			 name="performanceTestingBestOnTraining", fraction=fration )
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexTestingBestOnTraining,
-			 name="indexTestingBestOnTraining")
+			 name="indexTestingBestOnTraining", fraction=fration )
 
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
-			 name="performanceTestingDefaultOnTraining")
+			 name="performanceTestingDefaultOnTraining", fraction=fration )
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allIndexOnTesting[defaultId],
-			 name="indexTestingDefaultOnTraining")
+			 name="indexTestingDefaultOnTraining", fraction=fration )
 
 
-	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance" )
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance", fraction=fration )
 
 
 	return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId] , rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance
 
-def saveBest(out, data, typeset,k, algo = "",name = "" ):
+def saveBest(out, data, typeset,k, algo = "",name = "", fraction=1 ):
 
 
-	filename = "{}/summary_performance_{}_{}_K_{}_{}.csv".format(out, name, typeset, k, algo)
+	filename = "{}/summary_performance_{}_{}_K_{}_{}_f_{}.csv".format(out, name, typeset, k, algo, fraction)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
@@ -216,10 +216,10 @@ def saveBest(out, data, typeset,k, algo = "",name = "" ):
 	fout1.close()
 	print("Save results at {}".format(filename))
 
-def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" ):
+def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , fraction = 1):
 
 
-	filename = "{}/summary_avg_performance_{}_{}_{}.csv".format(out, name, typeset,  "allAlgorithms" if algo is None else  algo)
+	filename = "{}/summary_avg_performance_{}_{}_{}_f_{}.csv".format(out, name, typeset,  "allAlgorithms" if algo is None else  algo,fraction)
 	fout1 = open(filename, 'w')
 	for conf in data.keys():
 			fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
@@ -227,9 +227,9 @@ def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" ):
 	fout1.close()
 	print("Save results at {}".format(filename))
 
-def saveList(out,datasetname, data, algorithm, name):
+def saveList(out,datasetname, data, algorithm, name, fraction):
 
-	filename = "{}/summary_{}_{}_{}.csv".format(out,datasetname, "allAlgorithms" if algorithm is None else  algorithm, name)
+	filename = "{}/summary_{}_{}_{}_f_{}.csv".format(out,datasetname, "allAlgorithms" if algorithm is None else  algorithm, name, fraction)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{}\n".format(conf))

@@ -16,11 +16,6 @@ def main(onlyTest = False):
 						print("Only test mode, we stop The Execution")
 						return
 
-#folderToAnalyze = sys.argv[1]
-
-#algorithm = sys.argv[2]
-
-#datasetname = sys.argv[6]
 
 def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", runTpe = True,  dataset ="alldata", out ="../../plots/data/"):
 

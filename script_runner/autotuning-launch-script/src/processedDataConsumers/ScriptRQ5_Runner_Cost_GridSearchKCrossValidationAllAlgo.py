@@ -10,27 +10,21 @@ def main(onlyTest = False):
 							]:
 		print("\nAnalyzing {}".format(folderToAnalyze))
 		kvalue = 10
-		random_seed_value = 0
+		for i_fraction in [0.01, 0.1, 0.2, 0.5, 1 ]:
 
-		runGridSearchK("{}/distance_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze),
-								   kFold=kvalue, fractiondata = 1, algorithm=None,
-						#		   random_seed=random_seed_value,
-					   dataset=folderToAnalyze)
+			runGridSearchK("{}/distance_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze),
+									   kFold=kvalue, fractiondata = i_fraction, algorithm=None,
+							#		   random_seed=random_seed_value,
+						   dataset=folderToAnalyze)
 
+			if onlyTest:
+				print("Only test, break. End")
+				return
 
-#distancespath = sys.argv[1]
-
-#algorithm = sys.argv[2]
-
-#kfold = int(sys.argv[3])
-
-#datasetname = sys.argv[4]
-
-#fraction = sys.argv[5]
 
 def runGridSearchK(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5,  fractiondata= 0.1, dataset ="alldata", algorithm = None, out ="../../plots/data/"):
 
-	at_pythom_cmd =  "python3 -m src.execution.GridLauncher {} {} {} {} {}".format(pathResults, algorithm, kFold, dataset,fractiondata)
+	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5GridSearchLauncher {} {} {} {} {}".format(pathResults, algorithm, kFold, dataset,fractiondata)
 
 	cmd = ""
 	try:

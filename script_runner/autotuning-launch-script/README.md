@@ -67,6 +67,7 @@ The method ``_test_ComparisonBest_PlotRQ1`` calls `computeBestAndDefaultByFoldFi
 
 
 #### HyperOpt
+First,  install dependencies. Execute: ` pip install hyperopt pingouin sklearn`.
 
 `EngineHyperOptDAT.py` executes HyperOpt framework, in particular the TPE method.
 The input is the `distance_per_diff_[X].csv` previously computed (where X is the name of the algorithm).
@@ -102,7 +103,9 @@ The script `ScriptRQ5_Cost_HyperOpt.py` contains two methods.
 First, `_test_CompteHyperOpt_range` executes HyperOpts with different a) number of diff in the dataset, b) number of evaluations.
 Then, `_test_Study_Evolution_HyperOpt` analyzes the results from the previous execution. (TO FINISH)
 
-
+Two new runner to execute the experimentt on the Grid:
+`ScriptRQ5_Runner_Cost_GridSearchKCrossValidationAllAlgo.py `
+and `ScriptRQ5_Runner_Cost_TPE.py`(replace the mentioned first one in `ScriptRQ5_Cost_HyperOpt.py`)
 
 ####
 
