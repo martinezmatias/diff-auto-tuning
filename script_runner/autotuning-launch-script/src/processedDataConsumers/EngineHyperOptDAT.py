@@ -1,5 +1,5 @@
 import hyperopt
-from hyperopt import tpe, hp, fmin, Trials
+from hyperopt import tpe, hp, fmin, Trials, rand
 import pandas
 import numpy as np
 import os
@@ -42,7 +42,7 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 	columns = list(df.columns)
 	# We get the name of the configurations
 	allConfig = columns[1:]
-	print(allConfig)
+	#print(allConfig)
 
 	indexOfConfig = {}
 
@@ -108,16 +108,11 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 		best = fmin(
 			fn=objectiveFunctionDAT,
 			space=search_space,
-			algo=tpe.suggest if runTpe else hyperopt.random.suggest,
+			algo=tpe.suggest if runTpe else rand.suggest,
 			max_evals=max_evals,
 			trials=trials,
 
 		)
-
-		#print("best {}".format(best))
-		#print(trials.trials)
-		#print(trials.results)
-		#print(trials.argmin)
 
 		eval = hyperopt.space_eval(search_space, best)
 		keyConfig = recreateConfigurationKey(eval)

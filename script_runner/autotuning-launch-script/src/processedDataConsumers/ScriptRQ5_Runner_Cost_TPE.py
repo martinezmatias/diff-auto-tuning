@@ -4,9 +4,9 @@ from src.execution.Config import  *
 from src.commons.Datalocation import *
 
 
-def main(onlyTest = False):
+def main(runTPE = True, onlyTest = False):
 
-	runTPE = True
+
 
 	for folderToAnalyze in [#NAME_FOLDER_ASTSPOON,
 							NAME_FOLDER_ASTJDT
@@ -54,5 +54,5 @@ def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", ru
 def is_grid5k():
     return os.path.exists("/usr/bin/oarsub")
 
-main(onlyTest=False)
+main(runTPE = False, onlyTest=False)
 print("END")
