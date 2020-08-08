@@ -8,7 +8,9 @@ def main(onlyTest = False):
 
 	runTPE = True
 
-	for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
+	for folderToAnalyze in [#NAME_FOLDER_ASTSPOON,
+							NAME_FOLDER_ASTJDT
+							]:
 					print("\nanalyzing {}".format(folderToAnalyze))
 					runHyperOpts(pathResults="{}/distance_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), dataset = folderToAnalyze, runTpe=runTPE)
 
