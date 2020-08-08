@@ -61,7 +61,7 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 	performanceBestInTesting = []
 	bestConfigs = []
 
-	if df.shape[0] <= 10:
+	if df.shape[0] <= kFold:
 		return
 
 	# For each Fold

@@ -25,6 +25,13 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	df = df.sample(frac=fration, random_state=random_seed).reset_index(drop=True)
 	print("DS size after {} ".format(df.size))
 
+	if df.shape[0] <= kFold:
+		return
+
+	if alreadyAnalyzed(out = out, datasetname = datasetname,  algorithm=algorithm,  franctiondataset =  fration):
+		print("Config already analyzed")
+		return None
+
 	columns = list(df.columns)
 
 	# We get the name of the configurations
@@ -534,4 +541,10 @@ def runReadResultsCrossValidation(path = "/Users/matias/develop/gt-tuning/git-co
 def isOutlier(value, mean,  std, m = 2):
 	return abs(value - mean) > m * std
 
+import os
+def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset):
+	filename = "{}/summary_avg_performance_{}_{}_{}_f_{}.csv".format(out, "performance", datasetname,
+																	 "allAlgorithms" if algorithm is None else algorithm,
+																	 franctiondataset)
 
+	return  os.path.exists(filename)
