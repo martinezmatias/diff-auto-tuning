@@ -1,6 +1,6 @@
 import unittest
 from src.commons.Datalocation import *
-from src.rowDataConsumers.RQ0_Setup_ComputeFitnessOfConfiguationsFromRowData import *
+from src.rowDataConsumers.RQ0_Setup_ComputeFitnessDistanceOfConfiguationsFromRowData import *
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 class TestRQ4(unittest.TestCase):
 

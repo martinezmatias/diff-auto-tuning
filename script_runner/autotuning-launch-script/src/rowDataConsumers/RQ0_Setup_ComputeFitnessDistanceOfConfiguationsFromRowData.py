@@ -86,9 +86,6 @@ def computeFitnessOfFilePair(location, results, diffId, dataFrame, key = None,
 							 matrixOfDistancesPerDiff = {}, indexesOfPropertiesInTable = {}, indexOfConfig = {}, orderOfConfiguration = []
 							 ):
 
-	# Get all the nr Actions
-	allNrActions = dataFrame["NRACTIONS"]
-
 
 	# List with the best configurations (that with nr of actions equals to minES)
 	allBestConfigurationOfFile = []

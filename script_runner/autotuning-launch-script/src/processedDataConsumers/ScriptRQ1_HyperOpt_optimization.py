@@ -1,7 +1,14 @@
 import unittest
 from src.processedDataConsumers.EngineHyperOptDAT import *
 from src.commons.Datalocation import *
+from src.rowDataConsumers.RQ0_Setup_ComputeEDSizeOfConfiguationsFromRowData import *
 class TestHyperOp(unittest.TestCase):
+
+	def test_A_ComputeDistanceFastPerAlgorithm(self):
+
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT,  NAME_FOLDER_ASTSPOON]:
+			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
+				computeEditScriptSize("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
 
 	def _test_CompteHyperOpt_single_by_algo(self):

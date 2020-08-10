@@ -9,11 +9,10 @@ import pandas as pd
 import scipy.stats
 from src.commons.Utils import *
 from src.commons.Datalocation import *
-from src.rowDataConsumers.RQ0_Setup_ComputeFitnessDistanceOfConfiguationsFromRowData import *
 
 '''Compute the fitness of all the data given as parameter'''
 
-def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix ="", key = None, algorithm="ClassicGumtree", thresholdEDsize = 1, thresholdEDsizeDefault = 10):
+def computeEditScriptSize(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix ="", key = None):
 		indexesOfPropertiesInTable = {}
 		indexOfConfig = {}
 		orderOfConfiguration = []
@@ -57,33 +56,12 @@ def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix 
 					csvFile = os.path.join(filesGroup, diff)
 					df = pandas.read_csv(csvFile)
 					diffFromGroup += 1
-
-					minEDsize = computeLessOfFilePair(filesGroup, results, diff, df,
-																matrixOfDistancesPerDiff = matrixOfDistancesPerDiff,
-																key=key, indexesOfPropertiesInTable=indexesOfPropertiesInTable, indexOfConfig=indexOfConfig, orderOfConfiguration=orderOfConfiguration
-																)
-					bestOfDiff = []
-					if minEDsize > thresholdEDsize:
-						continue
-					#get distance of default config
-					defaultConfig = defaultConfigurations[algorithm]
-					indexDefault = indexOfConfig[defaultConfig]
-					distanceDefault = matrixOfDistancesPerDiff[diff][indexDefault]
-					# we only want defaults with not best performance
-					if distanceDefault is not None and distanceDefault > 0 and distanceDefault <= thresholdEDsizeDefault:
-
-						for index in range(0, len(matrixOfDistancesPerDiff[diff])):
-
-								distance = matrixOfDistancesPerDiff[diff][index]
-
-								if distance == 0:
-
-									for config in indexOfConfig.keys():
-										if indexOfConfig[config] == index:
-											bestOfDiff.append(config)
-
-											print("\nconfig {} minED {} distance default {} distance config {} \n path {}".format(config,minEDsize, distanceDefault, distance, csvFile))
-									#return
+					totalDiffAnalyzed += 1
+					totalConfigAnalyzedFromDiff = computeSizeOfFilePair(filesGroup, results, diff, df,
+																		matrixOfDistancesPerDiff = matrixOfDistancesPerDiff,
+																		key=key, indexesOfPropertiesInTable=indexesOfPropertiesInTable, indexOfConfig=indexOfConfig, orderOfConfiguration=orderOfConfiguration
+																		)
+					totalConfigAnalyzed+= totalConfigAnalyzedFromDiff
 					#Testing
 					#if diffFromGroup == 10:
 					#	break
@@ -97,22 +75,17 @@ def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix 
 			#break
 
 
+		saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory=out, filesuffix = suffix, orderOfConfiguration=orderOfConfiguration)
 		print("Total diff {} total config {}".format(totalDiffAnalyzed, totalConfigAnalyzed))
 		print("END")
 
 
 
 ''' Navigates the CSV of one diff, computes the best configurations and store some metrics '''
-def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
-							 matrixOfDistancesPerDiff = {}, indexesOfPropertiesInTable = {}, indexOfConfig = {}, orderOfConfiguration = []
-							 ):
+def computeSizeOfFilePair(location, results, diffId, dataFrame, key = None,
+						  matrixOfDistancesPerDiff = {}, indexesOfPropertiesInTable = {}, indexOfConfig = {}, orderOfConfiguration = []
+						  ):
 
-	# Get all the nr Actions
-	allNrActions = dataFrame["NRACTIONS"]
-
-
-	# List with the best configurations (that with nr of actions equals to minES)
-	allBestConfigurationOfFile = []
 	totalRow = 0
 
 	## for the first call to this method, let's store the columns
@@ -120,12 +93,8 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 
 	## we store the configuration to be analyzed together with it NrActions
 	configurationsFiltered = {}
-	minES = 1000000
 
-	# Navigates each configuration (one per row).
-	#Filters those condif we target and store the distance
 	for rowConfiguration in dataFrame.itertuples():
-
 		matcherName = rowConfiguration.MATCHER
 		if key is not None and isinstance(matcherName, str) and key not in matcherName:
 			continue
@@ -133,27 +102,14 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 		currentNrActions = rowConfiguration.NRACTIONS
 
 		# Skip if the configuration does not produce results (timeout, failure, etc)
-		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
+		if (np.isnan(currentNrActions) or int(currentNrActions) == 0):
 			continue
 
-		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
-		# We store the number of actions
-		configurationsFiltered[rowConfigurationKey] = currentNrActions
-		# check if that number is the min
-		if currentNrActions < minES:
-			minES = currentNrActions
-
-		totalRow +=1
-
-
-	# Now, computes the distance of each configuration (between those filtered!)
-	for rowConfigurationKey in configurationsFiltered.keys():
-
-		currentNrActions = configurationsFiltered[rowConfigurationKey]
-
 		# compute the fitness of the current configuration
-		distance = int(currentNrActions) - minES
+		edsizerow = int(currentNrActions)
+
+		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration,
+														 indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
 
 		index = None
 		# Initialize the structures
@@ -169,12 +125,28 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 			index = indexOfConfig[rowConfigurationKey]
 
 		## save the distance of the config by diff
-		matrixOfDistancesPerDiff[diffId][index] = distance
+		matrixOfDistancesPerDiff[diffId][index] = edsizerow
 
+	return totalRow
 
-		# the configuration is the best
-		if distance == 0:
-			# We save the configuration as best
-			allBestConfigurationOfFile.append(rowConfigurationKey)
+def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="../../plots/data/", filesuffix = "", orderOfConfiguration = []):
 
-	return minES
+	if not os.path.exists(outDirectory):
+		os.makedirs(outDirectory)
+
+	csv__file = "{}/editscript_size_per_diff_{}.csv".format(outDirectory, filesuffix)
+	fbestFile = open(csv__file, "w")
+
+	fbestFile.write("diff,{}\n".format(",".join(orderOfConfiguration)))
+
+	for diff in matrixOfDistancesPerDiff:
+		distances = matrixOfDistancesPerDiff[diff]
+		##truncate the list:
+		distances = distances[0: len(orderOfConfiguration)]
+		filtered = ["" if v is None else str(v) for v in distances]
+		data = ",".join(filtered)
+		fbestFile.write("{},{}\n".format(diff, data))
+		fbestFile.flush()
+
+	fbestFile.close()
+

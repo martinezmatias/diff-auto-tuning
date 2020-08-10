@@ -2,7 +2,7 @@ import unittest
 
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.processedDataConsumers.deprecated.plotPerformance import *
-from src.rowDataConsumers.RQ0_Setup_ComputeFitnessOfConfiguationsFromRowData import *
+from src.rowDataConsumers.RQ0_Setup_ComputeFitnessDistanceOfConfiguationsFromRowData import *
 from src.commons.Datalocation import *
 
 class TestGrid(unittest.TestCase):
