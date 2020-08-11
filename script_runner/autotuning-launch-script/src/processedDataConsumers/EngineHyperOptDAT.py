@@ -21,17 +21,18 @@ rangeSSIM2= [ round(x,2) for x in np.arange(0.2,1.1,0.2)]
 rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 
 notfound = []
-
-def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = RESULTS_PROCESSED_LOCATION ):
+#editscript_size_per_diff
+def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = RESULTS_PROCESSED_LOCATION , overwriteResult = True):
 	print("GT space size: {}".format(len(rangeGT_BUM_SMT) * len(rangeGT_BUM_SZT) * len(rangeMH)))
 	print("SimpleGT space size: {}".format(len(rangeSBUP) * len(rangeMH)))
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
 	print("XY space size: {}".format(len(rangeXYSIM) * len(rangeMH)))
 	print("Run TPE? {}".format(runTpe))
+	print("Overwrite results? {}".format(overwriteResult))
 	df = pandas.read_csv(pathResults, sep=",")
 	print("dataset before random {}".format(df.shape))
 
-	if alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe):
+	if not overwriteResult and alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe):
 		print("Config already analyzed")
 		return None
 
@@ -81,7 +82,7 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 		print("\nTraining {} ".format(k))
 
 		## let's compute first the metrics for each configuration
-		configsTraining, rankedBestTraining = findBestRanking(X_train, allConfig, df, indexOfColumns = indexOfConfig)
+		configsTraining, rankedBestTraining = findESAverageRanking(X_train, allConfig, df, indexOfColumns = indexOfConfig)
 
 		configsTrainingMaps = {}
 		for config in configsTraining:
@@ -91,7 +92,7 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 
 		## Now the same for testing:
 
-		configsTesting, rankedBestTesting = findBestRanking(X_test, allConfig, df, indexOfColumns=indexOfConfig)
+		configsTesting, rankedBestTesting = findESAverageRanking(X_test, allConfig, df, indexOfColumns=indexOfConfig)
 
 		configsTestingMaps = {}
 		for config in configsTesting:
@@ -140,6 +141,30 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 
 	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe)
 
+def findESAverageRanking(X_train, allConfig, df, indexOfColumns):
+	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig, indexOfColumns)
+	configs, rankedBest = computeAvgSizeConfiguration(allConfig, presentPerConfig, valuesPerConfig)
+	return configs, rankedBest
+
+
+def computeAvgSizeConfiguration(allConfig, presentPerConfig, valuesPerConfig):
+
+	averages = [0 for x in (allConfig)]
+	configs= []
+	for i in range(0, len(allConfig)):
+		averages[i] = np.mean(valuesPerConfig[i])
+
+		configs.append({'c': allConfig[i], 'av': averages[i]})
+
+	##Sorting according number of best
+	bestOrder = sorted(configs, key=lambda x: x['av'], reverse=False)
+	print("Bests avg ({}) {}".format(len(bestOrder),bestOrder))
+
+	for i in range(0, len(bestOrder)):
+		bestOrder[i]["i"] = i
+
+	return configs, bestOrder
+
 def createSpace(algorithm = None):
 	spaceAlgorithms = [
 		{  # ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
@@ -181,7 +206,7 @@ def createSpace(algorithm = None):
 def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
 
 	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(out, "hyper_op" if isTPE else "random_op" , datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
-
+	print("checking existance of {}".format(filename))
 	return  os.path.exists(filename)
 
 def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
@@ -209,7 +234,7 @@ def objectiveFunctionDAT(params):
 
 	dataOfConfig = dataBestConfigurations[keyConfig]
 	## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-	bestPercentage = dataOfConfig['bs']
+	bestPercentage = dataOfConfig['av']#dataOfConfig['bs']
 	print("config {} best {} ".format(keyConfig, bestPercentage))
 	## As fmin aims at minimizing
 	return 1 - bestPercentage

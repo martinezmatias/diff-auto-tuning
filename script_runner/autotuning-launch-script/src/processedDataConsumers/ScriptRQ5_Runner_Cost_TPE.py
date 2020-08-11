@@ -55,4 +55,5 @@ def is_grid5k():
     return os.path.exists("/usr/bin/oarsub")
 
 main(runTPE = False, onlyTest=False)
+main(runTPE = True, onlyTest=False)
 print("END")

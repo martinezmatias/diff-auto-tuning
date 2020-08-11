@@ -1,6 +1,7 @@
 import unittest
 from src.commons.Datalocation import *
 from src.rowDataConsumers.RQ0_Setup_ComputeFitnessDistanceOfConfiguationsFromRowData import *
+from src.rowDataConsumers.RQ0_Setup_ComputeEDSizeOfConfiguationsFromRowData import *
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 class TestRQ4(unittest.TestCase):
 
@@ -9,8 +10,13 @@ class TestRQ4(unittest.TestCase):
 		folderToAnalyze = NAME_FOLDER_ASTJDT
 		computeFitness("{}/{}/".format(RESULTS_ROW_LOCATION,folderToAnalyze), suffix=folderToAnalyze)
 
+	def test_ComputeEditScriptFast(self):
+
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
+			computeEditScriptSize("{}/{}/".format(RESULTS_ROW_LOCATION,folderToAnalyze), suffix=folderToAnalyze)
+
 	'''This script is similar to RQ 1, but the call it once, with a single distance matrix (fitness) considering all algorithms.'''
-	def test_ComputeBestKFoldComplete(self):
+	def _test_ComputeBestKFoldComplete(self):
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
 								NAME_FOLDER_ASTSPOON
 								]:
