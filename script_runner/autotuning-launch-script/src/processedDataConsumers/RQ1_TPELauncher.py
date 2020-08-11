@@ -22,6 +22,6 @@ datasetname = sys.argv[2]
 
 runTPE = str(sys.argv[3])
 
-algoSelected = str(sys.argv[3])
+algoSelected = str(sys.argv[4])
 
 runTPERangeValues(distancespath,datasetname, runTPE, algoSelected)
