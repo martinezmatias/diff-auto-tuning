@@ -11,7 +11,7 @@ class TestHyperOp(unittest.TestCase):
 				computeEditScriptSize("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
 
-	def _test_CompteHyperOpt_single_by_algo(self):
+	def test_CompteHyperOpt_single_by_algo(self):
 			''''only 1000 '''''
 			kfold = 10
 			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
@@ -20,7 +20,7 @@ class TestHyperOp(unittest.TestCase):
 					print("\nanalyzing {}".format(folderToAnalyze))
 					computeHyperOpt(overwriteResult=True, pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=1000,fractiondata= 1,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION )
 
-	def test_CompteHyperOpt_single(self):
+	def _test_CompteHyperOpt_single(self):
 			''''only 1000 '''''
 			kfold = 10
 			for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:

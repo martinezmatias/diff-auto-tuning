@@ -8,6 +8,8 @@ from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.commons.DiffAlgorithmMetadata import *
 from src.commons.Datalocation import *
 
+AVG_CONSTANT = 'av'
+
 rangeSBUP = [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
 rangeMH = [ round(x,2) for x in np.arange(1,6,1)]
 rangeGT_BUM_SMT = [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
@@ -28,6 +30,7 @@ def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
 	print("XY space size: {}".format(len(rangeXYSIM) * len(rangeMH)))
 	print("Run TPE? {}".format(runTpe))
+	print("Algorithm {}".format(algorithm))
 	print("Overwrite results? {}".format(overwriteResult))
 	df = pandas.read_csv(pathResults, sep=",")
 	print("dataset before random {}".format(df.shape))
@@ -125,7 +128,7 @@ def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_
 
 		dataOfConfig = configsTrainingMaps[keyConfig]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-		bestPercentage = dataOfConfig['bs']
+		bestPercentage = dataOfConfig[AVG_CONSTANT]
 		print("Results k {} config {} best testing {} ".format(k, keyConfig, bestPercentage))
 
 		performanceBestInTraining.append(bestPercentage)
@@ -134,7 +137,7 @@ def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_
 
 		dataOfConfig = configsTestingMaps[keyConfig]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-		bestPercentage = dataOfConfig['bs']
+		bestPercentage = dataOfConfig[AVG_CONSTANT]
 		print("Results k {} config {} best training {} ".format(k, keyConfig, bestPercentage))
 
 		performanceBestInTesting.append(bestPercentage)
@@ -152,13 +155,13 @@ def computeAvgSizeConfiguration(allConfig, presentPerConfig, valuesPerConfig):
 	averages = [0 for x in (allConfig)]
 	configs= []
 	for i in range(0, len(allConfig)):
-		averages[i] = np.mean(valuesPerConfig[i])
+		averages[i] = np.mean(valuesPerConfig[i]) if len((valuesPerConfig[i])) <= 2 else np.median(valuesPerConfig[i])
 
-		configs.append({'c': allConfig[i], 'av': averages[i]})
+		configs.append({'c': allConfig[i], AVG_CONSTANT: averages[i]})
 
 	##Sorting according number of best
-	bestOrder = sorted(configs, key=lambda x: x['av'], reverse=False)
-	print("Bests avg ({}) {}".format(len(bestOrder),bestOrder))
+	bestOrder = sorted(configs, key=lambda x: x[AVG_CONSTANT], reverse=False)
+	print("Bests avg ({}) {}".format(len(bestOrder),bestOrder[0]))
 
 	for i in range(0, len(bestOrder)):
 		bestOrder[i]["i"] = i
@@ -234,7 +237,7 @@ def objectiveFunctionDAT(params):
 
 	dataOfConfig = dataBestConfigurations[keyConfig]
 	## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-	bestPercentage = dataOfConfig['av']#dataOfConfig['bs']
+	bestPercentage = dataOfConfig[AVG_CONSTANT]#dataOfConfig['bs']
 	print("config {} best {} ".format(keyConfig, bestPercentage))
 	## As fmin aims at minimizing
 	return 1 - bestPercentage

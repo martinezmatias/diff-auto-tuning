@@ -271,8 +271,6 @@ def analyzeConfigurationsFromDiffs(df, setofDiffToConsider, allconfig, indexOfCo
 				currentConfig = allconfig[i]
 				indexOfcurrent =  indexOfColumns[currentConfig]
 				positionOfConfig = shift + indexOfcurrent
-				#if i < 10:
-				#	print("{} {} ".format(currentConfig, positionOfConfig))
 				distance = rowDiff[positionOfConfig]
 				if not np.isnan(distance):
 					valuesPerConfig[i].append(distance)
