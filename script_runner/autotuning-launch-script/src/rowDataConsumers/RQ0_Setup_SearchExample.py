@@ -87,12 +87,14 @@ def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix 
 									for config in indexOfConfig.keys():
 										if indexOfConfig[config] == index:
 											bestOfDiff.append(config)
-
+											algoConfig = config.split("_")[0]
+											print(algoConfig)
 											#print("\nconfig {} minED {} distance default {} distance config {} \n path {}".format(config,minEDsize, distanceDefault, distance, csvFile))
 											rowstring = "{},{},{},{},{},{},{},{}\n".format(diff, config, minEDsize,
 																					 defaultConfig,
 																					 cacheOfSizes[diff][defaultConfig],
-																					 distanceDefault, createCompleteKey(configId=config, algo=algorithm), createCompleteKey(configId=defaultConfig, algo=algorithm))
+																					 distanceDefault, createCompleteKey(configId=config, algo=algoConfig#algorithm
+																														), createCompleteKey(configId=defaultConfig, algo=algorithm))
 											print(rowstring)
 											f.write(rowstring)
 											f.flush()
@@ -154,15 +156,17 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 		# Skip if the configuration does not produce results (timeout, failure, etc)
 		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
 			continue
-
-		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
-		# We store the number of actions
-		configurationsFiltered[rowConfigurationKey] = currentNrActions
-		cacheOfSizes[diffId][rowConfigurationKey] = currentNrActions
-		# check if that number is the min
-		if currentNrActions < minES:
-			minES = currentNrActions
+		try:
+			# get a key of the configuration (concatenation of its parameters)
+			rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
+			# We store the number of actions
+			configurationsFiltered[rowConfigurationKey] = currentNrActions
+			cacheOfSizes[diffId][rowConfigurationKey] = currentNrActions
+			# check if that number is the min
+			if currentNrActions < minES:
+				minES = currentNrActions
+		except:
+			print("error in row")
 
 		totalRow +=1
 
