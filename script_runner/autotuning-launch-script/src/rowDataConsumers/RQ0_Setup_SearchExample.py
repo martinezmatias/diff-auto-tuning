@@ -11,12 +11,18 @@ from src.commons.Utils import *
 from src.commons.Datalocation import *
 from src.rowDataConsumers.RQ0_Setup_ComputeFitnessDistanceOfConfiguationsFromRowData import *
 
+cacheOfSizes = {}
 '''Compute the fitness of all the data given as parameter'''
 
 def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix ="", key = None, algorithm="ClassicGumtree", thresholdEDsize = 1, thresholdEDsizeDefault = 10):
 		indexesOfPropertiesInTable = {}
 		indexOfConfig = {}
 		orderOfConfiguration = []
+		cacheOfSizes.clear()
+
+		f = open("revisionstoanalyze_{}.csv".format(suffix), "w")
+		f.write("{},{},{},{},{},{},{},{}\n".format("DIFF_ID", "BEST_CONFIG", "BEST_SIZE", "DEFAULT_CONFIG", "DEFAULT_SIZE",
+											 "DISTANCE", "KEY_BEST", "KEY_DEFAULT"))
 
 		files = (os.listdir(rootResults))
 		files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults, x)), files))
@@ -71,7 +77,7 @@ def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix 
 					distanceDefault = matrixOfDistancesPerDiff[diff][indexDefault]
 					# we only want defaults with not best performance
 					if distanceDefault is not None and distanceDefault > 0 and distanceDefault <= thresholdEDsizeDefault:
-
+						foundBest = False
 						for index in range(0, len(matrixOfDistancesPerDiff[diff])):
 
 								distance = matrixOfDistancesPerDiff[diff][index]
@@ -82,7 +88,20 @@ def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix 
 										if indexOfConfig[config] == index:
 											bestOfDiff.append(config)
 
-											print("\nconfig {} minED {} distance default {} distance config {} \n path {}".format(config,minEDsize, distanceDefault, distance, csvFile))
+											#print("\nconfig {} minED {} distance default {} distance config {} \n path {}".format(config,minEDsize, distanceDefault, distance, csvFile))
+											rowstring = "{},{},{},{},{},{},{},{}\n".format(diff, config, minEDsize,
+																					 defaultConfig,
+																					 cacheOfSizes[diff][defaultConfig],
+																					 distanceDefault, createCompleteKey(configId=config, algo=algorithm), createCompleteKey(configId=defaultConfig, algo=algorithm))
+											print(rowstring)
+											f.write(rowstring)
+											f.flush()
+											foundBest = True
+
+											break
+
+								if foundBest:
+									break
 									#return
 					#Testing
 					#if diffFromGroup == 10:
@@ -96,7 +115,7 @@ def searchExampleForPaper(rootResults, out = RESULTS_PROCESSED_LOCATION, suffix 
 				#test
 			#break
 
-
+		f.close()
 		print("Total diff {} total config {}".format(totalDiffAnalyzed, totalConfigAnalyzed))
 		print("END")
 
@@ -107,8 +126,6 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 							 matrixOfDistancesPerDiff = {}, indexesOfPropertiesInTable = {}, indexOfConfig = {}, orderOfConfiguration = []
 							 ):
 
-	# Get all the nr Actions
-	allNrActions = dataFrame["NRACTIONS"]
 
 
 	# List with the best configurations (that with nr of actions equals to minES)
@@ -121,6 +138,8 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 	## we store the configuration to be analyzed together with it NrActions
 	configurationsFiltered = {}
 	minES = 1000000
+
+	cacheOfSizes[diffId] = {}
 
 	# Navigates each configuration (one per row).
 	#Filters those condif we target and store the distance
@@ -140,6 +159,7 @@ def computeLessOfFilePair(location, results, diffId, dataFrame, key = None,
 		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
 		# We store the number of actions
 		configurationsFiltered[rowConfigurationKey] = currentNrActions
+		cacheOfSizes[diffId][rowConfigurationKey] = currentNrActions
 		# check if that number is the min
 		if currentNrActions < minES:
 			minES = currentNrActions
