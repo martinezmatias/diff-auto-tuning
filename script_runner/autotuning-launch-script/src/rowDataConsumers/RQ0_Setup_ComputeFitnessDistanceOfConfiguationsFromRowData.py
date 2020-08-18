@@ -106,22 +106,25 @@ def computeFitnessOfFilePair(location, results, diffId, dataFrame, key = None,
 		if key is not None and isinstance(matcherName, str) and key not in matcherName:
 			continue
 
-		currentNrActions = rowConfiguration.NRACTIONS
+		try:
+			currentNrActions = rowConfiguration.NRACTIONS
 
-		# Skip if the configuration does not produce results (timeout, failure, etc)
-		if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
-			continue
+			# Skip if the configuration does not produce results (timeout, failure, etc)
+			if(np.isnan(currentNrActions) or int(currentNrActions) == 0 ):
+				continue
 
-		# get a key of the configuration (concatenation of its parameters)
-		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
-		# We store the number of actions
-		configurationsFiltered[rowConfigurationKey] = currentNrActions
-		# check if that number is the min
-		if currentNrActions < minES:
-			minES = currentNrActions
+			# get a key of the configuration (concatenation of its parameters)
+			rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration, indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
+			# We store the number of actions
+			configurationsFiltered[rowConfigurationKey] = currentNrActions
+			# check if that number is the min
+			if currentNrActions < minES:
+				minES = currentNrActions
 
-		totalRow +=1
+		except:
+			print("Problems reading row")
 
+		totalRow += 1
 	# Now, computes the distance of each configuration (between those filtered!)
 	for rowConfigurationKey in configurationsFiltered.keys():
 
@@ -174,4 +177,5 @@ def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="
 		fbestFile.flush()
 
 	fbestFile.close()
+	print("save at {}".format(csv__file))
 

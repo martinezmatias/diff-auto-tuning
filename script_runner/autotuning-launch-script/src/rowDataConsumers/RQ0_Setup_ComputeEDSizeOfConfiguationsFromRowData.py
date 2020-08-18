@@ -100,32 +100,34 @@ def computeSizeOfFilePair(location, results, diffId, dataFrame, key = None,
 			continue
 
 		currentNrActions = rowConfiguration.NRACTIONS
+		try:
+			# Skip if the configuration does not produce results (timeout, failure, etc)
+			if (np.isnan(currentNrActions) or int(currentNrActions) == 0):
+				continue
 
-		# Skip if the configuration does not produce results (timeout, failure, etc)
-		if (np.isnan(currentNrActions) or int(currentNrActions) == 0):
-			continue
+			# compute the fitness of the current configuration
+			edsizerow = int(currentNrActions)
 
-		# compute the fitness of the current configuration
-		edsizerow = int(currentNrActions)
+			rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration,
+															 indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
 
-		rowConfigurationKey = getConfigurationKeyFromCSV(rowConfiguration,
-														 indexesOfPropertiesOnTable=indexesOfPropertiesInTable)
+			index = None
+			# Initialize the structures
+			if rowConfigurationKey not in results:
+				results[rowConfigurationKey] = {}
 
-		index = None
-		# Initialize the structures
-		if rowConfigurationKey not in results:
-			results[rowConfigurationKey] = {}
+				index = len(indexOfConfig.keys())
+				indexOfConfig[rowConfigurationKey] = index
+				orderOfConfiguration.append(rowConfigurationKey)
 
-			index = len(indexOfConfig.keys())
-			indexOfConfig[rowConfigurationKey] = index
-			orderOfConfiguration.append(rowConfigurationKey)
+			else:
+				# the configuration was already seen, so it has an idex
+				index = indexOfConfig[rowConfigurationKey]
 
-		else:
-			# the configuration was already seen, so it has an idex
-			index = indexOfConfig[rowConfigurationKey]
-
-		## save the distance of the config by diff
-		matrixOfDistancesPerDiff[diffId][index] = edsizerow
+			## save the distance of the config by diff
+			matrixOfDistancesPerDiff[diffId][index] = edsizerow
+		except:
+			print("Problems with row")
 
 	return totalRow
 
@@ -149,4 +151,5 @@ def saveResultsPerDiffAndConfiguration(matrixOfDistancesPerDiff, outDirectory ="
 		fbestFile.flush()
 
 	fbestFile.close()
+	print("save at {}".format(csv__file))
 
