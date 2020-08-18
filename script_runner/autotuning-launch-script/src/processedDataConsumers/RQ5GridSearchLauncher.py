@@ -8,7 +8,7 @@ def main(distancespath,algorithm,kfold,datasetname):
 
 		computeGridSearchKFold(pathResults=distancespath, kFold=kfold,
 							   algorithm=None if algorithm.lower() == "none" else None,
-							   defaultId="ClassicGumtree_0.5_1000_2", fration=i_fraction, datasetname=datasetname)
+							   defaultId="ClassicGumtree_0.5_1000_1", fration=i_fraction, datasetname=datasetname)
 
 distancespath = sys.argv[1]
 
