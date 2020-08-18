@@ -12,7 +12,7 @@ def main(runTPE = True, onlyTest = False):
 		for algorithm in ["Gumtree", "ChangeDistiller",
 						  "XyMatcher"]:
 					print("\nanalyzing {}".format(folderToAnalyze))
-					runHyperOpts(pathResults="{}/distance_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), dataset = folderToAnalyze, runTpe=runTPE, algo=algorithm)
+					runHyperOpts(pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm), dataset = folderToAnalyze, runTpe=runTPE, algo=algorithm)
 
 					if onlyTest:
 						print("Only test mode, we stop The Execution")
