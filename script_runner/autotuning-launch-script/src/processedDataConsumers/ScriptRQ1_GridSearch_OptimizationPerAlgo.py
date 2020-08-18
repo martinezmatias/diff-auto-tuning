@@ -8,7 +8,7 @@ from src.commons.Datalocation import *
 class TestGrid(unittest.TestCase):
 
 
-	def _test_A_ComputeFitnessFastPerAlgorithm(self):
+	def test_A_ComputeFitnessFastPerAlgorithm(self):
 
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,  NAME_FOLDER_ASTSPOON]:
 			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:

@@ -2,13 +2,15 @@ from src.processedDataConsumers.EngineHyperOptDAT import *
 import subprocess
 from src.execution.Config import  *
 from src.commons.Datalocation import *
-
+import subprocess
+from src.execution.Config import  *
+from src.commons.Datalocation import *
 
 def main(runTPE = True, onlyTest = False):
 
 
 
-	for folderToAnalyze in [#NAME_FOLDER_ASTSPOON,
+	for folderToAnalyze in [NAME_FOLDER_ASTSPOON,
 							NAME_FOLDER_ASTJDT
 							]:
 					print("\nanalyzing {}".format(folderToAnalyze))

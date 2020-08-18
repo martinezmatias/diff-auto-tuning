@@ -6,7 +6,7 @@ from src.commons.Datalocation import *
 
 def main(runTPE = True, onlyTest = False):
 
-	for folderToAnalyze in [#NAME_FOLDER_ASTSPOON,
+	for folderToAnalyze in [NAME_FOLDER_ASTSPOON,
 							NAME_FOLDER_ASTJDT
 							]:
 		for algorithm in ["Gumtree", "ChangeDistiller",

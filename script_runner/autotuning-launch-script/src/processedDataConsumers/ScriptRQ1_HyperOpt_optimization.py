@@ -11,7 +11,7 @@ class TestHyperOp(unittest.TestCase):
 				computeEditScriptSize("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
 
-	def test_CompteHyperOpt_single_by_algo(self):
+	def _test_CompteHyperOpt_single_by_algo(self):
 			''''only 1000 '''''
 			kfold = 10
 			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:

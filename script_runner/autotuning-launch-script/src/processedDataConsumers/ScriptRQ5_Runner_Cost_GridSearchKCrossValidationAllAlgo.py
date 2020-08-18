@@ -6,7 +6,7 @@ from src.commons.Datalocation import *
 
 def main(onlyTest = False):
 	for folderToAnalyze in [NAME_FOLDER_ASTJDT,
-							#NAME_FOLDER_ASTSPOON
+							NAME_FOLDER_ASTSPOON
 							]:
 		print("\nAnalyzing {}".format(folderToAnalyze))
 		kvalue = 10
