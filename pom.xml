@@ -66,6 +66,13 @@
 			<version>1.114</version>
 		</dependency>
 
+		<dependency>
+			<groupId>org.rendersnake</groupId>
+			<artifactId>rendersnake</artifactId>
+			<version>1.9.0</version>
+		</dependency>
+
+
 	</dependencies>
 
 	<build>
