@@ -121,17 +121,20 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		for j in range(0, len(resultsByKTestingByConfig)):
 			if i > j :
 				print("\nCorrelation between testing i:{} j:{} ".format(i,j))
-				rp, srho, pmann, pwilcoxon =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j], field = 'i')
-				rp_index.append(rp[0])
-				srho_index.append(srho[0])
-				pmann_index.append(pmann)
-				pwilcoxon_index .append(pwilcoxon)
-
-				rp, srho, pmann, pwilcoxon = computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j],  field = 'bs')
-				rp_performance.append(rp[0])
-				srho_performance.append(srho[0])
-				pmann_performance.append(pmann)
-				pwilcoxon_performance.append(pwilcoxon)
+				try:
+					rp, srho, pmann, pwilcoxon =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j], field = 'i')
+					rp_index.append(rp[0])
+					srho_index.append(srho[0])
+					pmann_index.append(pmann)
+					pwilcoxon_index .append(pwilcoxon)
+	
+					rp, srho, pmann, pwilcoxon = computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j],  field = 'bs')
+					rp_performance.append(rp[0])
+					srho_performance.append(srho[0])
+					pmann_performance.append(pmann)
+					pwilcoxon_performance.append(pwilcoxon)
+				except:
+					print("Error computing stats")
 
 
 	print("\n Getting the best:")
