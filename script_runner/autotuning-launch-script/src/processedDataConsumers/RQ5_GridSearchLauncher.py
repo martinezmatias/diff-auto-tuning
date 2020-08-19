@@ -2,15 +2,21 @@ from src.commons.Datalocation import RESULTS_PROCESSED_LOCATION
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import computeGridSearchKFold
 import os, sys
 from src.processedDataConsumers.CostParameters import *
+from src.commons.DiffAlgorithmMetadata import *
+def main(distancespath,algorithm,kfold,datasetname, seed):
 
-def main(distancespath,algorithm,kfold,datasetname):
-
-
+	datasetComplete = None
 	for i_fraction in ratioDataset:
 
-		computeGridSearchKFold(pathResults=distancespath, kFold=kfold,
+		keyDefault = None
+		if algorithm is None or "Gumtree" in algorithm:
+			keyDefault = "ClassicGumtree"
+		else:
+			keyDefault = algorithm
+
+		datasetComplete = computeGridSearchKFold(pathResults=distancespath, dfcomplete=datasetComplete, kFold=kfold,
 							   algorithm=None if algorithm.lower() == "none" else algorithm,
-							   defaultId="ClassicGumtree_0.5_1000_1", fration=i_fraction, datasetname=datasetname)
+							   defaultId=defaultConfigurations[keyDefault], fration=i_fraction, datasetname=datasetname, random_seed=seed)
 
 distancespath = sys.argv[1]
 
@@ -20,5 +26,5 @@ kfold = int(sys.argv[3])
 
 datasetname = sys.argv[4]
 
-
-main(distancespath, algorithm, kfold, datasetname )
+seed = sys.argv[4]
+main(distancespath, algorithm, kfold, datasetname, seed )

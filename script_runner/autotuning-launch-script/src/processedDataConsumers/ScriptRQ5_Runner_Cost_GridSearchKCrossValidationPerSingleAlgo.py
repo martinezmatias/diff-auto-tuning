@@ -11,19 +11,22 @@ def main(onlyTest = False):
 		print("\nAnalyzing {}".format(folderToAnalyze))
 		kvalue = 10
 		for palgorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
-			runGridSearchK("{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, palgorithm),
-										   kFold=kvalue, algorithm=palgorithm,
-								#		   random_seed=random_seed_value,
-							   dataset=folderToAnalyze)
+
+			for iseed in range(0, SEEDS_TO_EXECUTE):
+
+				runGridSearchK("{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, palgorithm),
+											   kFold=kvalue, algorithm=palgorithm,
+											   random_seed=iseed,
+								   dataset=folderToAnalyze)
 
 		if onlyTest:
 				print("Only test, break. End")
 				return
 
 
-def runGridSearchK(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, dataset ="alldata", algorithm = None, out ="../../plots/data/"):
+def runGridSearchK(pathResults ="../../../../plots/data/distance_per_diff.csv", kFold=5, dataset ="alldata", algorithm = None, out ="../../plots/data/",  random_seed = 0):
 
-	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5_GridSearchLauncher {} {} {} {} ".format(pathResults, algorithm, kFold, dataset)
+	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5_GridSearchLauncher {} {} {} {} {} ".format(pathResults, algorithm, kFold, dataset, random_seed)
 
 	cmd = ""
 	try:
@@ -32,8 +35,8 @@ def runGridSearchK(pathResults ="../../../../plots/data/distance_per_diff.csv", 
 
 			cmd = "oarsub -l nodes=1,walltime=%s -O %s -E %s \"%s\"" % (
 				GRID5K_TIME_OUT,
-				"./logs/out_{}_{}_{}_{}.txt".format( "gridsearch"  ,"allAlgo" if algorithm is None else algorithm, kFold,dataset),
-				"./logs/error_{}_{}_{}_{}.txt".format("gridsearch" , "allAlgo"  if algorithm is None else algorithm, kFold,  dataset),at_pythom_cmd)
+				"./logs/out_{}_{}_{}_{}_seed_{}.txt".format( "gridsearch"  ,"allAlgo" if algorithm is None else algorithm, kFold,dataset, random_seed),
+				"./logs/error_{}_{}_{}_{}_seed_{}.txt".format("gridsearch" , "allAlgo"  if algorithm is None else algorithm, kFold,  dataset, random_seed),at_pythom_cmd)
 
 		else:
 			cmd = at_pythom_cmd

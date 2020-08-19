@@ -23,8 +23,8 @@ propertiesPerMatcher["XyMatcher"] = ["GT_STM_MH", "GT_XYM_SIM"]
 defaultConfigurations = {
 	#"SimpleGumtree":"SimpleGumtree_0.4_2", ##as the threshold does not count, we use 0.5, which we have computed it
 "SimpleGumtree":"SimpleGumtree_0.5_2",
-"ClassicGumtree":"ClassicGumtree_0.5_1000_2"	,
-"CompleteGumtreeMatcher":"CompleteGumtreeMatcher_0.5_1000_2",
+"ClassicGumtree":"ClassicGumtree_0.5_1000_1"	, ## "CompleteGumtreeMatcher_0.5_1000_2", GT2 uses H = 1 , GT 3 uses 2
+"CompleteGumtreeMatcher": "CompleteGumtreeMatcher_0.5_1000_1",#"CompleteGumtreeMatcher_0.5_1000_2",
 "ChangeDistiller": "ChangeDistiller_0.5_4_0.6_0.4",
 "XyMatcher": "XyMatcher_2_0.5"
 			}
@@ -49,3 +49,14 @@ def getConfigurationKeyFromCSV(row, indexesOfPropertiesOnTable):
 
 		return key
 
+def createCompleteKey(configId = "", algo = None):
+	#print("\nconfig {}".format(configId))
+	properties = propertiesPerMatcher[algo]
+
+	#print("\nconfig {} properties {}" .format(configId, properties))
+	values = configId.split("_")
+	r="{}".format(algo)
+	for i in range(0, len(properties)):
+		r+="@{}@{}".format(properties[i],values[i+1])
+
+	return r

@@ -4,11 +4,12 @@ from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.processedDataConsumers.deprecated.plotPerformance import *
 from src.rowDataConsumers.RQ0_Setup_ComputeFitnessDistanceOfConfiguationsFromRowData import *
 from src.commons.Datalocation import *
+from src.commons.DiffAlgorithmMetadata import *
 
 class TestGrid(unittest.TestCase):
 
 
-	def test_A_ComputeFitnessFastPerAlgorithm(self):
+	def _test_A_ComputeFitnessFastPerAlgorithm(self):
 
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,  NAME_FOLDER_ASTSPOON]:
 			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
@@ -19,19 +20,40 @@ class TestGrid(unittest.TestCase):
 								NAME_FOLDER_ASTSPOON
 								]:
 			print("\nanalyzing {}".format(folderToAnalyze))
-			kvalue = 10
-			random_seed_value = 0
+			kvalue = 4#10
+			random_seed_value = 1
+			fraction = 1
+
+			computeGridSearchKFold("{}/distance_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
+
+
+			computeGridSearchKFold("{}/distance_per_diff_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId=defaultConfigurations["ChangeDistiller"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
+
+
+			computeGridSearchKFold("{}/distance_per_diff_{}_XyMatcher.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kvalue,	algorithm="XyMatcher", defaultId=defaultConfigurations["XyMatcher"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
+
+
+
+	def test_C_plot(self):
+		##TODO: the data must be readen from files
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
+								NAME_FOLDER_ASTSPOON
+								]:
+			print("\nanalyzing {}".format(folderToAnalyze))
+			kvalue = 4#10
+			random_seed_value = 1
+			fraction = 1
 			allOptimized = []
 			allDefault = []
-			optimizedgt, defaultgt,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance = computeGridSearchKFold("{}/distance_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId="ClassicGumtree_0.5_1000_2", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			optimizedgt, defaultgt,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance = computeGridSearchKFold("{}/distance_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 			allOptimized.append(optimizedgt)
 			allDefault.append(defaultgt)
 
-			optimizedcd, defaultcd,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("{}/distance_per_diff_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId="ChangeDistiller_0.5_4_0.6_0.4", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			optimizedcd, defaultcd,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("{}/distance_per_diff_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue,   algorithm="ChangeDistiller", defaultId=defaultConfigurations["ChangeDistiller"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 			allOptimized.append(optimizedcd)
 			allDefault.append(defaultcd)
 
-			optimizedxy, defaultxy,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("{}/distance_per_diff_{}_Xy.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kvalue,	algorithm="Xy", defaultId="XyMatcher_2_0.5", random_seed=random_seed_value, datasetname=folderToAnalyze)
+			optimizedxy, defaultxy,  rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance =computeGridSearchKFold("{}/distance_per_diff_{}_XyMatcher.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kvalue,	algorithm="XyMatcher", defaultId=defaultConfigurations["XyMatcher"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 			allOptimized.append(optimizedxy)
 			allDefault.append(defaultxy)
 
@@ -46,6 +68,7 @@ class TestGrid(unittest.TestCase):
 
 			plotImprovements(improvements=allOptimized, defaults=allDefault, key = folderToAnalyze)
 			print("\nanalyzing {}".format(folderToAnalyze))
+
 
 
 	'''For Table of  RQ 1'''

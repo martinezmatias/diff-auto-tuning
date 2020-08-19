@@ -28,12 +28,17 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
 	print("XY space size: {}".format(len(rangeXYSIM) * len(rangeMH)))
 	print("Run TPE? {}".format(runTpe))
-	df = pandas.read_csv(pathResults, sep=",")
-	print("dataset before random {}".format(df.shape))
 
 	if alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe):
 		print("Config already analyzed")
 		return None
+
+
+
+	df = pandas.read_csv(pathResults, sep=",")
+	print("dataset before random {}".format(df.shape))
+
+
 
 	df = df.sample(frac=fractiondata, random_state=random_seed).reset_index(drop=True)
 
@@ -138,7 +143,7 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 
 		performanceBestInTesting.append(bestPercentage)
 
-	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe)
+	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed)
 
 def createSpace(algorithm = None):
 	spaceAlgorithms = [

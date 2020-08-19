@@ -12,25 +12,52 @@ import pingouin as pg
 from sklearn.utils import shuffle
 from src.commons.Utils import  *
 from src.commons.Datalocation import  *
+from src.processedDataConsumers.CostParameters import *
 
-def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
+def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), dfcomplete = None,kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
 
+	print("****\nStart execution K {} algo {} random {} dataset {} fraction {}\n".format(kFold, algorithm, random_seed, datasetname, fration))
+	out = "{}/GridSearch/".format(out)
 	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
 	k_fold = KFold(kFold, random_state=0)
 
-	df = pandas.read_csv(pathResults, sep=",")
+	print("Default configuration used {}".format(defaultId))
+
+	if not overwriteResult and alreadyAnalyzed(out = out, datasetname = datasetname,  algorithm=algorithm,  franctiondataset =  fration, randomseed=random_seed):
+		print("EARLY END 1: Config already analyzed {} {} {} {} {}".format(out, datasetname, algorithm, fration, random_seed))
+		return None
+
+
+	if fration == 1 and random_seed > 0  and  alreadyAnalyzed(out = out, datasetname = datasetname,  algorithm=algorithm,  franctiondataset =  fration, randomseed=0):
+		print("EARLY END 2: Already computed Grid for fraction 1. {} {} {} {} {}".format(out, datasetname, algorithm, fration,																 random_seed))
+		return None
+
+	print("Not executed previously")
+
+	if dfcomplete is None:
+		print("Computing dataset for a first time")
+		import time
+		start_time = time.time()
+		dfcomplete  = pandas.read_csv(pathResults, sep=",")
+		elapsed_time = time.time() - start_time
+		print("Time loading data from disk: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
+	else:
+		print("dataset already loaded")
+
 	print("Dataset fraction used {}".format(fration))
-	print("DS size before {} ".format(df.size))
+	print("DS size before {} ".format(dfcomplete.size))
+
+
+
+	diffs = dfcomplete['diff']
+	allDiff = list(diffs.values)
+	print("All diffs in dataset {}".format(len(allDiff)))
 	## let's shuffle the results, otherwise they are grouped by megadiff group id
-	df = df.sample(frac=fration, random_state=random_seed).reset_index(drop=True)
+	df = dfcomplete.sample(frac=fration, random_state=random_seed).reset_index(drop=True)
 	print("DS size after {} ".format(df.size))
 
 	if df.shape[0] <= kFold:
 		return
-
-	if alreadyAnalyzed(out = out, datasetname = datasetname,  algorithm=algorithm,  franctiondataset =  fration):
-		print("Config already analyzed")
-		return None
 
 	columns = list(df.columns)
 
@@ -48,11 +75,13 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	for i in range(1, len(columns)):
 		indexOfConfig[columns[i]] = i
 
-	print("All configs considered with algo {}:{}".format(algorithm, len(allConfig)))
+	print("All configs considered with algo {}: {}".format(algorithm, len(allConfig)))
 	# we get the first column, which has the diff names
 	diffs = df['diff']
 
 	allDiff = list(diffs.values)
+
+	print("All diffs considered after reduction with proportion {} ({}%): {}".format(fration, fration * 100, len(allDiff)))
 
 	resultsByKTraining = []
 	resultsByKTestingSorted = []
@@ -93,14 +122,14 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 		print("\nTesting {} size {}".format(k, len(X_test)))
 
-		configsTesting,rankedConfigTesting = findBestRanking(X_test, allConfig, df, indexOfConfig)
-		resultsByKTestingSorted.append(rankedConfigTesting)
+		configsTesting,rankedConfigsTesting = findBestRanking(X_test, allConfig, df, indexOfConfig)
+		resultsByKTestingSorted.append(rankedConfigsTesting)
 		resultsByKTestingByConfig.append(configsTesting)
 
-		saveBest(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance", fraction=fration )
+		saveBestPerformances(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance", fraction=fration, randomseed = random_seed)
 
 
-		for config in rankedConfigTesting:
+		for config in rankedConfigsTesting:
 			if config['c'] not in bestOnTestingByFold:
 				bestOnTestingByFold[config['c']] = []
 				allIndexOnTesting[config['c']] = []
@@ -110,10 +139,13 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 
 		###maybe only compare top X
-		print("\nCheck with defaults: ")
+		print("\nCheck with defaults on training: ")
 		compareDefaultWithBest(rankedConfigsTraining)
 
-	print("\n--End Kfold:")
+		print("\nCheck with defaults on testing: ")
+		compareDefaultWithBest(rankedConfigsTesting)
+
+	print("\n----End Kfold:")
 
 	## Once we finish, we compute the correlation between the rankings
 	print("\nCheck k-fold rankings: ")
@@ -175,50 +207,56 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 																   indexDefaultOnTesting))
 
 	print("avg performance on testing of best in training {}: {}".format(np.mean(performanceTestingBestOnTraining), performanceTestingBestOnTraining))
-	print("avg index on testing of best in training {}: {}".format(np.mean(indexTestingBestOnTraining),
-																		 indexTestingBestOnTraining))
+	print("avg index on testing of best in training {}: {}".format(np.mean(indexTestingBestOnTraining), indexTestingBestOnTraining))
 
-	print("avg  rp_index: {} {}".format(np.mean(rp_index),rp_index))
+	#print("avg  rp_index: {} {}".format(np.mean(rp_index),rp_index))
 
-	saveList(out, datasetname=datasetname,  algorithm=algorithm, data=rp_index,name="rp_index", fraction=fration )
-	print("avg  srho_index: {} {}".format(np.mean(srho_index), srho_index))
-	saveList(out, datasetname=datasetname, algorithm=algorithm,  data=srho_index,name="srho_index", fraction=fration  )
-	print("avg  pmann_index: {} {}".format(np.mean(pmann_index), pmann_index))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_index,name="pmann_index", fraction=fration  )
-	print("avg  pwilcoxon_index: {} {}".format(np.mean(pwilcoxon_index), pwilcoxon_index))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_index,name="pwilcoxon_index", fraction=fration  )
-	print("avg  rp_performance: {} {}".format(np.mean(rp_performance), rp_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=rp_performance,name="rp_performance", fraction=fration  )
-	print("avg  srho_performance: {} {}".format(np.mean(srho_performance), srho_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=srho_performance,name="srho_performance", fraction=fration  )
-	print("avg  pmann_performance: {} {}".format(np.mean(pmann_performance), pmann_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_performance,name="pmann_performance", fraction=fration  )
-	print("avg  pwilcoxon_performance: {} {}".format(np.mean(pwilcoxon_performance), pwilcoxon_performance))
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_performance,name="pwilcoxon_performance", fraction=fration  )
+	saveList(out, datasetname=datasetname,  algorithm=algorithm, data=rp_index,name="rp_index", fraction=fration , randomseed = random_seed)
+	#print("avg  srho_index: {} {}".format(np.mean(srho_index), srho_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm,  data=srho_index,name="srho_index", fraction=fration , randomseed = random_seed )
+	#print("avg  pmann_index: {} {}".format(np.mean(pmann_index), pmann_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_index,name="pmann_index", fraction=fration , randomseed = random_seed )
+	#print("avg  pwilcoxon_index: {} {}".format(np.mean(pwilcoxon_index), pwilcoxon_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_index,name="pwilcoxon_index", fraction=fration, randomseed = random_seed  )
+	#print("avg  rp_performance: {} {}".format(np.mean(rp_performance), rp_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=rp_performance,name="rp_performance", fraction=fration, randomseed = random_seed  )
+	#print("avg  srho_performance: {} {}".format(np.mean(srho_performance), srho_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=srho_performance,name="srho_performance", fraction=fration , randomseed = random_seed )
+	#print("avg  pmann_performance: {} {}".format(np.mean(pmann_performance), pmann_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_performance,name="pmann_performance", fraction=fration , randomseed = random_seed )
+	#print("avg  pwilcoxon_performance: {} {}".format(np.mean(pwilcoxon_performance), pwilcoxon_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_performance,name="pwilcoxon_performance", fraction=fration, randomseed = random_seed  )
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceTestingBestOnTraining,
-			 name="performanceTestingBestOnTraining", fraction=fration )
+			 name="performanceTestingBestOnTraining", fraction=fration , randomseed = random_seed)
 
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexTestingBestOnTraining,
-			 name="indexTestingBestOnTraining", fraction=fration )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexTestingBestOnTraining, name="indexTestingBestOnTraining", fraction=fration, randomseed = random_seed )
 
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
-			 name="performanceTestingDefaultOnTraining", fraction=fration )
+			 name="performanceTestingDefaultOnTraining", fraction=fration, randomseed = random_seed )
 
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allIndexOnTesting[defaultId],
-			 name="indexTestingDefaultOnTraining", fraction=fration )
-
-
-	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance", fraction=fration )
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allIndexOnTesting[defaultId],	 name="indexTestingDefaultOnTraining", fraction=fration, randomseed = random_seed )
 
 
-	return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId] , rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance", fraction=fration, randomseed = random_seed )
 
-def saveBest(out, data, typeset,k, algo = "",name = "", fraction=1 ):
+	saveDefaultName(out, datasetname=datasetname, algorithm=algorithm,
+			 name="indexTestingDefaultOnTraining", fraction=fration, randomseed=random_seed, default=defaultId)
+
+	#return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId] , rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance
+	return dfcomplete
 
 
-	filename = "{}/summary_performance_{}_{}_K_{}_{}_f_{}.csv".format(out, name, typeset, k, algo, fraction)
+def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0):
+
+	algoName = "allAlgorithms" if algo is None else algo
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName, randomseed,
+																					fraction, name)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/summary_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, name, typeset, k, algoName, fraction)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
@@ -226,26 +264,74 @@ def saveBest(out, data, typeset,k, algo = "",name = "", fraction=1 ):
 	fout1.close()
 	print("Save results at {}".format(filename))
 
-def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , fraction = 1):
+def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , fraction = 1, randomseed=0):
 
+	algoName =  "allAlgorithms" if algo is None else  algo
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName,randomseed,fraction, name)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
 
-	filename = "{}/summary_avg_performance_{}_{}_{}_f_{}.csv".format(out, name, typeset,  "allAlgorithms" if algo is None else  algo,fraction)
+	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, name, typeset, algoName,fraction)
 	fout1 = open(filename, 'w')
+	means = {}
 	for conf in data.keys():
-			fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
-	fout1.flush()
+			#fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
+			means[conf] = np.mean(data[conf])
+
+	allconfigs = list(means.keys())
+	allconfigs = sorted(allconfigs, key=lambda x: means[x], reverse=True)
+
+	for xconf in allconfigs:
+		fout1.write("{},{}\n".format(xconf, means[xconf]))
+		fout1.flush()
 	fout1.close()
 	print("Save results at {}".format(filename))
 
-def saveList(out,datasetname, data, algorithm, name, fraction):
+def saveList(out,datasetname, data, algorithm, name, fraction, randomseed):
 
-	filename = "{}/summary_{}_{}_{}_f_{}.csv".format(out,datasetname, "allAlgorithms" if algorithm is None else  algorithm, name, fraction)
+	algoName = "allAlgorithms" if algorithm is None else algorithm
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, datasetname, algoName, randomseed,
+																					fraction)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/summary_{}_{}_{}_f_{}.csv".format(randomparentfolder,datasetname,algoName, name, fraction)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{}\n".format(conf))
 	fout1.flush()
 	fout1.close()
 	print("Save results at {}".format(filename))
+
+def saveDefaultName(out,datasetname,  algorithm, name, fraction, randomseed, default):
+
+	algoName = "allAlgorithms" if algorithm is None else algorithm
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, datasetname, algoName, randomseed,
+																					fraction)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/default_configuration{}_{}_{}_f_{}.csv".format(randomparentfolder,datasetname,algoName, name, fraction)
+	fout1 = open(filename, 'w')
+
+	fout1.write("{}\n".format(default))
+	fout1.flush()
+	fout1.close()
+	print("Save results at {}".format(filename))
+
+import os
+def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, randomseed):
+	algoName = "allAlgorithms" if algorithm is None else algorithm
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, datasetname, algoName,
+																					randomseed,
+																					franctiondataset)
+
+	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, "performance", datasetname,
+																	 "allAlgorithms" if algorithm is None else algorithm,
+																	 franctiondataset)
+	print("Checking existence of {}".format(filename))
+	return  os.path.exists(filename)
+
 '''
 df is the  dataframe with all data
 X: the list of the diffs to consider (because we may not be interested in analyzing all diffs, specially on the k-fold)
@@ -542,10 +628,4 @@ def runReadResultsCrossValidation(path = "/Users/matias/develop/gt-tuning/git-co
 def isOutlier(value, mean,  std, m = 2):
 	return abs(value - mean) > m * std
 
-import os
-def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset):
-	filename = "{}/summary_avg_performance_{}_{}_{}_f_{}.csv".format(out, "performance", datasetname,
-																	 "allAlgorithms" if algorithm is None else algorithm,
-																	 franctiondataset)
 
-	return  os.path.exists(filename)

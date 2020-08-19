@@ -7,6 +7,7 @@ from src.commons.DiffAlgorithmMetadata import *
 from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
 from src.commons.DiffAlgorithmMetadata import *
 from src.commons.Datalocation import *
+from src.processedDataConsumers.CostParameters import *
 
 AVG_CONSTANT = 'av'
 
@@ -24,7 +25,8 @@ rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 
 notfound = []
 #editscript_size_per_diff
-def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = RESULTS_PROCESSED_LOCATION , overwriteResult = True):
+def computeHyperOpt(pathResults, dfcomplete = None, kFold=5, runTpe = True, max_evals=1000, random_seed = 0, fractiondata= 0.1,  dataset = "alldata", algorithm = None,  out = RESULTS_PROCESSED_LOCATION):
+	out = "{}/{}/".format(out, "TPE" if runTpe else "random")
 	print("GT space size: {}".format(len(rangeGT_BUM_SMT) * len(rangeGT_BUM_SZT) * len(rangeMH)))
 	print("SimpleGT space size: {}".format(len(rangeSBUP) * len(rangeMH)))
 	print("CD space size: {}".format(len(rangeLSIM) * len(rangeML) * len(rangeSSIM1) * len((rangeSSIM2))))
@@ -32,14 +34,26 @@ def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_
 	print("Run TPE? {}".format(runTpe))
 	print("Algorithm {}".format(algorithm))
 	print("Overwrite results? {}".format(overwriteResult))
-	df = pandas.read_csv(pathResults, sep=",")
-	print("dataset before random {}".format(df.shape))
 
-	if not overwriteResult and alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe):
-		print("Config already analyzed")
+	if not overwriteResult and alreadyAnalyzedTPE(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed):
+		print("EARLY END: Config already analyzed {} {} {} {} {} ".format(out, dataset, algorithm, fractiondata, random_seed))
 		return None
 
-	df = df.sample(frac=fractiondata, random_state=random_seed).reset_index(drop=True)
+	print("Executing new config")
+
+	if dfcomplete is None:
+		print("Computing dataset for a first time {}".format(pathResults))
+		dfcomplete = pandas.read_csv(pathResults, sep=",")
+	else:
+		print("dataset already loaded")
+
+	print("dataset before random {}".format(dfcomplete.shape))
+
+	diffs = dfcomplete['diff']
+	allDiff = list(diffs.values)
+	print("All diffs in dataset {}".format(len(allDiff)))
+
+	df = dfcomplete.sample(frac=fractiondata, random_state=random_seed).reset_index(drop=True)
 
 	print("dataset after random {}".format(df.shape))
 
@@ -54,10 +68,13 @@ def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_
 	for i in range(1, len(columns)):
 		indexOfConfig[columns[i]] = i
 
-
+	##We retrieve it again as the dataset could be probably reduced
 	diffs = df['diff']
 
 	allDiff = list(diffs.values)
+
+
+	print("All diffs considered after reduction with proportion {} ({}%): {}".format(fractiondata, fractiondata * 100, len(allDiff)))
 
 	k_fold = KFold(kFold, random_state=0)
 
@@ -142,7 +159,8 @@ def computeHyperOpt(pathResults, kFold=5, runTpe = True, max_evals=1000, random_
 
 		performanceBestInTesting.append(bestPercentage)
 
-	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe)
+	saveList(out = out,bestTraining = performanceBestInTraining , bestTesting = performanceBestInTesting,names = bestConfigs, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed)
+	return dfcomplete
 
 def findESAverageRanking(X_train, allConfig, df, indexOfColumns):
 	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig, indexOfColumns)
@@ -206,15 +224,28 @@ def createSpace(algorithm = None):
 
 	return spaceAlgorithms
 
-def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
+def alreadyAnalyzedTPE(out, datasetname,  algorithm, franctiondataset, evals, isTPE = True,  randomseed = 0):
+	executionmode = "hyper_op" if isTPE else "random_op"
+	algoName = "allAlgorithms" if algorithm is None else algorithm
+	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, executionmode, datasetname,
+																					   algoName,
+																					   randomseed,
+																					   franctiondataset)
 
-	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(out, "hyper_op" if isTPE else "random_op" , datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
+	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(randomparentfolder, executionmode , datasetname, algoName, evals, franctiondataset)
 	print("checking existance of {}".format(filename))
 	return  os.path.exists(filename)
 
-def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True):
+def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True, randomseed = 0):
+	executionmode = "hyper_op" if isTPE else "random_op"
+	algoName = "allAlgorithms" if algorithm is None else algorithm
+	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out,executionmode, datasetname, algoName,
+																					randomseed,
+																					franctiondataset)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
 
-	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(out, "hyper_op" if isTPE else "random_op" , datasetname, algorithm if algorithm is not None else "allAlgorithms", evals, franctiondataset)
+	filename = "{}/{}_{}_{}_evals_{}_f_{}.csv".format(randomparentfolder,executionmode , datasetname, algoName, evals, franctiondataset)
 	fout1 = open(filename, 'w')
 	for i in range(0, len(bestTraining)):
 			fout1.write("{},{},{},{}\n".format(i,names[i], bestTraining[i],bestTesting[i]))

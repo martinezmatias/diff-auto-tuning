@@ -5,7 +5,8 @@ import numpy as np
 from src.commons.CohenEffectSize import *
 from scipy.stats import wilcoxon, kruskal
 from src.commons.Datalocation import *
-def compareDistributions(pathResults ="{}/distance_per_diff_GTSPOON.csv".format(RESULTS_PROCESSED_LOCATION), keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration="ClassicGumtree_0.5_1000_2"):
+from src.commons.DiffAlgorithmMetadata import *
+def compareDistributions(pathResults ="{}/distance_per_diff_GTSPOON.csv".format(RESULTS_PROCESSED_LOCATION), keyBestConfiguration= defaultConfigurations["ClassicGumtree"], keyDefaultConfiguration="ClassicGumtree_0.5_1000_2"):
 	df = pandas.read_csv(pathResults, sep=",")
 
 	columns = list(df.columns)
