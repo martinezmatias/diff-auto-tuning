@@ -127,7 +127,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 					srho_index.append(srho[0])
 					pmann_index.append(pmann)
 					pwilcoxon_index .append(pwilcoxon)
-	
+
 					rp, srho, pmann, pwilcoxon = computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j],  field = 'bs')
 					rp_performance.append(rp[0])
 					srho_performance.append(srho[0])
