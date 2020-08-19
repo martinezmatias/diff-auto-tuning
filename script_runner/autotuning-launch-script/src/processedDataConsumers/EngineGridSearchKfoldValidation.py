@@ -15,6 +15,9 @@ from src.commons.Datalocation import  *
 from src.processedDataConsumers.CostParameters import *
 import math
 
+PERFORMANCE_TESTING = "performanceOnTesting"
+
+
 def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), dfcomplete = None,kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
 
 	print("****\nStart execution K {} algo {} random {} dataset {} fraction {}\n".format(kFold, algorithm, random_seed, datasetname, fration))
@@ -89,6 +92,8 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	resultsByKTestingByConfig = []
 
 	bestOnTestingByFold = {}
+	bestOnTrainingByFold = {}
+
 	allIndexOnTesting = {}
 
 	rp_index = []
@@ -117,11 +122,23 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 			#X_test.append(allDiff[i])
 			X_test.add(allDiff[i])
 
+		print("X_train: {}".format(X_train))
+		print("X_test: {}".format(X_test))
+
 		print("\nTraining {} size #diff: {}".format(k, len(X_train)))
 
 		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
 
 		resultsByKTraining.append(rankedConfigsTraining)
+		saveBestPerformances(out=out, data=configsTraining, typeset=datasetname, k=k, algo=algorithm, name="performanceTraining",
+							 fraction=fration, randomseed=random_seed)
+
+
+		for config in rankedConfigsTraining:
+			if config['c'] not in bestOnTrainingByFold:
+				bestOnTrainingByFold[config['c']] = []
+
+			bestOnTrainingByFold[config['c']].append(config['bs'])
 
 		print("\nTesting {} size #diff: {}".format(k, len(X_test)))
 
@@ -129,7 +146,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		resultsByKTestingSorted.append(rankedConfigsTesting)
 		resultsByKTestingByConfig.append(configsTesting)
 
-		saveBestPerformances(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performance", fraction=fration, randomseed = random_seed)
+		saveBestPerformances(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performanceTesting", fraction=fration, randomseed = random_seed)
 
 
 		for config in rankedConfigsTesting:
@@ -147,6 +164,10 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 		print("\nCheck with defaults on testing: ")
 		compareDefaultWithBest(rankedConfigsTesting)
+
+		saveDiffFromFold(out=out, data=X_train , typeset = datasetname, k = k, algo=algorithm, name="diffOnTraining", fraction=fration, randomseed = random_seed)
+		saveDiffFromFold(out=out, data=X_test, typeset=datasetname, k=k, algo=algorithm, name="diffOnTesting",
+							 fraction=fration, randomseed=random_seed)
 
 	print("\n----End Kfold:")
 
@@ -176,6 +197,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	## As we have compute K folds, we summarize the performance
 	iK = 0
 	performanceTestingBestOnTraining = []
+	performanceBestOnTraining = []
 	indexTestingBestOnTraining = []
 
 	for iResultsFold in resultsByKTraining:
@@ -183,6 +205,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		## We retrieve the perfomrance on testing of  the best config from training
 		bestConfigInTraining = iResultsFold[0]
 		print("K: {} Best configuration given by the training: {}".format(iK, bestConfigInTraining))
+		performanceBestOnTraining.append(bestConfigInTraining['bs'])
 
 		bestConfigInTesting = None
 		#Now, we find it in the corresponding training (not necesary is the best i.e. the first one)
@@ -233,16 +256,23 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceTestingBestOnTraining,
 			 name="performanceTestingBestOnTraining", fraction=fration , randomseed = random_seed)
 
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceBestOnTraining,
+			 name="performanceBestOnTraining", fraction=fration, randomseed=random_seed)
+
+
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexTestingBestOnTraining, name="indexTestingBestOnTraining", fraction=fration, randomseed = random_seed )
 
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
 			 name="performanceTestingDefaultOnTraining", fraction=fration, randomseed = random_seed )
 
+
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allIndexOnTesting[defaultId],	 name="indexTestingDefaultOnTraining", fraction=fration, randomseed = random_seed )
 
 
-	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold,typeset=datasetname, algo=algorithm, name="performance", fraction=fration, randomseed = random_seed )
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold, typeset=datasetname, algo=algorithm, name=PERFORMANCE_TESTING, fraction=fration, randomseed = random_seed)
+	saveAvgPerformancePerConfig(out=out, data=bestOnTrainingByFold, typeset=datasetname, algo=algorithm,
+								name="performanceOnTraining", fraction=fration, randomseed=random_seed)
 
 	saveDefaultName(out, datasetname=datasetname, algorithm=algorithm,
 			 name="indexTestingDefaultOnTraining", fraction=fration, randomseed=random_seed, default=defaultId)
@@ -259,10 +289,26 @@ def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, 
 	if not os.path.exists(randomparentfolder):
 		os.makedirs(randomparentfolder)
 
-	filename = "{}/summary_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, name, typeset, k, algoName, fraction)
+	filename = "{}/summary_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, fraction)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
+	fout1.flush()
+	fout1.close()
+	print("Save results at {}".format(filename))
+
+def saveDiffFromFold(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0):
+
+	algoName = "allAlgorithms" if algo is None else algo
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName, randomseed,
+																					fraction, name)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/data_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, fraction)
+	fout1 = open(filename, 'w')
+	for conf in data:
+			fout1.write("{}\n".format(conf))
 	fout1.flush()
 	fout1.close()
 	print("Save results at {}".format(filename))
@@ -329,7 +375,7 @@ def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, randomseed):
 																					randomseed,
 																					franctiondataset)
 
-	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, "performance", datasetname,
+	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, PERFORMANCE_TESTING, datasetname,
 																	 "allAlgorithms" if algorithm is None else algorithm,
 																	 franctiondataset)
 	print("Checking existence of {}".format(filename))

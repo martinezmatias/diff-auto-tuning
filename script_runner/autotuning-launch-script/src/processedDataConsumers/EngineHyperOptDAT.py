@@ -99,6 +99,11 @@ def computeHyperOpt(pathResults, dfcomplete = None, kFold=5, runTpe = True, max_
 		for i in test:
 			X_test.add(allDiff[i])
 
+		saveDiffFromFold(out=out, data=X_train, typeset=dataset, k=k, algo=algorithm, name="diffOnTraining",
+						 fraction=fractiondata, randomseed=random_seed)
+		saveDiffFromFold(out=out, data=X_test, typeset=dataset, k=k, algo=algorithm, name="diffOnTesting",
+						 fraction=fractiondata, randomseed=random_seed)
+
 		print("\nTraining {} ".format(k))
 
 		## let's compute first the metrics for each configuration

@@ -21,7 +21,7 @@ class TestHyperOp(unittest.TestCase):
 				for algorithm in ["Gumtree", "ChangeDistiller",
 								  "XyMatcher"]:
 					print("\nanalyzing {}".format(folderToAnalyze))
-					computeHyperOpt(overwriteResult=True, pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+					computeHyperOpt(pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 
 	def _test_CompteHyperOpt_allAlgos(self):
 			''''only 1000 '''''
@@ -29,7 +29,7 @@ class TestHyperOp(unittest.TestCase):
 			for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 
 					print("\nanalyzing {}".format(folderToAnalyze))
-					computeHyperOpt(overwriteResult=True,pathResults="{}/editscript_size_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kfold, max_evals=1000,fractiondata= 1,  dataset = folderToAnalyze, algorithm = None, out=RESULTS_PROCESSED_LOCATION )
+					computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kfold, max_evals=1000,fractiondata= 1,  dataset = folderToAnalyze, algorithm = None, out=RESULTS_PROCESSED_LOCATION )
 
 
 
