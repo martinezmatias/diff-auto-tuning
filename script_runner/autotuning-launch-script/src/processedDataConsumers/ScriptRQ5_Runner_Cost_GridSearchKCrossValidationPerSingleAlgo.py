@@ -9,7 +9,7 @@ def main(onlyTest = False):
 							NAME_FOLDER_ASTSPOON
 							]:
 		print("\nAnalyzing {}".format(folderToAnalyze))
-		kvalue = 10
+		kvalue = KFOLD_VALUE
 		for palgorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
 
 			for iseed in range(0, SEEDS_TO_EXECUTE):

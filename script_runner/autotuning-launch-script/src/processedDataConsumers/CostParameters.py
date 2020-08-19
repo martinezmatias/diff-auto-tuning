@@ -12,3 +12,5 @@ evals_range = [10, 50, 100, 500, 1000]#[10, 20, 50, 100, 200, 500, 1000]
 overwriteResult = False
 
 SEEDS_TO_EXECUTE=5
+
+KFOLD_VALUE = 10
