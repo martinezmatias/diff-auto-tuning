@@ -1,7 +1,7 @@
 import unittest
 from src.processedDataConsumers.EngineHyperOptDAT import *
 from src.commons.Datalocation import *
-from src.processedDataConsumers.RQ5_TPELauncher import *
+from src.processedDataConsumers.RQ5_TPELauncher_allAlgo import *
 class TestRQ5(unittest.TestCase):
 
 

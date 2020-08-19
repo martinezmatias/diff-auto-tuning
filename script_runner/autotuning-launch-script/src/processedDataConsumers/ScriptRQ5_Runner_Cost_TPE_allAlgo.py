@@ -8,8 +8,6 @@ from src.commons.Datalocation import *
 
 def main(runTPE = True, onlyTest = False):
 
-
-
 	for folderToAnalyze in [NAME_FOLDER_ASTSPOON,
 							NAME_FOLDER_ASTJDT
 							]:
@@ -23,7 +21,7 @@ def main(runTPE = True, onlyTest = False):
 
 def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", runTpe = True,  dataset ="alldata", out ="../../plots/data/"):
 
-	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5_TPELauncher {} {} {}".format(pathResults,  dataset, runTpe)
+	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5_TPELauncher_allAlgo {} {} {}".format(pathResults,  dataset, runTpe)
 
 	cmd = ""
 	try:

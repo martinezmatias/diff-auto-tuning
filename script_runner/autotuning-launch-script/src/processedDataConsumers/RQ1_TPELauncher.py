@@ -6,7 +6,6 @@ from src.processedDataConsumers.CostParameters import *
 
 def runTPERangeValues(distancespath,datasetname, runTPE, algo):
 
-
 	for i_eval in evals_range:
 		kfold = 10
 		for i_ratio in ratioDataset:
