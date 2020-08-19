@@ -30,7 +30,7 @@ def computeHyperOpt(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCE
 	print("Run TPE? {}".format(runTpe))
 
 	if alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe):
-		print("Config already analyzed")
+		print("Config already analyzed {} {} {} {} {} {} ".format())
 		return None
 
 

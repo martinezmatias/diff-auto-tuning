@@ -13,6 +13,7 @@ from sklearn.utils import shuffle
 from src.commons.Utils import  *
 from src.commons.Datalocation import  *
 from src.processedDataConsumers.CostParameters import *
+import math
 
 def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), dfcomplete = None,kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
 
@@ -102,25 +103,27 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
-		X_train = []
-		X_test = []
+		X_train = set([])#[]
+		X_test = set([])
 		print("\n---------Running fold {}".format(k))
 
 		# Create the training dataset
 		for i in train:
-			X_train.append(allDiff[i])
+			#X_train.append(allDiff[i])
+			X_train.add(allDiff[i])
 
 		# Create the testing dataset
 		for i in test:
-			X_test.append(allDiff[i])
+			#X_test.append(allDiff[i])
+			X_test.add(allDiff[i])
 
-		print("\nTraining {} size {}".format(k, len(X_train)))
+		print("\nTraining {} size #diff: {}".format(k, len(X_train)))
 
 		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
 
 		resultsByKTraining.append(rankedConfigsTraining)
 
-		print("\nTesting {} size {}".format(k, len(X_test)))
+		print("\nTesting {} size #diff: {}".format(k, len(X_test)))
 
 		configsTesting,rankedConfigsTesting = findBestRanking(X_test, allConfig, df, indexOfConfig)
 		resultsByKTestingSorted.append(rankedConfigsTesting)
@@ -311,7 +314,7 @@ def saveDefaultName(out,datasetname,  algorithm, name, fraction, randomseed, def
 	if not os.path.exists(randomparentfolder):
 		os.makedirs(randomparentfolder)
 
-	filename = "{}/default_configuration{}_{}_{}_f_{}.csv".format(randomparentfolder,datasetname,algoName, name, fraction)
+	filename = "{}/default_configuration_{}_{}_{}_f_{}.csv".format(randomparentfolder,datasetname,algoName, name, fraction)
 	fout1 = open(filename, 'w')
 
 	fout1.write("{}\n".format(default))
@@ -357,11 +360,14 @@ def analyzeConfigurationsFromDiffs(df, setofDiffToConsider, allconfig, indexOfCo
 			shift = 1
 
 			for i in range(0, len(allconfig)):
+
 				currentConfig = allconfig[i]
 				indexOfcurrent =  indexOfColumns[currentConfig]
 				positionOfConfig = shift + indexOfcurrent
 				distance = rowDiff[positionOfConfig]
-				if not np.isnan(distance):
+
+				if not math.isnan(distance): #np.isnan(distance):
+
 					valuesPerConfig[i].append(distance)
 					presentPerConfig[i]+=1
 
@@ -431,10 +437,17 @@ def computeCorrelation(configsTesting, configsTraining, field = 'i'):
 	print('scipy mannwhitneyu: stat=%.3f, p=%.3f' % (stat, pmann))
 
 	return rp, srho, pmann, pwil
-
+import time
 def findBestRanking(X_train, allConfig, df, indexOfColumns):
+	start_time = time.time()
 	valuesPerConfig, presentPerConfig = analyzeConfigurationsFromDiffs(df, X_train, allConfig, indexOfColumns)
+	elapsed_time = time.time() - start_time
+	print("----Time parsing values: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
+
+	start_time = time.time()
 	configs, rankedBest = computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig)
+	elapsed_time = time.time() - start_time
+	print("----Time computing best values: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 	return configs, rankedBest
 
 

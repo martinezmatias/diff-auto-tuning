@@ -87,17 +87,17 @@ def computeHyperOpt(pathResults, dfcomplete = None, kFold=5, runTpe = True, max_
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
-		X_train = []
-		X_test = []
+		X_train = set([])
+		X_test = set([])
 		print("\n---------Running fold {}".format(k))
 
 		# Create the training dataset
 		for i in train:
-			X_train.append(allDiff[i])
+			X_train.add(allDiff[i])
 
 		# Create the testing dataset
 		for i in test:
-			X_test.append(allDiff[i])
+			X_test.add(allDiff[i])
 
 		print("\nTraining {} ".format(k))
 

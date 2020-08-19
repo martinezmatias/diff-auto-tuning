@@ -20,8 +20,8 @@ class TestGrid(unittest.TestCase):
 								NAME_FOLDER_ASTSPOON
 								]:
 			print("\nanalyzing {}".format(folderToAnalyze))
-			kvalue = 4#10
-			random_seed_value = 1
+			kvalue = 2#10
+			random_seed_value = 30
 			fraction = 1
 
 			computeGridSearchKFold("{}/distance_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
