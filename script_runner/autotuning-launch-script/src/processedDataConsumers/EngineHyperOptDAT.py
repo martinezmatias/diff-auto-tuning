@@ -99,10 +99,10 @@ def computeHyperOpt(pathResults, dfcomplete = None, kFold=5, runTpe = True, max_
 		for i in test:
 			X_test.add(allDiff[i])
 
-		saveDiffFromFold(out=out, data=X_train, typeset=dataset, k=k, algo=algorithm, name="diffOnTraining",
-						 fraction=fractiondata, randomseed=random_seed)
-		saveDiffFromFold(out=out, data=X_test, typeset=dataset, k=k, algo=algorithm, name="diffOnTesting",
-						 fraction=fractiondata, randomseed=random_seed)
+		saveDiffFromFoldTPE(out=out, data=X_train, typeset=dataset, k=k, algo=algorithm, name="diffOnTraining",
+						 fraction=fractiondata, randomseed=random_seed, isTPE=runTpe)
+		saveDiffFromFoldTPE(out=out, data=X_test, typeset=dataset, k=k, algo=algorithm, name="diffOnTesting",
+						 fraction=fractiondata, randomseed=random_seed,  isTPE=runTpe)
 
 		print("\nTraining {} ".format(k))
 
@@ -257,6 +257,23 @@ def saveList(out,bestTraining, bestTesting,names, datasetname,  algorithm, franc
 	fout1.flush()
 	fout1.close()
 	print("Save data on {}".format(filename))
+
+def saveDiffFromFoldTPE(out, data, typeset, k, algo ="", name ="", fraction=1,  isTPE = True, randomseed=0):
+	executionmode = "hyper_op" if isTPE else "random_op"
+	algoName = "allAlgorithms" if algo is None else algo
+	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, executionmode, typeset, algoName, randomseed,
+																					fraction, name)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/data_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, fraction)
+	fout1 = open(filename, 'w')
+	for conf in data:
+			fout1.write("{}\n".format(conf))
+	fout1.flush()
+	fout1.close()
+	print("Save results at {}".format(filename))
+
 
 def objectiveFunctionDAT(params):
 
