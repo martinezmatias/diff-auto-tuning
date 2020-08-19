@@ -26,6 +26,6 @@ kfold = int(sys.argv[3])
 
 datasetname = sys.argv[4]
 
-seed = sys.argv[5]
+seed = int(sys.argv[5])
 
 main(distancespath, algorithm, kfold, datasetname, seed )
