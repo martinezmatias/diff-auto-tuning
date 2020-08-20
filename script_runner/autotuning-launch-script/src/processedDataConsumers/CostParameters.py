@@ -9,7 +9,7 @@ ratioDataset = [0.0001, 0.0005, 0.001,  0.005, 0.01, 0.05, 0.1, 0.5, 1] #[0.0001
 
 evals_range = [10, 50, 100, 500, 1000]#[10, 20, 50, 100, 200, 500, 1000]
 
-overwriteResult = False
+OVERWRITE_RESULTS = False
 
 SEEDS_TO_EXECUTE=5
 

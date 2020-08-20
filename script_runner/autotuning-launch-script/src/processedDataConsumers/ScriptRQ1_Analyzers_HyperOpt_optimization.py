@@ -2,6 +2,7 @@ import unittest
 from src.processedDataConsumers.EngineHyperOptDAT import *
 from src.commons.Datalocation import *
 from src.rowDataConsumers.RQ0_Setup_ComputeEDSizeOfConfiguationsFromRowData import *
+from src.processedDataConsumers.CostParameters import *
 class TestHyperOp(unittest.TestCase):
 
 	def _test_A_ComputeDistanceFastPerAlgorithm(self):
@@ -11,17 +12,30 @@ class TestHyperOp(unittest.TestCase):
 				computeEditScriptSize("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
 
-	def test_CompteHyperOpt_single_by_algo(self):
+	def _test_CompteHyperOpt_single_by_algo(self):
 			''''only 1000 '''''
 			kfold = 2
 			maxeval = 10
-			franction = 0.01
+			franction = 0.001
 			seed=20
 			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
 				for algorithm in ["Gumtree", "ChangeDistiller",
 								  "XyMatcher"]:
 					print("\nanalyzing {}".format(folderToAnalyze))
-					computeHyperOpt(pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+					computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+
+	def test_debug_CompteHyperOpt_single_by_algo(self):
+			kfold = 2
+			maxeval = 10
+			franction = 0.1
+			seed=20
+			TPE = False
+			for folderToAnalyze in [NAME_FOLDER_ASTJDT]:
+				for algorithm in ["Gumtree", "ChangeDistiller",
+								  "XyMatcher"]:
+					print("\nanalyzing {}".format(folderToAnalyze))
+					computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=True, runTpe=TPE, kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+					break
 
 	def _test_CompteHyperOpt_allAlgos(self):
 			''''only 1000 '''''

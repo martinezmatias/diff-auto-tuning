@@ -1,3 +1,5 @@
+import zipfile
+
 import numpy as np
 import matplotlib.pyplot as plt
 import seaborn as sns
@@ -18,7 +20,7 @@ import math
 PERFORMANCE_TESTING = "performanceOnTesting"
 
 
-def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), dfcomplete = None,kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
+def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULTS_PROCESSED_LOCATION), overwrite = OVERWRITE_RESULTS, dfcomplete = None,kFold = 5, algorithm = None, defaultId = None, random_seed = 0, datasetname = None, out = RESULTS_PROCESSED_LOCATION, fration =1 ):
 
 	print("****\nStart execution K {} algo {} random {} dataset {} fraction {}\n".format(kFold, algorithm, random_seed, datasetname, fration))
 	out = "{}/GridSearch/".format(out)
@@ -27,7 +29,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	print("Default configuration used {}".format(defaultId))
 
-	if not overwriteResult and alreadyAnalyzed(out = out, datasetname = datasetname,  algorithm=algorithm,  franctiondataset =  fration, randomseed=random_seed):
+	if not overwrite and alreadyAnalyzed(out = out, datasetname = datasetname, algorithm=algorithm, franctiondataset =  fration, randomseed=random_seed):
 		print("EARLY END 1: Config already analyzed {} {} {} {} {}".format(out, datasetname, algorithm, fration, random_seed))
 		return None
 
@@ -122,8 +124,6 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 			#X_test.append(allDiff[i])
 			X_test.add(allDiff[i])
 
-		print("X_train: {}".format(X_train))
-		print("X_test: {}".format(X_test))
 
 		print("\nTraining {} size #diff: {}".format(k, len(X_train)))
 
@@ -305,13 +305,15 @@ def saveDiffFromFold(out, data, typeset, k, algo ="", name ="", fraction=1, rand
 	if not os.path.exists(randomparentfolder):
 		os.makedirs(randomparentfolder)
 
-	filename = "{}/data_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, fraction)
-	fout1 = open(filename, 'w')
-	for conf in data:
-			fout1.write("{}\n".format(conf))
-	fout1.flush()
-	fout1.close()
-	print("Save results at {}".format(filename))
+	filename = "data_{}_{}_K_{}_{}_f_{}.txt".format(typeset, name, k, algoName, fraction)
+	zipname = "{}/data_{}_{}_K_{}_{}_f_{}.zip".format(randomparentfolder, typeset, name, k, algoName, fraction)
+
+	with zipfile.ZipFile(zipname, "w", zipfile.ZIP_DEFLATED) as myzip:
+		with myzip.open(filename, "w") as fout1:
+			for conf in data:
+				fout1.write(str.encode("{}\n".format(conf)))
+	print("Save results at {}".format(zipname))
+
 
 def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , fraction = 1, randomseed=0):
 
@@ -411,10 +413,9 @@ def analyzeConfigurationsFromDiffs(df, setofDiffToConsider, allconfig, indexOfCo
 				indexOfcurrent =  indexOfColumns[currentConfig]
 				positionOfConfig = shift + indexOfcurrent
 				distance = rowDiff[positionOfConfig]
-
+				## for performance, we use  isnam from math instead of np
 				if not math.isnan(distance): #np.isnan(distance):
-
-					valuesPerConfig[i].append(distance)
+					valuesPerConfig[i].append(int(distance))
 					presentPerConfig[i]+=1
 
 
