@@ -3,19 +3,22 @@ import sys
 from src.processedDataConsumers.EngineHyperOptDAT import *
 from src.commons.Datalocation import *
 from src.processedDataConsumers.CostParameters import *
+import traceback
 
-def runTPERangeValues(distancespath,datasetname, runTPE, algo, seed):
+
+def runTPERangeValues(editscriptsizepath,datasetname, runTPE, algo, seed):
 	#The first
 	datasetDF = None
 	for i_eval in evals_range:
 		kfold = KFOLD_VALUE
 		for i_ratio in ratioDataset:
 			try:
-				datasetDF = computeHyperOpt(pathResults=distancespath, dfcomplete=datasetDF, kFold=kfold, max_evals=i_eval , algorithm=algo,fractiondata= i_ratio,  dataset = datasetname, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+				datasetDF = computeHyperOpt(pathResults=editscriptsizepath, dfcomplete=datasetDF, kFold=kfold, max_evals=i_eval , algorithm=algo,fractiondata= i_ratio,  dataset = datasetname, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 			except:
-				print("Error")
+				print("Error executing Hyperopt")
+				print(traceback.format_exc())
 
-distancespath = sys.argv[1]
+editscriptsizepath = sys.argv[1]
 
 datasetname = sys.argv[2]
 
@@ -25,4 +28,4 @@ algoSelected = str(sys.argv[4])
 
 seed = int(sys.argv[5])
 
-runTPERangeValues(distancespath,datasetname, runTPE, algoSelected, seed)
+runTPERangeValues(editscriptsizepath,datasetname, runTPE, algoSelected, seed)

@@ -12,14 +12,14 @@ def main(runTPE = True, onlyTest = False):
 							NAME_FOLDER_ASTJDT
 							]:
 					print("\nanalyzing {}".format(folderToAnalyze))
-					runHyperOpts(pathResults="{}/distance_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), dataset = folderToAnalyze, runTpe=runTPE)
+					runHyperOpts(pathResults="{}/editscript_size_per_diff_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), dataset = folderToAnalyze, runTpe=runTPE)
 
 					if onlyTest:
 						print("Only test mode, we stop The Execution")
 						return
 
 
-def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", runTpe = True,  dataset ="alldata", out ="../../plots/data/"):
+def runHyperOpts(pathResults ="../../../../plots/data/editscript_size_per_diff.csv", runTpe = True,  dataset ="alldata", out ="../../plots/data/"):
 
 	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ5_TPELauncher_allAlgo {} {} {}".format(pathResults,  dataset, runTpe)
 

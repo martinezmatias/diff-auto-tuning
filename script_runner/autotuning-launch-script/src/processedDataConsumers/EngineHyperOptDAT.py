@@ -81,7 +81,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 
 	print("All diffs considered after reduction with proportion {} ({}%): {}".format(fractiondata, fractiondata * 100, len(allDiff)))
 
-	k_fold = KFold(kFold, random_state=0)
+	k_fold = KFold(kFold, random_state=random_seed)
 
 	performanceBestInTraining = []
 	performanceBestInTesting = []

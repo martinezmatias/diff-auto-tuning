@@ -14,14 +14,14 @@ def main(runTPE = True, onlyTest = False):
 
 			for iseed in range(0, SEEDS_TO_EXECUTE):
 					print("\nanalyzing {}".format(folderToAnalyze))
-					runHyperOpts(pathResults="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm), dataset = folderToAnalyze, runTpe=runTPE, algo=algorithm, seed=iseed)
+					runHyperOpts(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm), dataset = folderToAnalyze, runTpe=runTPE, algo=algorithm, seed=iseed)
 
 					if onlyTest:
 						print("Only test mode, we stop The Execution")
 						return
 
 
-def runHyperOpts(pathResults ="../../../../plots/data/distance_per_diff.csv", runTpe = True,  dataset ="alldata", algo = None,  out ="../../plots/data/", seed = 0):
+def runHyperOpts(pathResults ="../../../../plots/data/editscript_size_per_diff.csv", runTpe = True,  dataset ="alldata", algo = None,  out ="../../plots/data/", seed = 0):
 
 	at_pythom_cmd =  "python3 -m src.processedDataConsumers.RQ1_TPELauncher {} {} {} {} {}".format(pathResults,  dataset, runTpe, algo, seed)
 
