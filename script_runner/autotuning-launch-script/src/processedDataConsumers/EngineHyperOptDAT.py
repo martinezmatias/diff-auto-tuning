@@ -9,6 +9,7 @@ from src.commons.DiffAlgorithmMetadata import *
 from src.commons.Datalocation import *
 from src.processedDataConsumers.CostParameters import *
 import zipfile
+import time
 
 CONFIGS_PERFORMANCE = "bestConfigsPerformance"
 
@@ -39,6 +40,9 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 	print("Algorithm {}".format(algorithm))
 	print("Overwrite results? {}".format(overwrite))
 	print("Random_seed {}".format(random_seed))
+	print("Total folds {}".format(kFold))
+
+	inittime = time.time()
 
 	if not overwrite and alreadyAnalyzedTPE(out = out, name =CONFIGS_PERFORMANCE, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed):
 		print("EARLY END: Config already analyzed {} {} {} {} {} ".format(out, dataset, algorithm, fractiondata, random_seed))
@@ -109,8 +113,8 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
 		X_train = set([])
 		X_test = set([])
-		print("\n---------Running fold {}".format(k))
-
+		print("\n---------Running fold {}/{}".format(k,kFold))
+		start_time = time.time()
 		# Create the training dataset
 		for i in train:
 			X_train.add(allDiff[i])
@@ -176,7 +180,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 		dataOfConfig = configsTrainingMaps[keyConfig]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
 		bestPercentage = dataOfConfig[AVG_CONSTANT]
-		print("Results k {} config {} best testing {} ".format(k, keyConfig, bestPercentage))
+		print("Results k {}/{} config {} best testing {} ".format(k,kFold, keyConfig, bestPercentage))
 		performanceBestInTraining.append(bestPercentage)
 
 		## the same but the testing:
@@ -184,7 +188,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 		dataOfConfig = configsTestingMaps[keyConfig]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
 		bestPercentage = dataOfConfig[AVG_CONSTANT]
-		print("Results k {} config {} best training {} ".format(k, keyConfig, bestPercentage))
+		print("Results k {}/{} config {} best training {} ".format(k,kFold, keyConfig, bestPercentage))
 		performanceBestInTesting.append(bestPercentage)
 
 		## now for the defaults
@@ -202,6 +206,10 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 			print("Performace default {} on testing {}".format(defaultConfigurationKey, bestPercentage))
 		else:
 			print("Could not determine default {}".format(defaultConfigurationKey))
+
+		elapsed_time = time.time() - start_time
+		print("Time for k {} {}".format(k, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
+
 	##Best configs per K fold
 	saveList(out = out, name =CONFIGS_PERFORMANCE, bestTraining = performanceBestInTraining, bestTesting = performanceBestInTesting, names = bestConfigs, datasetname = dataset, algorithm=algorithm, evals= max_evals, franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed)
 
@@ -210,6 +218,9 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 	saveList(out=out, name="defaultConfigsPerformance", bestTraining=performanceDefaultInTraining,
 			 bestTesting=performanceDefaultInTesting, names=defaultConfigNameList, datasetname=dataset, algorithm=algorithm,
 			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed)
+
+	elapsed_time = time.time() - inittime
+	print("END total time after {} k {}".format(kFold, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 
 	return dfcomplete
 
