@@ -161,7 +161,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, dfcomplete = Non
 		)
 
 		eval = hyperopt.space_eval(search_space, best)
-		print("finishing execution of Hyperopts")
+		print("finishing execution of Hyperopts for K {}".format(k))
 		keyConfig = recreateConfigurationKey(eval)
 		print("Best config found: {}".format(keyConfig))
 		#print("eval {} {}".format(len(eval),eval))
@@ -391,7 +391,6 @@ def saveDiffFromFoldTPE(out, data, typeset, k, algo ="", name ="", fraction=1,  
 
 
 def objectiveFunctionDAT(params):
-	print("\n*fmin invocation")
 	## we attach the data in the parameter space.
 	dataBestConfigurations = params['data']
 

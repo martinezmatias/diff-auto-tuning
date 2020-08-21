@@ -2,6 +2,7 @@ import pandas
 import scipy.stats
 import matplotlib.pyplot as plt
 import numpy as np
+import math
 from src.commons.CohenEffectSize import *
 from scipy.stats import wilcoxon, kruskal
 from src.commons.Datalocation import *
@@ -16,6 +17,101 @@ def compareDistributions(pathResults ="{}/distance_per_diff_GTSPOON.csv".format(
 
 	compareDistribution(df=df,keyBestConfiguration=keyBestConfiguration, keyDefaultConfiguration=keyDefaultConfiguration)
 
+
+def crossResults(pathDistances, pathSize, keyBestConfiguration, keyDefaultConfiguration):
+	print("reading data for {}".format(pathDistances))
+	dfDistances = pandas.read_csv(pathDistances, sep=",")
+	dfSize = pandas.read_csv(pathSize, sep=",")
+
+	columnsDistances = list(dfDistances.columns)
+
+	# We get the name of the configurations
+	print("Nr columns In Distances {}".format(len(columnsDistances)))
+	diffsDistances = dfDistances['diff']
+	allDiffDistances = list(diffsDistances.values)
+	print("nr of diffs Distances {}".format(len(allDiffDistances)))
+
+	##now ed size
+	columnsSize = list(dfSize.columns)
+	print("Nr columns In Sizes {}".format(len(columnsSize)))
+
+	diffsSize = dfSize['diff']
+	allDiffSizes = list(diffsSize.values)
+	print("nr of diffs Sizes {}".format(len(allDiffSizes)))
+
+	print("Comparing Best {} and Default {} ".format(keyBestConfiguration, keyDefaultConfiguration))
+
+	valuesDistancesBestConfiguration = list(dfDistances[keyBestConfiguration].values)
+	valuesDistancesDefaultConfiguration = list(dfDistances[keyDefaultConfiguration].values)
+
+	valuesSizeBestConfiguration = list(dfSize[keyBestConfiguration].values)
+	valuesSizeDefaultConfiguration = list(dfSize[keyDefaultConfiguration].values)
+
+	print("nr of valuesBestConfiguration {}".format(len(valuesDistancesBestConfiguration)))
+	print("nr of valuesDefaultConfiguration {}".format(len(valuesDistancesDefaultConfiguration)))
+	xBest = []
+	xDefault = []
+	nrNAN = 0
+	nrNotNAN = 0
+	bothBest = 0
+	onlyBestIsBest = 0
+	onlyDefaultIsBest = 0
+	noneIsBest = 0
+
+	for i in range(0, len(allDiffDistances)):
+
+		iDiffD = allDiffDistances[i]
+		iDiffS = allDiffSizes[i]
+
+		#print("{} {} {} ".format(i, iDiffD, iDiffS))
+
+		if not (iDiffD ==  iDiffS):
+			print("Error Different diff")
+			return
+
+		iBest =  valuesDistancesBestConfiguration[i]
+		iDefault = valuesDistancesDefaultConfiguration[i]
+		if math.isnan(iBest) and  math.isnan(iDefault):
+			nrNAN+=1
+		else:
+			nrNotNAN+=1
+
+			if iBest == 0 and iDefault == 0:
+				bothBest+=1
+				if valuesSizeBestConfiguration[i] != valuesSizeBestConfiguration[i]:
+					print("Error: values must match")
+					return
+
+				if valuesSizeBestConfiguration[i] < 10:
+					print("{} Same Size: {} {} ".format(i,iDiffD,valuesSizeBestConfiguration[i] ))
+
+			elif iBest == 0:
+				onlyBestIsBest+=1
+				print("{} Best better Size: {} {} {} ".format(i,iDiffD, valuesSizeBestConfiguration[i], valuesSizeDefaultConfiguration[i]))
+			elif iDefault == 0:
+				onlyDefaultIsBest+=1
+				print("{} Best default Size: {} {} {} ".format(i, iDiffD,
+														   valuesSizeDefaultConfiguration[i], valuesSizeBestConfiguration[i]))
+			else:
+				noneIsBest+=1
+
+	print("nan {}, non nan {}, both best {} ({:.5f}), only best {} ({:.5f}), only default {} ({:.5f}), noOneIsTheBest {}".format(nrNAN, nrNotNAN, bothBest,
+																															 bothBest/nrNotNAN,
+																															 onlyBestIsBest, (onlyBestIsBest + bothBest) / nrNotNAN,
+																															 onlyDefaultIsBest, (onlyDefaultIsBest + bothBest) / nrNotNAN,
+																															 noneIsBest))
+
+	#for i in range(0, len(valuesDefaultConfiguration)):
+	#	if not np.isnan(valuesBestConfiguration[i]) and not np.isnan(valuesDefaultConfiguration[i]):
+	#		xBest.append(valuesBestConfiguration[i])
+	#		xDefault.append(valuesDefaultConfiguration[i])
+
+	print("Size best {} size default {}".format(len(xBest), len(xDefault)))
+
+
+	#saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
+	#saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
+	print("END-ok")
 
 def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
