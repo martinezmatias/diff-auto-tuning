@@ -406,7 +406,7 @@ def objectiveFunctionDAT(params):
 
 	dataOfConfig = dataBestConfigurations[keyConfig]
 	editScriptAvgSize = dataOfConfig[AVG_CONSTANT]#dataOfConfig['bs']
-	print("--> Config {} edSize {} ".format(keyConfig, editScriptAvgSize))
+	#print("--> Config {} edSize {} ".format(keyConfig, editScriptAvgSize))
 	## As fmin aims at minimizing, so shortest avg is the best
 	return editScriptAvgSize
 
