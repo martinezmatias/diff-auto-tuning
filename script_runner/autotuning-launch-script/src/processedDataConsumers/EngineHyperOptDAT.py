@@ -452,7 +452,7 @@ def recreateConfigurationKey(params):
 	key = [algo]
 	for iParameter in propertiesPerMatcher[algo]:
 		key.append(str(params['space']["{}_{}".format(algo, iParameter)]))
-	keyConfig = ("_".join(key)).replace("_1.0_", "_1_")
+	keyConfig = ("_".join(key)).replace("_1.0", "_1")
 	return keyConfig
 
 def computeAvgLengthsFromHyperop(path, algo):
