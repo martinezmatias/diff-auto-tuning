@@ -523,12 +523,12 @@ def computeBestConfiguration(allConfig, presentPerConfig, valuesPerConfig):
 
 
 
-def computeBestAndDefaultByFoldFiles(algoName, fileBest, fileDefault):
-	computeBestAndDefaultByFold(algoName, readFileToFloatList(fileBest), readFileToFloatList(fileDefault))
+def computeBestAndDefaultByFoldFiles(model, algoName, fileBest, fileDefault):
+	computeBestAndDefaultByFold(model, algoName, readFileToFloatList(fileBest), readFileToFloatList(fileDefault))
 
 '''Plots the numbers form rq1'''
-def computeBestAndDefaultByFold(algoName, allBest = [], allDefault = []):
-	print("\nComparing performance of best and default by fold. k={}".format(len(allBest)))
+def computeBestAndDefaultByFold(model, algoName, allBest = [], allDefault = []):
+	print("\nModel: {} Comparing performance of best and default by fold. k={}".format(model, len(allBest)))
 	print("{}: allBest mean {:.2f}\% (st {:.2f})".format(algoName, np.mean(allBest)* 100, np.std(allBest)* 100))
 	print("{}: allDefault mean {:.2f}\% st {:.2f})".format(algoName, np.mean(allDefault)* 100, np.std(allDefault)* 100))
 	improvements = []
@@ -540,7 +540,7 @@ def computeBestAndDefaultByFold(algoName, allBest = [], allDefault = []):
 
 	print('scipy wilcoxon: stat=%.3f, p=%.3f' % (stat, pwil))
 '''plots the distribution for RQ1'''
-def plotDistributionAvg( fileGT, fileCD, fileXY, defaultGT, defaultCD, defaultXy, model = "JDT"):
+def plotDistributionAvg( fileGT, fileCD, fileXY, defaultGT, defaultCD, defaultXy, model = "JDT", out = RESULTS_PROCESSED_LOCATION):
 
 	allGT = readCSVToFloatList(fileGT)
 	allCD = readCSVToFloatList(fileCD)
@@ -569,8 +569,10 @@ def plotDistributionAvg( fileGT, fileCD, fileXY, defaultGT, defaultCD, defaultXy
 	plt.xticks(fontsize=20)
 	plt.yticks(fontsize=20)
 	#plt.xlabel("Diff Algorithm", fontproperties=20)
-	plt.ylabel("Performance", fontsize=14)
-	plt.savefig("distr_avg_performance_{}.pdf".format(model))
+	plt.ylabel("Performance for {} ASTs".format(model), fontsize=14)
+	outpath = "{}/distr_avg_performance_{}.pdf".format(out, model)
+	print("Save plot at {}".format(outpath))
+	plt.savefig(outpath)
 	plt.show()
 
 def countHigherValuesFile(path, thr = 0.05):

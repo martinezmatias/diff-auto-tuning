@@ -15,7 +15,7 @@ class TestGrid(unittest.TestCase):
 			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
 				computeFitness("{}/{}/".format(RESULTS_ROW_LOCATION, folderToAnalyze), suffix="{}_{}".format(folderToAnalyze, algorithm), key = algorithm)
 
-	def test_B_ComputeBestKFoldComplete(self):
+	def _test_B_ComputeBestKFoldComplete(self):
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
 								NAME_FOLDER_ASTSPOON
 								]:
@@ -34,7 +34,7 @@ class TestGrid(unittest.TestCase):
 
 
 
-	def test_C_plot(self):
+	def _test_C_plot(self):
 		##TODO: the data must be readen from files
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
 								NAME_FOLDER_ASTSPOON
@@ -73,25 +73,39 @@ class TestGrid(unittest.TestCase):
 
 	'''For Table of  RQ 1'''
 	def _test_C_ComparisonBest_TableRQ1(self):
+		#GridSearch
+		#/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/summaryResults/summaryResults/GridSearch/dataset_merge_out4gt_outCD/algorithm_Gumtree/seed_0/fractionds_1
 
-		for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
-			for algorithm in ["Gumtree", "ChangeDistiller", "Xy"]:
+		for astModel in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
+			for algorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
+				## for proportion 1, we took any seed, all have the same results
 
-				computeBestAndDefaultByFoldFiles("GumTree",
-												 "{}/summary_{}_{}_performanceTestingBestOnTraining.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm)
-												 , "{}/summary_{}_{}_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm))
-
-
+				fraction = 1
+				locationFileResults = "{}/summaryResults/GridSearch/dataset_{}/algorithm_{}/seed_0/fractionds_{}/".format(RESULTS_PROCESSED_LOCATION,astModel, algorithm, fraction)
+				computeBestAndDefaultByFoldFiles(astModel, algorithm,
+												 "{}/summary_{}_{}_performanceTestingBestOnTraining_f_{}.csv".format(locationFileResults,astModel, algorithm,fraction)
+												 , "{}/summary_{}_{}_performanceTestingDefaultOnTraining_f_{}.csv".format(locationFileResults, astModel, algorithm,fraction))
 
 	'''For Table of  RQ 1'''
-	def _test_D_ComparisonBest_PlotRQ1(self):
-		dataset = NAME_FOLDER_ASTSPOON
-		plotDistributionAvg("{}/summary_avg_performance_performance_{}_GumTree.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
-							"{}/summary_avg_performance_performance_{}_ChangeDistiller.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
-							"{}/summary_avg_performance_performance_{}_Xy.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
-							 "{}/summary_{}_Gumtree_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
-							 "{}/summary_{}_ChangeDistiller_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, dataset),
-							"{}/summary_{}_Xy_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, dataset))
+	def test_D_ComparisonBest_PlotRQ1(self):
+		for astModel in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
+			fraction = 1
+
+			locationFileResultsGumTree = "{}/summaryResults/GridSearch/dataset_{}/algorithm_{}/seed_0/fractionds_{}/".format(
+				RESULTS_PROCESSED_LOCATION, astModel, "Gumtree", fraction)
+
+			locationFileResultsChangeDistiller = "{}/summaryResults/GridSearch/dataset_{}/algorithm_{}/seed_0/fractionds_{}/".format(
+				RESULTS_PROCESSED_LOCATION, astModel, "ChangeDistiller", fraction)
+			locationFileResultsXyMatcher = "{}/summaryResults/GridSearch/dataset_{}/algorithm_{}/seed_0/fractionds_{}/".format(
+				RESULTS_PROCESSED_LOCATION, astModel, "XyMatcher", fraction)
+
+			plotDistributionAvg( "{}/avg_performance_performanceOnTraining_{}_GumTree_f_{}.csv".format(locationFileResultsGumTree, astModel, fraction),
+								"{}/avg_performance_performanceOnTraining_{}_ChangeDistiller_f_{}.csv".format(locationFileResultsChangeDistiller, astModel, fraction),
+								"{}/avg_performance_performanceOnTraining_{}_XyMatcher_f_{}.csv".format(locationFileResultsXyMatcher, astModel, fraction),
+								 "{}/summary_{}_Gumtree_performanceTestingDefaultOnTraining_f_{}.csv".format(locationFileResultsGumTree, astModel, fraction),
+								 "{}/summary_{}_ChangeDistiller_performanceTestingDefaultOnTraining_f_{}.csv".format(locationFileResultsChangeDistiller, astModel, fraction),
+								"{}/summary_{}_XyMatcher_performanceTestingDefaultOnTraining_f_{}.csv".format(locationFileResultsXyMatcher, astModel, fraction),
+								 model= "JDT" if "JDT" in astModel else "Spoon", out=RESULTS_PROCESSED_LOCATION)
 
 	'''Deprecated, not used any more, those metrics are computed based on the  summary_avg_performance_performance'''
 	def _testCheckTest(self):

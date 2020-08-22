@@ -29,6 +29,12 @@ defaultConfigurations = {
 "XyMatcher": "XyMatcher_2_0.5"
 			}
 
+sizeSearchSpace = {}
+sizeSearchSpace["Gumtree"] = 2050
+sizeSearchSpace["ChangeDistiller"] = 375
+sizeSearchSpace["XyMatcher"] = 50
+
+
 
 '''Returns a key for the configuration. It's the combination of the values for each property
 The CSV does not have a key: it has columns where the concrete values or null.

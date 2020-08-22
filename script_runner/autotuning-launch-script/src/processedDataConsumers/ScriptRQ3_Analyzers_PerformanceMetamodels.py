@@ -18,7 +18,7 @@ class TestHyperOp(unittest.TestCase):
 					 keyBestConfiguration="ClassicGumtree_0.1_2000_1",
 					 keyDefaultConfiguration=defaultConfigurations["ClassicGumtree"])
 
-	def test_CompareCrossDistributionBestDefaultGTSpoon(self):
+	def _test_CompareCrossDistributionBestDefaultGTSpoon(self):
 		##compare with the default of gtspoon
 		folderToAnalyze = NAME_FOLDER_ASTSPOON
 		algorithm = "Gumtree"
@@ -27,3 +27,24 @@ class TestHyperOp(unittest.TestCase):
 																		   algorithm),
 					 keyBestConfiguration="ClassicGumtree_0.6_1000_1",
 					 keyDefaultConfiguration=defaultConfigurations["ClassicGumtree"])
+
+
+		##SimpleGumtree_0.1_1
+
+	def test_CompareDistributionBestGridAndTPE(self):
+		folderToAnalyze = NAME_FOLDER_ASTJDT
+		## we want to compare the differences between the best from grid and the best ##SimpleGumtree_0.1_1 from TPE ClassicGumtree_0.1_2000_1
+		bestGrid = "SimpleGumtree_0.1_1"
+		bestTPE =  "ClassicGumtree_0.1_2000_1"
+
+		algorithm = "Gumtree"
+		pathSizeMatrix = "{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze,
+																	 algorithm)
+		crossResults(pathDistances="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze,
+																		   algorithm),
+					 pathSize=pathSizeMatrix,
+					 keyBestConfiguration=bestGrid,
+					 keyDefaultConfiguration=bestTPE)
+
+		compareDistributions(pathResults=pathSizeMatrix, keyBestConfiguration=bestGrid, keyDefaultConfiguration=bestTPE)
+

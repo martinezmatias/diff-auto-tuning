@@ -32,12 +32,12 @@ class TestRQ4(unittest.TestCase):
 	'''This script is similar to RQ 1, but the call it once, with a distance matrix (fitness) considering all algorithms.'''
 	def _test_ComparisonBest_TableRQ1(self):
 
-		for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
+		for astModel in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 			for algorithm in ["Gumtree", "ChangeDistiller", "Xy"]:
 
-				computeBestAndDefaultByFoldFiles("GumTree",
-												 "{}/summary_{}_{}_performanceTestingBestOnTraining.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm)
-												 , "{}/summary_{}_{}_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm))
+				computeBestAndDefaultByFoldFiles(astModel, "algorithm",
+												 "{}/summary_{}_{}_performanceTestingBestOnTraining.csv".format(RESULTS_PROCESSED_LOCATION,astModel, algorithm)
+												 , "{}/summary_{}_{}_performanceTestingDefaultOnTraining.csv".format(RESULTS_PROCESSED_LOCATION, astModel, algorithm))
 
 
 

@@ -9,7 +9,28 @@ import traceback
 def runTPERangeValues(editscriptsizepath,datasetname, runTPE, algo, seed):
 	#The first
 	datasetDF = None
-	for i_eval in evals_range:
+
+	evals_To_execute = []
+	print("percentage evals? ".format(USE_PERCENTAGE_EVAL))
+	if USE_PERCENTAGE_EVAL:
+
+		sizeSpaceAlgo = sizeSearchSpace[algo]
+
+		for per in PERCENTAGE_EVALS_RANGE:
+			# round
+			totalEval = int(per * sizeSpaceAlgo)
+			# if is zero, we put 1
+			totalEval = 1 if totalEval is 0 else totalEval
+
+			if totalEval not in evals_To_execute:
+				evals_To_execute.append(totalEval)
+
+	else:
+		evals_To_execute = ABSOLUTE_EVALS_RANGE
+
+	print("Evals to execute {} for {}".format(evals_To_execute, algo))
+
+	for i_eval in evals_To_execute:
 		kfold = KFOLD_VALUE
 		for i_ratio in ratioDataset:
 			try:

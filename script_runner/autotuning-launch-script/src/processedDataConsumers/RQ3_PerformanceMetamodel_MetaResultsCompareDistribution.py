@@ -22,6 +22,9 @@ def crossResults(pathDistances, pathSize, keyBestConfiguration, keyDefaultConfig
 	print("reading data for {}".format(pathDistances))
 	dfDistances = pandas.read_csv(pathDistances, sep=",")
 	dfSize = pandas.read_csv(pathSize, sep=",")
+	return crossResultsDatasets(dfDistances, dfSize,  keyBestConfiguration, keyDefaultConfiguration)
+
+def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultConfiguration):
 
 	columnsDistances = list(dfDistances.columns)
 
@@ -82,24 +85,27 @@ def crossResults(pathDistances, pathSize, keyBestConfiguration, keyDefaultConfig
 					print("Error: values must match")
 					return
 
-				if valuesSizeBestConfiguration[i] < 10:
-					print("{} Same Size: {} {} ".format(i,iDiffD,valuesSizeBestConfiguration[i] ))
+				#if valuesSizeBestConfiguration[i] < 10:
+				#	print("{} Same Size: {} {} ".format(i,iDiffD,valuesSizeBestConfiguration[i] ))
 
 			elif iBest == 0:
 				onlyBestIsBest+=1
-				print("{} Best better Size: {} {} {} ".format(i,iDiffD, valuesSizeBestConfiguration[i], valuesSizeDefaultConfiguration[i]))
+				#print("{} Best better Size: {} {} {} ".format(i,iDiffD, valuesSizeBestConfiguration[i], valuesSizeDefaultConfiguration[i]))
 			elif iDefault == 0:
 				onlyDefaultIsBest+=1
-				print("{} Best default Size: {} {} {} ".format(i, iDiffD,
-														   valuesSizeDefaultConfiguration[i], valuesSizeBestConfiguration[i]))
+				#print("{} Best default Size: {} {} {} ".format(i, iDiffD, valuesSizeDefaultConfiguration[i], valuesSizeBestConfiguration[i]))
 			else:
 				noneIsBest+=1
 
+	percentageBest = (onlyBestIsBest + bothBest) / nrNotNAN
+	percentageDefault = (onlyDefaultIsBest + bothBest) / nrNotNAN
 	print("nan {}, non nan {}, both best {} ({:.5f}), only best {} ({:.5f}), only default {} ({:.5f}), noOneIsTheBest {}".format(nrNAN, nrNotNAN, bothBest,
-																															 bothBest/nrNotNAN,
-																															 onlyBestIsBest, (onlyBestIsBest + bothBest) / nrNotNAN,
-																															 onlyDefaultIsBest, (onlyDefaultIsBest + bothBest) / nrNotNAN,
-																															 noneIsBest))
+																																 bothBest / nrNotNAN,
+																																 onlyBestIsBest,
+																																 percentageBest,
+																																 onlyDefaultIsBest,
+																																 percentageDefault,
+																																 noneIsBest))
 
 	#for i in range(0, len(valuesDefaultConfiguration)):
 	#	if not np.isnan(valuesBestConfiguration[i]) and not np.isnan(valuesDefaultConfiguration[i]):
@@ -112,6 +118,7 @@ def crossResults(pathDistances, pathSize, keyBestConfiguration, keyDefaultConfig
 	#saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
 	#saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
 	print("END-ok")
+	return percentageBest, percentageDefault
 
 def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
@@ -122,13 +129,29 @@ def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
 	xBest = []
 	xDefault = []
-
+	import seaborn as sns
+	import matplotlib.pyplot as plt
 	for i in range(0, len(valuesDefaultConfiguration)):
 		if not np.isnan(valuesBestConfiguration[i]) and not np.isnan(valuesDefaultConfiguration[i]):
 			xBest.append(valuesBestConfiguration[i])
 			xDefault.append(valuesDefaultConfiguration[i])
 
-	print("Size best {} size default {}".format(len(xBest), len(xDefault)))
+	if False:
+
+		print("Size best {} size default {}".format(len(xBest), len(xDefault)))
+
+		# Method 1: on the same Axis
+		sns.distplot(xBest, color="skyblue", label="First")
+		sns.distplot(xDefault, color="red", label="Second")
+		#sns.plt.legend()
+
+		plt.show()
+
+	#ax = sns.violinplot(data=[xBest,xDefault], split=True, orient="v", inner="quartile", cut=0, showfliers = False )
+	#ax.set_xticklabels(['first', 'second'])
+	plt.boxplot([xBest,xDefault], showfliers=False)
+	plt.show()
+
 
 	stat, p =	scipy.stats.mannwhitneyu(xBest, xDefault)
 
