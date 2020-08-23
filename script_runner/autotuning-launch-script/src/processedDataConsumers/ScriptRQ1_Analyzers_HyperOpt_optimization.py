@@ -75,7 +75,7 @@ class TestHyperOp(unittest.TestCase):
 
 			kfold = 2
 			maxeval = 10
-			franction = 0.5
+			franction = 0.001
 			seed=20
 			model = NAME_FOLDER_ASTJDT
 			for algorithm in ["Gumtree"]:

@@ -124,9 +124,12 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 		return
 
 	## Here we want to compute the distance from all diffs considered in this fraction (training + testing)
-	rd, rd2, bestProportion_general = findESAverageRanking(allDiff, allConfig, df,
-																						 indexOfColumns=indexOfConfig,
-																						 useAvg=useAverage)
+
+	rd, rd2, bestProportion_general = retrieveESsizeFromMatrix(df, allDiff, allConfig, indexOfConfig)
+
+	saveAvgPerformancePerConfigTPEAll(out=out, name="general", data= bestProportion_general, datasetname=dataset,
+			 algorithm=algorithm,
+			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage,)
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
@@ -278,9 +281,6 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 			 bestTesting=proportionDefaultInTesting, names=defaultConfigNameList, datasetname=dataset, algorithm=algorithm,
 			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage, bestGeneral=proportionDefaultAllDiffFromFraction)
 
-	saveAvgPerformancePerConfigTPE(out=out, name="general", dataset= bestProportion_general, names=defaultConfigNameList, datasetname=dataset,
-			 algorithm=algorithm,
-			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage,)
 
 	elapsed_time = time.time() - inittime
 	print("END total time after {} k {}".format(kFold, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
@@ -600,7 +600,7 @@ def analyzeResultsHyperop2(pathDistances, pathSize, pathBest, pathDefault, algo,
 
 
 
-def saveAvgPerformancePerConfigTPE(out, name, datasetname,  algorithm, franctiondataset, evals, isTPE = True, randomseed = 0, useAvg = True,data = {}):
+def saveAvgPerformancePerConfigTPEAll(out, name, datasetname,  algorithm, franctiondataset, evals, isTPE = True, randomseed = 0, useAvg = True,data = {}):
 	executionmode = "hyper_op" if isTPE else "random_op"
 	algoName = "allAlgorithms" if algorithm is None else algorithm
 	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out,executionmode, datasetname, algoName,
@@ -617,30 +617,6 @@ def saveAvgPerformancePerConfigTPE(out, name, datasetname,  algorithm, franction
 
 	for xconf in allconfigs:
 		fout1.write("{},{}\n".format(xconf, data[xconf]))
-		fout1.flush()
-	fout1.close()
-	print("Save results at {}".format(filename))
-
-
-def saveAvgPerformancePerConfigTPE(out,  typeset, data = {}, algo = "",name = "" , fraction = 1, randomseed=0):
-
-	algoName =  "allAlgorithms" if algo is None else  algo
-	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName,randomseed,fraction, name)
-	if not os.path.exists(randomparentfolder):
-		os.makedirs(randomparentfolder)
-
-	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, name, typeset, algoName,fraction)
-	fout1 = open(filename, 'w')
-	means = {}
-	for conf in data.keys():
-			#fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
-			means[conf] = np.mean(data[conf])
-
-	allconfigs = list(means.keys())
-	allconfigs = sorted(allconfigs, key=lambda x: means[x], reverse=True)
-
-	for xconf in allconfigs:
-		fout1.write("{},{}\n".format(xconf, means[xconf]))
 		fout1.flush()
 	fout1.close()
 	print("Save results at {}".format(filename))
