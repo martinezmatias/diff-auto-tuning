@@ -31,7 +31,6 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	columnsDistances = list(dfDistances.columns)
 
 	# We get the name of the configurations
-	print("Nr columns In Distances {}".format(len(columnsDistances)))
 	diffsDistances = dfDistances['diff']
 	allDiffDistances = list(diffsDistances.values)
 	#print("nr of diffs Distances {}".format(len(allDiffDistances)))
@@ -44,7 +43,7 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	allDiffSizes = list(diffsSize.values)
 	#print("nr of diffs Sizes {}".format(len(allDiffSizes)))
 
-	print("Comparing Best {} and Default {} ".format(keyBestConfiguration, keyDefaultConfiguration))
+	#print("Comparing Best {} and Default {} ".format(keyBestConfiguration, keyDefaultConfiguration))
 
 	valuesDistancesBestConfiguration = list(dfDistances[keyBestConfiguration].values)
 	valuesDistancesDefaultConfiguration = list(dfDistances[keyDefaultConfiguration].values)
@@ -52,8 +51,6 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	valuesSizeBestConfiguration = list(dfSize[keyBestConfiguration].values)
 	valuesSizeDefaultConfiguration = list(dfSize[keyDefaultConfiguration].values)
 
-	#print("nr of valuesBestConfiguration {}".format(len(valuesDistancesBestConfiguration)))
-	#print("nr of valuesDefaultConfiguration {}".format(len(valuesDistancesDefaultConfiguration)))
 
 	nrNAN = 0
 	nrNotNAN = 0
@@ -61,8 +58,6 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	onlyBestIsBest = 0
 	onlyDefaultIsBest = 0
 	noneIsBest = 0
-	differencesFavorBest = []
-	differencesFavorDefault = []
 
 	sizesBest = []
 	sizeDefault = []
@@ -104,66 +99,28 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 
 			elif iBest == 0:
 				onlyBestIsBest+=1
-				#print("{} Best better Size: {} {} {} ".format(i,iDiffD, valuesSizeBestConfiguration[i], valuesSizeDefaultConfiguration[i]))
-				if not np.isnan(valuesSizeDefaultConfiguration[i]) and not np.isnan(valuesSizeBestConfiguration[i]) :
-					differencesFavorBest.append(float(valuesSizeDefaultConfiguration[i]) - float(valuesSizeBestConfiguration[i]))
 
 			elif iDefault == 0:
 				onlyDefaultIsBest+=1
-				if not np.isnan(valuesSizeDefaultConfiguration[i]) and not np.isnan(valuesSizeBestConfiguration[i]) :
-					differencesFavorDefault.append(float(valuesSizeBestConfiguration[i]) - float(valuesSizeDefaultConfiguration[i]))
+
 			else:
 				noneIsBest+=1
 
-	percentageBest = (onlyBestIsBest) / nrNotNAN
-	percentageDefault = (onlyDefaultIsBest ) / nrNotNAN
-	print("nan {}, non nan {}, both best {} ({:.5f}), only best {} ({:.5f}), only default {} ({:.5f}), noOneIsTheBest {} ({:.5f})".format(nrNAN, nrNotNAN, bothBest,
-																																 bothBest / nrNotNAN,
+	percentageOnlyBest = (onlyBestIsBest) / nrNotNAN
+	percentageOnlyDefault = (onlyDefaultIsBest ) / nrNotNAN
+
+	percentageBest = (onlyBestIsBest + bothBest) / nrNotNAN
+	percentageDefault = (onlyDefaultIsBest +  bothBest) / nrNotNAN
+	print("nan {}, non nan {}, both best {} ({:.5f}), best is best {}  ({:.5f}), only best {} ({:.5f}), default is best {} ({:.5f}),  only default {} ({:.5f}), noOneIsTheBest {} ({:.5f})".format(nrNAN, nrNotNAN, bothBest,
+																																 bothBest / nrNotNAN,(onlyBestIsBest + bothBest), percentageBest,
 																																 onlyBestIsBest,
-																																 percentageBest,
+																																 percentageOnlyBest, (onlyDefaultIsBest + bothBest), percentageDefault,
 																																 onlyDefaultIsBest,
-																																 percentageDefault,
+																																 percentageOnlyDefault,
 																																 noneIsBest, noneIsBest/nrNotNAN))
 
 
-	print("best distance favor {}  ".format(len(differencesFavorBest)))
-	print("default distance favor  {}  ".format(len(differencesFavorDefault)))
-	#saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
-	#saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
 
-	print("avg favor best {:.5f} avg favor default {:.5f}".format(np.mean(differencesFavorBest), np.mean(differencesFavorDefault)) )
-
-	if False:
-		print("best sizes {}  ".format(len(sizesBest)))
-		print("best default {}  ".format(len(sizeDefault)))
-
-		#https://matplotlib.org/3.1.1/gallery/statistics/histogram_multihist.html
-		#plt.hist([sizesBest, sizeDefault], alpha=0.5, bins=10000, label=["Best", "Default"]) #histtype = 'step', stacked = True, fill = True,
-		plt.hist([sizesBest, sizeDefault], alpha=0.5,bins=5000,histtype = 'step', label=["Best", "Default"])
-		plt.legend(["Best", "Default"])
-
-		plt.xlim(0, 50)
-		plt.show()
-
-		stat, p = scipy.stats.mannwhitneyu(sizesBest, sizeDefault,alternative='two-sided')
-
-		print('sizes  mannwhitneyu stat=%.3f, p=%.3f' % (stat, p))
-
-		stat, p = scipy.stats.mannwhitneyu(differencesFavorBest, differencesFavorDefault, alternative='two-sided')
-
-		print('differences  mannwhitneyu stat=%.3f, p=%.3f' % (stat, p))
-
-		saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), sizesBest)
-		saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), sizeDefault)
-
-		plt.boxplot([differencesFavorBest, differencesFavorDefault], showfliers=True)
-		plt.legend(["Best", "Default"])
-		plt.show()
-
-		plt.hist([differencesFavorBest, differencesFavorDefault], alpha=0.5, bins=5000, histtype='step', label=["Best", "Default"])
-		plt.legend(["Best", "Default"])
-		plt.xlim(0, 100)
-		plt.show()
 
 	print("END-ok")
 	return percentageBest, percentageDefault
@@ -265,5 +222,144 @@ def saveFile(filename, pvalues1):
 	fout1.flush()
 	fout1.close()
 
+def crossResultsDatasetsDistanceAnalysis(dfDistances, dfSize, keyBestConfiguration, keyDefaultConfiguration):
 
+	columnsDistances = list(dfDistances.columns)
+
+	# We get the name of the configurations
+	diffsDistances = dfDistances['diff']
+	allDiffDistances = list(diffsDistances.values)
+	#print("nr of diffs Distances {}".format(len(allDiffDistances)))
+
+	##now ed size
+	columnsSize = list(dfSize.columns)
+	#print("Nr columns In Sizes {}".format(len(columnsSize)))
+
+	diffsSize = dfSize['diff']
+	allDiffSizes = list(diffsSize.values)
+	#print("nr of diffs Sizes {}".format(len(allDiffSizes)))
+
+	#print("Comparing Best {} and Default {} ".format(keyBestConfiguration, keyDefaultConfiguration))
+
+	valuesDistancesBestConfiguration = list(dfDistances[keyBestConfiguration].values)
+	valuesDistancesDefaultConfiguration = list(dfDistances[keyDefaultConfiguration].values)
+
+	valuesSizeBestConfiguration = list(dfSize[keyBestConfiguration].values)
+	valuesSizeDefaultConfiguration = list(dfSize[keyDefaultConfiguration].values)
+
+	#print("nr of valuesBestConfiguration {}".format(len(valuesDistancesBestConfiguration)))
+	#print("nr of valuesDefaultConfiguration {}".format(len(valuesDistancesDefaultConfiguration)))
+
+	nrNAN = 0
+	nrNotNAN = 0
+	bothBest = 0
+	onlyBestIsBest = 0
+	onlyDefaultIsBest = 0
+	noneIsBest = 0
+	differencesFavorBest = []
+	differencesFavorDefault = []
+
+	sizesBest = []
+	sizeDefault = []
+	for i in range(0, len(allDiffDistances)):
+
+		iDiffD = allDiffDistances[i]
+		iDiffS = allDiffSizes[i]
+
+		#print("{} {} {} ".format(i, iDiffD, iDiffS))
+
+		if not (iDiffD ==  iDiffS):
+			print("Error Different diff")
+			return
+
+		iBest =  valuesDistancesBestConfiguration[i]
+		iDefault = valuesDistancesDefaultConfiguration[i]
+
+		if math.isnan(iBest) and  math.isnan(iDefault):
+			nrNAN+=1
+		else:
+			nrNotNAN+=1
+
+			if not np.isnan(valuesSizeDefaultConfiguration[i]) : #only commented to R
+			#if not np.isnan(valuesSizeDefaultConfiguration[i]) and not np.isnan(valuesSizeBestConfiguration[i]):
+				sizeDefault.append(int(valuesSizeDefaultConfiguration[i]))
+
+			if not np.isnan(valuesSizeBestConfiguration[i]) :
+			#if not np.isnan(valuesSizeDefaultConfiguration[i]) and not np.isnan(valuesSizeBestConfiguration[i]):
+				sizesBest.append(int(valuesSizeBestConfiguration[i]))
+
+			if iBest == 0 and iDefault == 0:
+				bothBest+=1
+				if valuesSizeBestConfiguration[i] != valuesSizeDefaultConfiguration[i]:
+					print("Error: values must match")
+					return
+
+				#if valuesSizeBestConfiguration[i] < 10:
+				#	print("{} Same Size: {} {} ".format(i,iDiffD,valuesSizeBestConfiguration[i] ))
+
+			elif iBest == 0:
+				onlyBestIsBest+=1
+				#print("{} Best better Size: {} {} {} ".format(i,iDiffD, valuesSizeBestConfiguration[i], valuesSizeDefaultConfiguration[i]))
+				if not np.isnan(valuesSizeDefaultConfiguration[i]) and not np.isnan(valuesSizeBestConfiguration[i]) :
+					differencesFavorBest.append(float(valuesSizeDefaultConfiguration[i]) - float(valuesSizeBestConfiguration[i]))
+
+			elif iDefault == 0:
+				onlyDefaultIsBest+=1
+				if not np.isnan(valuesSizeDefaultConfiguration[i]) and not np.isnan(valuesSizeBestConfiguration[i]) :
+					differencesFavorDefault.append(float(valuesSizeBestConfiguration[i]) - float(valuesSizeDefaultConfiguration[i]))
+			else:
+				noneIsBest+=1
+
+	percentageBest = (onlyBestIsBest) / nrNotNAN
+	percentageDefault = (onlyDefaultIsBest ) / nrNotNAN
+	print("nan {}, non nan {}, both best {} ({:.5f}), only best {} ({:.5f}), only default {} ({:.5f}), noOneIsTheBest {} ({:.5f})".format(nrNAN, nrNotNAN, bothBest,
+																																 bothBest / nrNotNAN,
+																																 onlyBestIsBest,
+																																 percentageBest,
+																																 onlyDefaultIsBest,
+																																 percentageDefault,
+																																 noneIsBest, noneIsBest/nrNotNAN))
+
+
+	#print("best distance favor {}  ".format(len(differencesFavorBest)))
+	#print("default distance favor  {}  ".format(len(differencesFavorDefault)))
+	#saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
+	#saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
+
+	print("avg favor best {:.5f} avg favor default {:.5f}".format(np.mean(differencesFavorBest), np.mean(differencesFavorDefault)) )
+
+	if False:
+		print("best sizes {}  ".format(len(sizesBest)))
+		print("best default {}  ".format(len(sizeDefault)))
+
+		#https://matplotlib.org/3.1.1/gallery/statistics/histogram_multihist.html
+		#plt.hist([sizesBest, sizeDefault], alpha=0.5, bins=10000, label=["Best", "Default"]) #histtype = 'step', stacked = True, fill = True,
+		plt.hist([sizesBest, sizeDefault], alpha=0.5,bins=5000,histtype = 'step', label=["Best", "Default"])
+		plt.legend(["Best", "Default"])
+
+		plt.xlim(0, 50)
+		plt.show()
+
+		stat, p = scipy.stats.mannwhitneyu(sizesBest, sizeDefault,alternative='two-sided')
+
+		print('sizes  mannwhitneyu stat=%.3f, p=%.3f' % (stat, p))
+
+		stat, p = scipy.stats.mannwhitneyu(differencesFavorBest, differencesFavorDefault, alternative='two-sided')
+
+		print('differences  mannwhitneyu stat=%.3f, p=%.3f' % (stat, p))
+
+		saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), sizesBest)
+		saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), sizeDefault)
+
+		plt.boxplot([differencesFavorBest, differencesFavorDefault], showfliers=True)
+		plt.legend(["Best", "Default"])
+		plt.show()
+
+		plt.hist([differencesFavorBest, differencesFavorDefault], alpha=0.5, bins=5000, histtype='step', label=["Best", "Default"])
+		plt.legend(["Best", "Default"])
+		plt.xlim(0, 100)
+		plt.show()
+
+	print("END-ok")
+	return percentageBest, percentageDefault
 

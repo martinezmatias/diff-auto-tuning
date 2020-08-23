@@ -468,7 +468,7 @@ def computeAvgLengthsFromHyperop(path, algo):
 
 from src.processedDataConsumers.RQ3_PerformanceMetamodel_MetaResultsCompareDistribution import *
 from src.commons.DiffAlgorithmMetadata import *
-def analyzeResultsHyperop2(pathDistances, pathSize, pathBest, pathDefault, algo, model):
+def analyzeResultsHyperop2(pathDistances, pathSize, pathBest, pathDefault, algo, model, seed = 0):
 	print("\nmodel {} algo {}".format(model, algo))
 	#the 0 is index
 	#the 1 is the config
@@ -480,19 +480,45 @@ def analyzeResultsHyperop2(pathDistances, pathSize, pathBest, pathDefault, algo,
 	dfDistances = pandas.read_csv(pathDistances, sep=",")
 	dfSize = pandas.read_csv(pathSize, sep=",")
 
-	bestConfigs = readCSVToStringList(pathBest, indexToKeep=1)
-	defaultConfigs = readCSVToStringList(pathDefault, indexToKeep=1)
+	allBestperK = readCSVtoAll(pathBest)
+	allDefaultperK = readCSVtoAll(pathDefault)
+	# we retrieve the name of the configuration
 
 	allPercentageBest = []
 	allPercentageDefault = []
 
-	for config in bestConfigs:
-		print("config {} ".format(config))
-		percentageBest, percentageDefault = crossResultsDatasets(dfDistances, dfSize, config,defaultConfigs[0])
+	allMetricBest = []
+	allMetricDefault = []
+
+	allConfigurationBestFound = []
+
+	differencesMetric = []
+
+	for i in range(0, len(allBestperK)):
+		#for each row (a k fold result)
+		# # we retrieve the name of the configuration
+		iConfig = str(allBestperK[i][1])
+		allConfigurationBestFound.append(iConfig)
+		iDefaultConfig = str(allDefaultperK[i][1])
+
+		# we retrieve the performance on testing (metric avg or median)
+		bestMetric = float(allBestperK[i][3])
+		defaultMetric = float(allDefaultperK[i][3])
+
+		differencesMetric.append(defaultMetric - bestMetric)
+
+		allMetricBest.append(bestMetric)
+		allMetricDefault.append(defaultMetric)
+		allConfigurationBestFound.append(iConfig)
+
+		print("config {} at K {} ".format(iConfig, i))
+		percentageBest, percentageDefault = crossResultsDatasets(dfDistances, dfSize, iConfig, iDefaultConfig)
 		print("best {} , default {} ".format(percentageBest, percentageDefault))
 		allPercentageBest.append(percentageBest)
 		allPercentageDefault.append(percentageDefault)
 
-	print("{} {} Best & {:.2f}\%  (st {:.2f})".format(model,algo, np.mean(allPercentageBest) * 100, np.std(allPercentageDefault) * 100))
+	print("Partial summary for seed {}:".format(seed))
+	print("{} {} Best & {:.2f}\%  (st {:.2f})".format(model,algo, np.mean(allPercentageBest) * 100, np.std(allPercentageBest) * 100))
 	print("{} {} Default & {:.2f}\%  (st {:.2f})".format(model, algo, np.mean(allPercentageDefault) * 100, np.std(allPercentageDefault) * 100))
 	print("-----")
+	return allPercentageBest, allPercentageDefault, allMetricBest, allMetricDefault, allConfigurationBestFound, differencesMetric

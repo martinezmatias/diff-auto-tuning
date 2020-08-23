@@ -3,6 +3,9 @@ from src.processedDataConsumers.EngineHyperOptDAT import *
 from src.commons.Datalocation import *
 from src.rowDataConsumers.RQ0_Setup_ComputeEDSizeOfConfiguationsFromRowData import *
 from src.processedDataConsumers.CostParameters import *
+
+from collections import Counter
+
 class TestHyperOp(unittest.TestCase):
 
 	def _test_A_ComputeDistanceFastPerAlgorithm(self):
@@ -27,7 +30,7 @@ class TestHyperOp(unittest.TestCase):
 	def _test_CompteHyperOpt_single_by_algo_GumTree(self):
 			''''only 1000 '''''
 			kfold = 5
-			maxeval = 200
+			maxeval = 1000
 			franction = 1
 			seed=10
 			TPE = True
@@ -52,7 +55,7 @@ class TestHyperOp(unittest.TestCase):
 					for useAvg in measure:
 						computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=True,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 
-	def test_CompteHyperOpt_single_by_algo_Xy(self):
+	def _test_CompteHyperOpt_single_by_algo_Xy(self):
 			''''only 1000 '''''
 			kfold = 2
 			maxeval = 10
@@ -109,45 +112,151 @@ class TestHyperOp(unittest.TestCase):
 
 
 
-	def _testAnalyzeHyperopResults(self):
-		evals = 1000
+	def testAnalyzeHyperopResults(self):
+		evals = 200
 		fraction = 1
 		parentMethodFolder = None
 		childMethodFolder = None
 
-		isTPE = False
+		isTPE = True
+		useAvg = True
 
 		if isTPE:
 			parentMethodFolder = "TPE"
-			childMethodFolder = "hyper"
+			childMethodFolder = "hyper_op"
 		else:
 			parentMethodFolder = "random"
-			childMethodFolder = "random"
+			childMethodFolder = "random_op"
 
 		for modelToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
-			for algo in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
+			modelName = "JDT" if "JDT" in modelToAnalyze else "Spoon"
+			for algo in ["Gumtree"#, "ChangeDistiller", "XyMatcher"
+						 ]:
 
-				location = "{}/summaryResults/{}/hyper_op/dataset_{}/algorithm_{}/seed_0/fractionds_{}/".format(RESULTS_PROCESSED_LOCATION,parentMethodFolder, modelToAnalyze, algo,fraction)
-				#/TPE/hyper_op/dataset_merge_out4gt_outCD/algorithm_Gumtree/seed_3/fractionds_1/hyper_op_merge_out4gt_outCD_defaultConfigsPerformance_Gumtree_evals_1000_f_1.csv
+				allPercentageBestAllSeed = []
+				allPercentageDefaultAllSeed = []
 
-				print("\nBest: ")
-				pathBest = "{}/{}_op_{}_bestConfigsPerformance_{}_evals_{}_f_{}.csv".format(location,childMethodFolder,
-																									 modelToAnalyze,
-																									 algo, evals,
-																									 fraction)
-				pathDefault = "{}/{}_op_{}_defaultConfigsPerformance_{}_evals_{}_f_{}.csv".format(location,childMethodFolder,
-																									 modelToAnalyze,
-																									 algo, evals,
-																									 fraction)
-				analyzeResultsHyperop2(
-					pathDistances="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, modelToAnalyze,
-																		  algo),
-					pathSize="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, modelToAnalyze,
-																			algo),
-					pathBest=pathBest,pathDefault=pathDefault, algo=algo, model="JDT" if "JDT" in modelToAnalyze else "Spoon"
-				)
+				allMetricBestAllSeed = []
+				allMetricDefaultAllSeed = []
+				differencesMetricAllSeed = []
 
-				print("----")
+				for iseed in [10]:
+					location = "{}/{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(RESULTS_PROCESSED_LOCATION,parentMethodFolder,childMethodFolder, modelToAnalyze, algo,iseed,fraction)
+					#/TPE/hyper_op/dataset_merge_out4gt_outCD/algorithm_Gumtree/seed_3/fractionds_1/hyper_op_merge_out4gt_outCD_defaultConfigsPerformance_Gumtree_evals_1000_f_1.csv
+
+					print("\nBest: ")
+					pathBest = "{}/{}_{}_bestConfigsPerformance_{}_evals_{}_f_{}_{}.csv".format(location,childMethodFolder,
+																										 modelToAnalyze,
+																										 algo, evals,
+																										 fraction, "avg" if useAvg else "median")
+					pathDefault = "{}/{}_{}_defaultConfigsPerformance_{}_evals_{}_f_{}_{}.csv".format(location,childMethodFolder,
+																										 modelToAnalyze,
+																										 algo, evals,
+																										 fraction, "avg" if useAvg else "median")
+
+					allPercentageBest, allPercentageDefault, allMetricBest, allMetricDefault, allConfigurationBestFound,differencesMetric = analyzeResultsHyperop2(
+						pathDistances="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, modelToAnalyze,
+																			  algo),
+						pathSize="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, modelToAnalyze,
+																				algo),
+						pathBest=pathBest,pathDefault=pathDefault, algo=algo, model=modelName, seed=iseed
+					)
+
+					print("all config found {}".format(Counter(allConfigurationBestFound)))
+
+					allPercentageBestAllSeed.extend(allPercentageBest)
+					allPercentageDefaultAllSeed.extend(allPercentageDefault)
+
+					allMetricBestAllSeed.extend(allMetricBest)
+					allMetricDefaultAllSeed.extend(allMetricDefault)
+
+					differencesMetricAllSeed.extend(differencesMetric)
+
+					print("----")
+				print("Summarizing results all seeds:")
+				print("Percentages: ")
+				meanPercentageBest = np.mean(allPercentageBestAllSeed)
+				print("{} {} Best & {:.2f}\%  (st {:.2f})".format(modelName, algo, meanPercentageBest * 100,
+																  np.std(allPercentageBestAllSeed) * 100))
+				meanPercentageDefault = np.mean(allPercentageDefaultAllSeed)
+				print("{} {} Default & {:.2f}\%  (st {:.2f})".format(modelName, algo, meanPercentageDefault * 100,
+																	 np.std(allPercentageDefaultAllSeed) * 100))
+
+				print("{} {} Difference & {:.2f}\%  ".format(modelName, algo, (meanPercentageBest - meanPercentageDefault )* 100))
+
+				print("Metrics: ")
+				meanMetricBest = np.mean(allMetricBestAllSeed)
+				print("{} {} Best & {:.2f}  (st {:.2f})".format(modelName, algo,
+																  meanMetricBest ,
+																  np.std(allMetricBestAllSeed) ))
+				meanMetricDefault = np.mean(allMetricDefaultAllSeed)
+				print("{} {} Default & {:.2f}  (st {:.2f})".format(modelName, algo,
+																	 meanMetricDefault,
+																	 np.std(allMetricDefaultAllSeed)))
+
+				print("{} {} Difference & {:.2f}\%  ".format(modelName, algo,
+															 ((meanMetricDefault - meanMetricBest)/meanMetricDefault) * 100))
+
+				meanDifferencesMetric = np.mean(differencesMetricAllSeed)
+				print("{} {} Difference from mean & {:.2f}\%  ".format(modelName, algo,
+															 ((meanDifferencesMetric) / meanMetricDefault) * 100))
+
+	def testAnalyzeHyperopResultsCompareAvgMediam(self):
+		evals = 200#1000
+		fraction = 1
+		parentMethodFolder = None
+		childMethodFolder = None
+
+		isTPE = True
+
+		if isTPE:
+			parentMethodFolder = "TPE"
+			childMethodFolder = "hyper_op"
+		else:
+			parentMethodFolder = "random"
+			childMethodFolder = "random_op"
+
+		for modelToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
+			for algo in ["Gumtree"#, "ChangeDistiller", "XyMatcher"
+						 ]:
+				iseed = 10
+				allPercentageBest = []
+				allPercentageDefault = []
+
+				bestFromAvg = []
+				bestFromMedian = []
+				for useAvg in [True, False]:
+					location = "{}/{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(RESULTS_PROCESSED_LOCATION,parentMethodFolder,childMethodFolder, modelToAnalyze, algo,iseed,fraction)
+					#/TPE/hyper_op/dataset_merge_out4gt_outCD/algorithm_Gumtree/seed_3/fractionds_1/hyper_op_merge_out4gt_outCD_defaultConfigsPerformance_Gumtree_evals_1000_f_1.csv
+
+					print("\nBest: ")
+					pathBest = "{}/{}_{}_bestConfigsPerformance_{}_evals_{}_f_{}_{}.csv".format(location,childMethodFolder,
+																										 modelToAnalyze,
+																										 algo, evals,
+																										 fraction, "avg" if useAvg else "median")
+					pathDefault = "{}/{}_{}_defaultConfigsPerformance_{}_evals_{}_f_{}_{}.csv".format(location,childMethodFolder,
+																										 modelToAnalyze,
+																										 algo, evals,
+																										 fraction, "avg" if useAvg else "median")
+					allPercentageBest, allPercentageDefault, allMetricBest, allMetricDefault, allConfigurationBestFound = analyzeResultsHyperop2(
+						pathDistances="{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, modelToAnalyze,
+																			  algo),
+						pathSize="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, modelToAnalyze,
+																				algo),
+						pathBest=pathBest,pathDefault=pathDefault, algo=algo, model="JDT" if "JDT" in modelToAnalyze else "Spoon", seed=iseed
+					)
+
+					if useAvg:
+						bestFromAvg = allPercentageBest
+					else:
+						bestFromMedian = allPercentageBest
+
+					print("all config found {}".format(Counter(allConfigurationBestFound)))
+
+					print("----")
+				print("Now we compare avg {} vs median {} ".format(np.mean(bestFromAvg), np.mean(bestFromMedian)))
+
+
 
 if __name__ == '__main__':
 	unittest.main()

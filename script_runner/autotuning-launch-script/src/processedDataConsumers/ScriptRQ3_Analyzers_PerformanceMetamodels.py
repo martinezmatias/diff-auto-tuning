@@ -29,7 +29,7 @@ class TestHyperOp(unittest.TestCase):
 					 keyDefaultConfiguration=defaultConfigurations["ClassicGumtree"])
 
 
-		##SimpleGumtree_0.1_1
+
 
 	def test_CompareDistributionBestGridAndTPE(self):
 		folderToAnalyze = NAME_FOLDER_ASTJDT
@@ -46,5 +46,5 @@ class TestHyperOp(unittest.TestCase):
 					 keyBestConfiguration=bestGrid,
 					 keyDefaultConfiguration=bestTPE)
 
-		compareDistributions(pathResults=pathSizeMatrix, keyBestConfiguration=bestGrid, keyDefaultConfiguration=bestTPE)
+		#compareDistributions(pathResults=pathSizeMatrix, keyBestConfiguration=bestGrid, keyDefaultConfiguration=bestTPE)
 
