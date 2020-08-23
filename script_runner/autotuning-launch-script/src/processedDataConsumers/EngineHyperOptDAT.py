@@ -43,6 +43,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 	print("Random_seed {}".format(random_seed))
 	print("Total folds {}".format(kFold))
 	print("Total evals {}".format(max_evals))
+	print("Proportion dataset {}".format(fractiondata))
 
 	inittime = time.time()
 	random.seed(random_seed)
@@ -90,11 +91,21 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 	k_fold = KFold(kFold, random_state=random_seed)
 
-	performanceBestInTraining = []
-	performanceBestInTesting = []
+	###Those stores the mesures (avg, median, etc) of the best config
+	mesureBestInTraining = []
+	mesureBestInTesting = []
 
-	performanceDefaultInTraining = []
-	performanceDefaultInTesting = []
+	mesureDefaultInTraining = []
+	mesureDefaultInTesting = []
+
+	###Those stores the proportionBest of the best config
+	proportionBestInTraining = []
+	proportionBestInTesting = []
+	proportionBestAllDiffFromFraction = []
+
+	proportionDefaultInTraining = []
+	proportionDefaultInTesting = []
+	proportionDefaultAllDiffFromFraction = []
 
 	defaultConfigurationKey = None
 
@@ -111,6 +122,11 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 	if df.shape[0] <= kFold:
 		return
+
+	## Here we want to compute the distance from all diffs considered in this fraction (training + testing)
+	rd, rd2, bestProportion_general = findESAverageRanking(allDiff, allConfig, df,
+																						 indexOfColumns=indexOfConfig,
+																						 useAvg=useAverage)
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
@@ -135,7 +151,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 		print("\nTesting {} #diff({})".format(k, len(X_test)))
 
 		## let's compute first the metrics for each configuration
-		configsTraining, rankedBestTraining = findESAverageRanking(X_train, allConfig, df, indexOfColumns = indexOfConfig, useAvg=useAverage)
+		configsTraining, rankedBestTraining, bestProportionTraining_k = findESAverageRanking(X_train, allConfig, df, indexOfColumns = indexOfConfig, useAvg=useAverage)
 
 		configsTrainingMaps = {}
 		for config in configsTraining:
@@ -144,14 +160,14 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 		print("Total Training configs {}".format(len(configsTrainingMaps.keys())))
 		## Now the same for testing:
 
-		configsTesting, rankedBestTesting = findESAverageRanking(X_test, allConfig, df, indexOfColumns=indexOfConfig, useAvg=useAverage)
+		configsTesting, rankedBestTesting, bestProportionTesting_k = findESAverageRanking(X_test, allConfig, df, indexOfColumns=indexOfConfig, useAvg=useAverage)
 
 		configsTestingMaps = {}
 		for config in configsTesting:
 			configsTestingMaps[config['c']] = config
 
 		print("Total Testing configs {}".format(len(configsTrainingMaps.keys())))
-		keyConfig = None
+		keyBestConfigFound_k = None
 		if runTpe:
 			print("Running TPE")
 			spaceAlgorithms = createSpace(algorithm=algorithm)
@@ -171,7 +187,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 			eval = hyperopt.space_eval(search_space, best)
 			print("finishing execution of Hyperopts for K {}".format(k))
-			keyConfig = recreateConfigurationKey(eval)
+			keyBestConfigFound_k = recreateConfigurationKey(eval)
 		else:
 			print("Running Random total configs: {}".format(len(allConfig)))
 			minEdlength = 10000000;
@@ -188,45 +204,55 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 					bestConfigFound = selectedConfig
 
 			if bestConfigFound is not None:
-				keyConfig = bestConfigFound
+				keyBestConfigFound_k = bestConfigFound
 
-		print("Best config found: {}".format(keyConfig))
+		print("Best config found: {}".format(keyBestConfigFound_k))
 		#print("eval {} {}".format(len(eval),eval))
-		bestConfigs.append(keyConfig)
+		bestConfigs.append(keyBestConfigFound_k)
 
 		print("Configs that could not be eval ({}) {}".format(len(notfound), notfound))
 
-		if keyConfig not in configsTrainingMaps:
-			print("Error: Key not in map, to continue {}".format(keyConfig))
+		if keyBestConfigFound_k not in configsTrainingMaps:
+			print("Error: Key not in map, to continue {}".format(keyBestConfigFound_k))
 			continue
 
-		dataOfConfig = configsTrainingMaps[keyConfig]
+		dataOfConfig = configsTrainingMaps[keyBestConfigFound_k]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-		bestPercentage = dataOfConfig[AVG_CONSTANT]
-		print("Results k {}/{} config {} best testing {} ".format(k,kFold, keyConfig, bestPercentage))
-		performanceBestInTraining.append(bestPercentage)
+		bestMesure = dataOfConfig[AVG_CONSTANT]
+		mesureBestInTraining.append(bestMesure)
+		proportionBestInTraining.append(bestProportionTraining_k[keyBestConfigFound_k])
+		print("Results k {}/{} config {} best testing metric {} proportion best {}  ".format(k, kFold, keyBestConfigFound_k, bestMesure,bestProportionTraining_k[keyBestConfigFound_k]))
 
 		## the same but the testing:
 
-		dataOfConfig = configsTestingMaps[keyConfig]
+		dataOfConfig = configsTestingMaps[keyBestConfigFound_k]
 		## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-		bestPercentage = dataOfConfig[AVG_CONSTANT]
-		print("Results k {}/{} config {} best training {} ".format(k,kFold, keyConfig, bestPercentage))
-		performanceBestInTesting.append(bestPercentage)
+		bestMesure = dataOfConfig[AVG_CONSTANT]
+		mesureBestInTesting.append(bestMesure)
+		proportionBestInTesting.append(bestProportionTesting_k[keyBestConfigFound_k])
+		print("Results k {}/{} config {} best training metric {} proportion best {}  ".format(k, kFold, keyBestConfigFound_k, bestMesure, bestProportionTesting_k[keyBestConfigFound_k]))
+
+		proportionBestAllDiffFromFraction.append(bestProportion_general[keyBestConfigFound_k])
 
 		## now for the defaults
 		if defaultConfigurationKey is not None and defaultConfigurationKey in configsTrainingMaps:
 			dataOfConfig = configsTrainingMaps[defaultConfigurationKey]
 			## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-			bestPercentage = dataOfConfig[AVG_CONSTANT]
-			performanceDefaultInTraining.append(bestPercentage)
-			print("Performace default {} on training {}".format(defaultConfigurationKey, bestPercentage))
+			bestMesure = dataOfConfig[AVG_CONSTANT]
+			mesureDefaultInTraining.append(bestMesure)
+			proportionDefaultInTraining.append(bestProportionTraining_k[defaultConfigurationKey])
+			print("Performace default {} on training metric {} proportion best {}".format(defaultConfigurationKey, bestMesure, bestProportionTraining_k[defaultConfigurationKey]))
+
 
 			dataOfConfig = configsTestingMaps[defaultConfigurationKey]
 			## this is a value between 0 (config not best in any diff) and 1 (config best in all diffs)
-			bestPercentage = dataOfConfig[AVG_CONSTANT]
-			performanceDefaultInTesting.append(bestPercentage)
-			print("Performace default {} on testing {}".format(defaultConfigurationKey, bestPercentage))
+			bestMesure = dataOfConfig[AVG_CONSTANT]
+			mesureDefaultInTesting.append(bestMesure)
+			proportionDefaultInTesting.append(bestProportionTesting_k[defaultConfigurationKey])
+			print("Performace default {} on testing metric {} proportion best".format(defaultConfigurationKey, bestMesure, bestProportionTesting_k[defaultConfigurationKey]))
+
+			proportionDefaultAllDiffFromFraction.append(bestProportion_general[defaultConfigurationKey])
+
 		else:
 			print("Could not determine default {}".format(defaultConfigurationKey))
 
@@ -234,15 +260,27 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 		print("Time for k {} {}".format(k, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 
 	##Best configs per K fold
-	saveList(out = out, name =CONFIGS_PERFORMANCE, bestTraining = performanceBestInTraining, bestTesting = performanceBestInTesting,
+	saveList(out = out, name =CONFIGS_PERFORMANCE, bestTraining = mesureBestInTraining, bestTesting = mesureBestInTesting,
 			 names = bestConfigs, datasetname = dataset, algorithm=algorithm, evals= max_evals,
 			 franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage)
 
+	saveList(out=out, name="bestConfigsProportionBest", bestTraining=proportionBestInTraining, bestTesting=proportionBestInTesting,
+			 names=bestConfigs, datasetname=dataset, algorithm=algorithm, evals=max_evals,
+			 franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage, bestGeneral=proportionBestAllDiffFromFraction)
+
 	##Performance of the default per K fold
-	defaultConfigNameList = averages = [defaultConfigurationKey for x in (performanceDefaultInTesting)]
-	saveList(out=out, name="defaultConfigsPerformance", bestTraining=performanceDefaultInTraining,
-			 bestTesting=performanceDefaultInTesting, names=defaultConfigNameList, datasetname=dataset, algorithm=algorithm,
+	defaultConfigNameList = averages = [defaultConfigurationKey for x in (mesureDefaultInTesting)]
+	saveList(out=out, name="defaultConfigsPerformance", bestTraining=mesureDefaultInTraining,
+			 bestTesting=mesureDefaultInTesting, names=defaultConfigNameList, datasetname=dataset, algorithm=algorithm,
 			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage)
+
+	saveList(out=out, name="defaultConfigsProportionBest", bestTraining=proportionDefaultInTraining,
+			 bestTesting=proportionDefaultInTesting, names=defaultConfigNameList, datasetname=dataset, algorithm=algorithm,
+			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage, bestGeneral=proportionDefaultAllDiffFromFraction)
+
+	saveAvgPerformancePerConfigTPE(out=out, name="general", dataset= bestProportion_general, names=defaultConfigNameList, datasetname=dataset,
+			 algorithm=algorithm,
+			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage,)
 
 	elapsed_time = time.time() - inittime
 	print("END total time after {} k {}".format(kFold, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
@@ -250,10 +288,10 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 	return dfcomplete
 
 def findESAverageRanking(X_train, allConfig, df, indexOfColumns, useAvg):
-	valuesPerConfig, presentPerConfig = retrieveESsizeFromMatrix(df, X_train, allConfig, indexOfColumns)
+	valuesPerConfig, presentPerConfig, bestProportion = retrieveESsizeFromMatrix(df, X_train, allConfig, indexOfColumns)
 
 	configs, rankedBest = computeAvgSizeConfiguration(allConfig, presentPerConfig, valuesPerConfig, useAvg)
-	return configs, rankedBest
+	return configs, rankedBest, bestProportion
 
 
 def computeAvgSizeConfiguration(allConfig, presentPerConfig, valuesPerConfig, useAvg):
@@ -289,18 +327,27 @@ def retrieveESsizeFromMatrix(df, setofDiffToConsider, allconfig, indexOfColumns)
 	presentPerConfig = [0 for i in allconfig]
 	## Stores the diffs id having at least one configuration which produces zero changes.
 	diffsWithEDlenghtZeros = []
-	countRow = 0
+	countDiffToConsider = 0
+
+	#Store the distances only considering the diffs to consider given as parameter
+	distancesPerConfig = {}
+
 	for rowDiff in df.itertuples():
 
-		countRow+=1
 		# in the DataFrame row the first two positions are the tuple id and diff name.
 		## example #<class 'tuple'>: (22671, 'nr_98_id_1_010de14013c38b7f82e4755270e88a8249f3a825_SimpleConveyer_GTSPOON.csv', 2.0, 16.0, 80.0, 80.0,192.0, ...
 		diff_ID = rowDiff[1]
 		if diff_ID in setofDiffToConsider:
+			countDiffToConsider += 1
 			# in the DataFrame row the first two positions are the tuple id and diff name. So, we start in the Shift = 1 position
 			shift = 1
 			##only to check we dont have zeros
 			zerosOfDiff = 0
+
+			## Lenght of the shortest ed found for this diff
+			minESlengthOfDiff = 10000000
+
+			cacheLengths = {}
 			for i in range(0, len(allconfig)):
 
 				currentConfig = allconfig[i]
@@ -310,19 +357,44 @@ def retrieveESsizeFromMatrix(df, setofDiffToConsider, allconfig, indexOfColumns)
 				## for performance, we use  isnam from math instead of np
 				if not math.isnan(aLenght): #np.isnan(distance):
 					anIntLenght = int(aLenght)
+					cacheLengths[currentConfig] = anIntLenght
 					#We discard ES size with zeros, and we report
 					if anIntLenght > 0:
 						valuesPerConfig[i].append(anIntLenght)
 						presentPerConfig[i]+=1
+
+						# store if it's the min
+						if anIntLenght < minESlengthOfDiff:
+							minESlengthOfDiff = anIntLenght
+
 					else:
 						zerosOfDiff+=1
+			#we iterate again to compute the distances
+			for iConfig in cacheLengths.keys():
+				iLength = cacheLengths[iConfig]
+				if iConfig not in distancesPerConfig:
+					distancesPerConfig[iConfig] = []
+				distanceWithMin = iLength - minESlengthOfDiff
+				distancesPerConfig[iConfig].append(distanceWithMin)
+
 			if zerosOfDiff > 0:
 				diffsWithEDlenghtZeros.append(diff_ID, zerosOfDiff)
 
 	if len(diffsWithEDlenghtZeros) > 0:
 		print("Warning: diff with ED of lenght zero {}".format(zerosOfDiff))
 
-	return valuesPerConfig, presentPerConfig
+	##Now, let's compute the number each config is the best
+	bestProportion = {}
+	countI = 0
+	print("Total diff considered: {}".format(countDiffToConsider))
+	for iConfig in distancesPerConfig.keys():
+		countI+=1
+		iDistances = distancesPerConfig[iConfig]
+		zeros = len(list(filter(lambda x: x == 0,iDistances)))
+		#print("{} zeros of {}: {} ({})".format(countI, iConfig, zeros,  (zeros / countDiffToConsider)))
+		bestProportion[iConfig] = zeros / countDiffToConsider
+
+	return valuesPerConfig, presentPerConfig, bestProportion
 
 def createSpace(algorithm = None):
 	spaceAlgorithms = [
@@ -374,7 +446,7 @@ def alreadyAnalyzedTPE(out, name, datasetname,  algorithm, franctiondataset, eva
 	print("checking existance of {}".format(filename))
 	return  os.path.exists(filename)
 
-def saveList(out,bestTraining, name, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True, randomseed = 0, useAvg = True):
+def saveList(out,bestTraining, name, bestTesting,names, datasetname,  algorithm, franctiondataset, evals, isTPE = True, randomseed = 0, useAvg = True, bestGeneral = None):
 	executionmode = "hyper_op" if isTPE else "random_op"
 	algoName = "allAlgorithms" if algorithm is None else algorithm
 	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out,executionmode, datasetname, algoName,
@@ -386,7 +458,10 @@ def saveList(out,bestTraining, name, bestTesting,names, datasetname,  algorithm,
 	filename = "{}/{}_{}_{}_{}_evals_{}_f_{}_{}.csv".format(randomparentfolder,executionmode , datasetname, name, algoName, evals, franctiondataset, "avg" if useAvg else "median")
 	fout1 = open(filename, 'w')
 	for i in range(0, len(bestTraining)):
-			fout1.write("{},{},{},{}\n".format(i,names[i], bestTraining[i],bestTesting[i]))
+			if bestGeneral is None:
+				fout1.write("{},{},{},{}\n".format(i,names[i], bestTraining[i],bestTesting[i]))
+			else:
+				fout1.write("{},{},{},{},{}\n".format(i, names[i], bestTraining[i], bestTesting[i],  bestGeneral[i]))
 	fout1.flush()
 	fout1.close()
 	print("Save data on {}".format(filename))
@@ -522,3 +597,50 @@ def analyzeResultsHyperop2(pathDistances, pathSize, pathBest, pathDefault, algo,
 	print("{} {} Default & {:.2f}\%  (st {:.2f})".format(model, algo, np.mean(allPercentageDefault) * 100, np.std(allPercentageDefault) * 100))
 	print("-----")
 	return allPercentageBest, allPercentageDefault, allMetricBest, allMetricDefault, allConfigurationBestFound, differencesMetric
+
+
+
+def saveAvgPerformancePerConfigTPE(out, name, datasetname,  algorithm, franctiondataset, evals, isTPE = True, randomseed = 0, useAvg = True,data = {}):
+	executionmode = "hyper_op" if isTPE else "random_op"
+	algoName = "allAlgorithms" if algorithm is None else algorithm
+	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out,executionmode, datasetname, algoName,
+																					randomseed,
+																					franctiondataset)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/{}_{}_proportions_{}_{}_evals_{}_f_{}_{}.csv".format(randomparentfolder,executionmode, datasetname, name, algoName, evals, franctiondataset, "avg" if useAvg else "median")
+	fout1 = open(filename, 'w')
+
+	allconfigs = list(data.keys())
+	allconfigs = sorted(allconfigs, key=lambda x: data[x], reverse=True)
+
+	for xconf in allconfigs:
+		fout1.write("{},{}\n".format(xconf, data[xconf]))
+		fout1.flush()
+	fout1.close()
+	print("Save results at {}".format(filename))
+
+
+def saveAvgPerformancePerConfigTPE(out,  typeset, data = {}, algo = "",name = "" , fraction = 1, randomseed=0):
+
+	algoName =  "allAlgorithms" if algo is None else  algo
+	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName,randomseed,fraction, name)
+	if not os.path.exists(randomparentfolder):
+		os.makedirs(randomparentfolder)
+
+	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, name, typeset, algoName,fraction)
+	fout1 = open(filename, 'w')
+	means = {}
+	for conf in data.keys():
+			#fout1.write("{},{}\n".format(conf, np.mean(data[conf])))
+			means[conf] = np.mean(data[conf])
+
+	allconfigs = list(means.keys())
+	allconfigs = sorted(allconfigs, key=lambda x: means[x], reverse=True)
+
+	for xconf in allconfigs:
+		fout1.write("{},{}\n".format(xconf, means[xconf]))
+		fout1.flush()
+	fout1.close()
+	print("Save results at {}".format(filename))

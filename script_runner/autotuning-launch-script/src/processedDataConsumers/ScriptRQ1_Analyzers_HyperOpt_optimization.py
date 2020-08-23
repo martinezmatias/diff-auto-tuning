@@ -19,7 +19,7 @@ class TestHyperOp(unittest.TestCase):
 			''''only 1000 '''''
 			kfold = 10
 			maxeval = 1000
-			franction = 0.005
+			franction = 0.01
 			seed=20
 			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
 				for algorithm in ["Gumtree", "ChangeDistiller",
@@ -71,17 +71,18 @@ class TestHyperOp(unittest.TestCase):
 
 
 
-	def _test_CompteHyperOpt_single_by_algo_GumTree_useAverage(self):
+	def test_CompteHyperOpt_single_by_algo_GumTree_useAverage(self):
 
 			kfold = 2
-			maxeval = 100
-			franction = 1
+			maxeval = 10
+			franction = 0.5
 			seed=20
 			model = NAME_FOLDER_ASTJDT
 			for algorithm in ["Gumtree"]:
 				print("\nanalyzing {}".format(model))
 				computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,model, algorithm),
-								useAverage=False,
+								useAverage=True,
+								overwrite=True,
 								kFold=kfold, max_evals=maxeval,fractiondata= franction,
 								dataset = model, algorithm = algorithm, out="{}/test/".format(RESULTS_PROCESSED_LOCATION), random_seed=seed )
 
@@ -92,7 +93,7 @@ class TestHyperOp(unittest.TestCase):
 	def _test_debug_CompteHyperOpt_single_by_algo(self):
 			kfold = 2
 			maxeval = 10
-			franction = 0.1
+			franction = 0.01
 			seed=20
 			TPE = False
 			for folderToAnalyze in [NAME_FOLDER_ASTJDT]:
@@ -112,7 +113,7 @@ class TestHyperOp(unittest.TestCase):
 
 
 
-	def testAnalyzeHyperopResults(self):
+	def _testAnalyzeHyperopResults(self):
 		evals = 200
 		fraction = 1
 		parentMethodFolder = None
@@ -201,7 +202,7 @@ class TestHyperOp(unittest.TestCase):
 				print("{} {} Difference from mean & {:.2f}\%  ".format(modelName, algo,
 															 ((meanDifferencesMetric) / meanMetricDefault) * 100))
 
-	def testAnalyzeHyperopResultsCompareAvgMediam(self):
+	def _testAnalyzeHyperopResultsCompareAvgMediam(self):
 		evals = 200#1000
 		fraction = 1
 		parentMethodFolder = None
