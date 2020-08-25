@@ -41,7 +41,7 @@ class TestGrid(unittest.TestCase):
 			random_seed_value = 35
 			fraction = 0.01
 
-			computeGridSearchKFold("{}/editscript_size_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
+			computeGridSearchKFold("{}/editscript_size_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze),overwrite=True, kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 
 
 	def _test_C_plot(self):

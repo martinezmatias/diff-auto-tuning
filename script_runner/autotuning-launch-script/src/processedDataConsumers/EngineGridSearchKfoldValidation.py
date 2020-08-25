@@ -133,16 +133,16 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 		## Select best and compare with default
 
-		print("Performance training {} in kfold {}".format(performanceTrainingPerDiff, k))
+		#print("Performance training {} in kfold {}".format(performanceTrainingPerDiff, k))
 		bestOrder = list(sorted(allConfig, key=lambda x: performanceTrainingPerDiff[x]['av'], reverse=False))
-		print("Sorted training {} ".format(bestOrder))
+		#print("Sorted training {} ".format(bestOrder))
 
 
 		##
 		bestFromTraining = bestOrder[0]
 		bestInTrainingK.append(performanceTrainingPerDiff[bestFromTraining]['av'])
 		print("Best training {} {}".format(k, performanceTrainingPerDiff[bestFromTraining]))
-		defaultInTrainingK.append(performanceTrainingPerDiff[defaultId])
+		defaultInTrainingK.append(performanceTrainingPerDiff[defaultId]['av'])
 
 		if bestFromTraining not in allBestFromTraining:
 			allBestFromTraining.append(bestFromTraining)
@@ -157,8 +157,8 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 		print("Performance testing {} in kfold {}".format(performanceTestingOfBest, k))
 
-		bestInTestingK.append(performanceTestingOfBest[bestFromTraining])
-		defaultInTestingK.append(performanceTestingOfBest[defaultId])
+		bestInTestingK.append(performanceTestingOfBest[bestFromTraining]['av'])
+		defaultInTestingK.append(performanceTestingOfBest[defaultId]['av'])
 
 		saveBestPerformances(out=out, data=performanceTestingOfBest, typeset=datasetname, k=k, algo=algorithm,
 							 name="performanceTesting",

@@ -10,11 +10,12 @@ def main(onlyTest = False):
 							]:
 		print("\nAnalyzing {}".format(folderToAnalyze))
 		kvalue = KFOLD_VALUE
-		for palgorithm in ["Gumtree", "ChangeDistiller", "XyMatcher"]:
+		for palgorithm in ["Gumtree"#, "ChangeDistiller", "XyMatcher"
+						   ]:
 
 			for iseed in range(0, SEEDS_TO_EXECUTE):
 
-				runGridSearchK("{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, palgorithm),
+				runGridSearchK("{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, palgorithm),
 											   kFold=kvalue, algorithm=palgorithm,
 											   random_seed=iseed,
 								   dataset=folderToAnalyze)
