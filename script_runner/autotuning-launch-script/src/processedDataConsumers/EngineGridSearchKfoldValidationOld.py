@@ -16,7 +16,7 @@ from src.commons.Utils import  *
 from src.commons.Datalocation import  *
 from src.processedDataConsumers.CostParameters import *
 import math
-import sys
+
 PERFORMANCE_TESTING = "performanceOnTesting"
 
 
@@ -54,6 +54,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	print("DS size before {} ".format(dfcomplete.size))
 
 
+
 	diffs = dfcomplete['diff']
 	allDiff = list(diffs.values)
 	print("All diffs in dataset {}".format(len(allDiff)))
@@ -88,155 +89,196 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	print("All diffs considered after reduction with proportion {} ({}%): {}".format(fration, fration * 100, len(allDiff)))
 
-	performanceTestingOfBestAll = {}
+	resultsByKTraining = []
+	resultsByKTestingSorted = []
+	resultsByKTestingByConfig = []
 
-	testingSets = []
-	allBestFromTraining = []
+	bestOnTestingByFold = {}
+	bestOnTrainingByFold = {}
+
+	allIndexOnTesting = {}
+
+	rp_index = []
+	srho_index = []
+	pmann_index = []
+	pwilcoxon_index = []
+
+	rp_performance = []
+	srho_performance= []
+	pmann_performance = []
+	pwilcoxon_performance = []
 
 	# For each Fold
-	defaultInTestingK = []
-	defaultInTrainingK = []
-	bestInTrainingK = []
-	bestInTestingK = []
-
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
-		X_train = []#[]
-		X_test = []
-
+		X_train = set([])#[]
+		X_test = set([])
 		print("\n---------Running fold {}".format(k))
 
 		# Create the training dataset
 		for i in train:
-			X_train.append(allDiff[i])
+			#X_train.append(allDiff[i])
+			X_train.add(allDiff[i])
 
 		# Create the testing dataset
 		for i in test:
-			X_test.append(allDiff[i])
+			#X_test.append(allDiff[i])
+			X_test.add(allDiff[i])
 
-		saveDiffFromFold(out=out, data=X_train, typeset=datasetname, k=k, algo=algorithm, name="diffOnTraining",
-						 fraction=fration, randomseed=random_seed)
-		saveDiffFromFold(out=out, data=X_test, typeset=datasetname, k=k, algo=algorithm, name="diffOnTesting",
-						 fraction=fration, randomseed=random_seed)
 
 		print("\nTraining {} size #diff: {}".format(k, len(X_train)))
-		print("itraining min {}".format(min(train)))
-		print("itest min {}".format(min(test)))
 
+		configsTraining,rankedConfigsTraining = findBestRanking(X_train, allConfig, df, indexOfConfig)
 
-
-		##Training
-		performanceTrainingPerDiff = computeAvgPerdiff(X_train, train, allConfig, allDiff, df)
-
-		saveBestPerformances(out=out, data=performanceTrainingPerDiff, typeset=datasetname, k=k, algo=algorithm,
-								 name="performanceTraining",
-								 fraction=fration, randomseed=random_seed)
-
-		## Select best and compare with default
-
-		print("Performance training {} in kfold {}".format(performanceTrainingPerDiff, k))
-		bestOrder = list(sorted(allConfig, key=lambda x: performanceTrainingPerDiff[x]['av'], reverse=False))
-		print("Sorted training {} ".format(bestOrder))
-
-
-		##
-		bestFromTraining = bestOrder[0]
-		bestInTrainingK.append(performanceTrainingPerDiff[bestFromTraining]['av'])
-		print("Best training {} {}".format(k, performanceTrainingPerDiff[bestFromTraining]))
-		defaultInTrainingK.append(performanceTrainingPerDiff[defaultId])
-
-		if bestFromTraining not in allBestFromTraining:
-			allBestFromTraining.append(bestFromTraining)
-
-		configsForTesting = [bestFromTraining, defaultId]
-
-		##Testing
-
-		testingSets.append((X_test, test))
-		performanceTestingOfBest = computeAvgPerdiff(X_test, test, configsForTesting, allDiff, df)
-
-
-		print("Performance testing {} in kfold {}".format(performanceTestingOfBest, k))
-
-		bestInTestingK.append(performanceTestingOfBest[bestFromTraining])
-		defaultInTestingK.append(performanceTestingOfBest[defaultId])
-
-		saveBestPerformances(out=out, data=performanceTestingOfBest, typeset=datasetname, k=k, algo=algorithm,
-							 name="performanceTesting",
+		resultsByKTraining.append(rankedConfigsTraining)
+		saveBestPerformances(out=out, data=configsTraining, typeset=datasetname, k=k, algo=algorithm, name="performanceTraining",
 							 fraction=fration, randomseed=random_seed)
 
 
+		for config in rankedConfigsTraining:
+			if config['c'] not in bestOnTrainingByFold:
+				bestOnTrainingByFold[config['c']] = []
 
-	# end K
+			bestOnTrainingByFold[config['c']].append(config['bs'])
 
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestInTrainingK,
+		print("\nTesting {} size #diff: {}".format(k, len(X_test)))
+
+		configsTesting,rankedConfigsTesting = findBestRanking(X_test, allConfig, df, indexOfConfig)
+		resultsByKTestingSorted.append(rankedConfigsTesting)
+		resultsByKTestingByConfig.append(configsTesting)
+
+		saveBestPerformances(out=out, data=configsTesting, typeset=datasetname, k = k, algo=algorithm, name="performanceTesting", fraction=fration, randomseed = random_seed)
+
+
+		for config in rankedConfigsTesting:
+			if config['c'] not in bestOnTestingByFold:
+				bestOnTestingByFold[config['c']] = []
+				allIndexOnTesting[config['c']] = []
+
+			bestOnTestingByFold[config['c']].append(config['bs'])
+			allIndexOnTesting[config['c']].append(config['i'])
+
+
+		###maybe only compare top X
+		print("\nCheck with defaults on training: ")
+		compareDefaultWithBest(rankedConfigsTraining)
+
+		print("\nCheck with defaults on testing: ")
+		compareDefaultWithBest(rankedConfigsTesting)
+
+		saveDiffFromFold(out=out, data=X_train , typeset = datasetname, k = k, algo=algorithm, name="diffOnTraining", fraction=fration, randomseed = random_seed)
+		saveDiffFromFold(out=out, data=X_test, typeset=datasetname, k=k, algo=algorithm, name="diffOnTesting",
+							 fraction=fration, randomseed=random_seed)
+
+	print("\n----End Kfold:")
+
+	## Once we finish, we compute the correlation between the rankings
+	print("\nCheck k-fold rankings: ")
+	for i in range(0, len(resultsByKTestingByConfig)):
+		for j in range(0, len(resultsByKTestingByConfig)):
+			if i > j :
+				print("\nCorrelation between testing i:{} j:{} ".format(i,j))
+				try:
+					rp, srho, pmann, pwilcoxon =  computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j], field = 'i')
+					rp_index.append(rp[0])
+					srho_index.append(srho[0])
+					pmann_index.append(pmann)
+					pwilcoxon_index .append(pwilcoxon)
+
+					rp, srho, pmann, pwilcoxon = computeCorrelation(resultsByKTestingByConfig[i], resultsByKTestingByConfig[j],  field = 'bs')
+					rp_performance.append(rp[0])
+					srho_performance.append(srho[0])
+					pmann_performance.append(pmann)
+					pwilcoxon_performance.append(pwilcoxon)
+				except:
+					print("Error computing stats")
+
+
+	print("\n Getting the best:")
+	## As we have compute K folds, we summarize the performance
+	iK = 0
+	performanceTestingBestOnTraining = []
+	performanceBestOnTraining = []
+	indexTestingBestOnTraining = []
+
+	for iResultsFold in resultsByKTraining:
+		print("\nAnalyzing kfold {}".format(iK))
+		## We retrieve the perfomrance on testing of  the best config from training
+		bestConfigInTraining = iResultsFold[0]
+		print("K: {} Best configuration given by the training: {}".format(iK, bestConfigInTraining))
+		performanceBestOnTraining.append(bestConfigInTraining['bs'])
+
+		bestConfigInTesting = None
+		#Now, we find it in the corresponding training (not necesary is the best i.e. the first one)
+		resultTestingOfK = resultsByKTestingSorted[iK]
+		for aConfigFromTesting in resultTestingOfK:
+			if aConfigFromTesting['c'] == bestConfigInTraining['c']:
+				bestConfigInTesting = aConfigFromTesting
+
+		## find the default in Testing:
+		performanceDefaultOnTesting = bestOnTestingByFold[defaultId] ## each position has the data of one fold
+		indexDefaultOnTesting = allIndexOnTesting[defaultId]
+
+		if bestConfigInTesting is not None:
+			print("K: {} Default configuration performance {} index {}".format(iK, performanceDefaultOnTesting[iK], indexDefaultOnTesting[iK]))
+			print("K: {} Best configuration given by the training on the testing: {}".format(iK, bestConfigInTesting))
+
+			performanceTestingBestOnTraining.append(bestConfigInTesting['bs'])
+			indexTestingBestOnTraining.append(bestConfigInTesting['i'])
+
+		iK += 1
+
+	print("avg performance on testing of Default {}: {}".format(np.mean(performanceDefaultOnTesting),
+																 performanceDefaultOnTesting))
+	print("avg index on testing of best in Default {}: {}".format(np.mean(indexDefaultOnTesting),
+																   indexDefaultOnTesting))
+
+	print("avg performance on testing of best in training {}: {}".format(np.mean(performanceTestingBestOnTraining), performanceTestingBestOnTraining))
+	print("avg index on testing of best in training {}: {}".format(np.mean(indexTestingBestOnTraining), indexTestingBestOnTraining))
+
+	#print("avg  rp_index: {} {}".format(np.mean(rp_index),rp_index))
+
+	saveList(out, datasetname=datasetname,  algorithm=algorithm, data=rp_index,name="rp_index", fraction=fration , randomseed = random_seed)
+	#print("avg  srho_index: {} {}".format(np.mean(srho_index), srho_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm,  data=srho_index,name="srho_index", fraction=fration , randomseed = random_seed )
+	#print("avg  pmann_index: {} {}".format(np.mean(pmann_index), pmann_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_index,name="pmann_index", fraction=fration , randomseed = random_seed )
+	#print("avg  pwilcoxon_index: {} {}".format(np.mean(pwilcoxon_index), pwilcoxon_index))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_index,name="pwilcoxon_index", fraction=fration, randomseed = random_seed  )
+	#print("avg  rp_performance: {} {}".format(np.mean(rp_performance), rp_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=rp_performance,name="rp_performance", fraction=fration, randomseed = random_seed  )
+	#print("avg  srho_performance: {} {}".format(np.mean(srho_performance), srho_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=srho_performance,name="srho_performance", fraction=fration , randomseed = random_seed )
+	#print("avg  pmann_performance: {} {}".format(np.mean(pmann_performance), pmann_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pmann_performance,name="pmann_performance", fraction=fration , randomseed = random_seed )
+	#print("avg  pwilcoxon_performance: {} {}".format(np.mean(pwilcoxon_performance), pwilcoxon_performance))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=pwilcoxon_performance,name="pwilcoxon_performance", fraction=fration, randomseed = random_seed  )
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceTestingBestOnTraining,
+			 name="performanceTestingBestOnTraining", fraction=fration , randomseed = random_seed)
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=performanceBestOnTraining,
 			 name="performanceBestOnTraining", fraction=fration, randomseed=random_seed)
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestInTestingK,
-			 name="performanceBestOnTesting", fraction=fration, randomseed=random_seed)
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=defaultInTrainingK,
-			 name="performanceDefaultOnTraining", fraction=fration, randomseed=random_seed)
-	saveList(out, datasetname=datasetname, algorithm=algorithm, data=defaultInTestingK,
-			 name="performanceDefaultOnTesting", fraction=fration, randomseed=random_seed)
 
 
-
-		#now all validate
-	bestOnTesting = {}
-	for c in allBestFromTraining:
-		bestOnTesting[c] = []
-
-	print("Now, k fold")
-	for k in range(0,kFold):
-			X_test_i, test_i = testingSets[k]
-			performanceTestingOfBest = computeAvgPerdiff(X_test_i, test_i, allBestFromTraining, allDiff, df)
-			print("Performance testing {} in kfold {}".format(performanceTestingOfBest, k))
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=indexTestingBestOnTraining, name="indexTestingBestOnTraining", fraction=fration, randomseed = random_seed )
 
 
-			for configInTraining in performanceTestingOfBest.keys():
-				bestOnTesting[configInTraining].append(performanceTestingOfBest[configInTraining]['av'])
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestOnTestingByFold[defaultId],
+			 name="performanceTestingDefaultOnTraining", fraction=fration, randomseed = random_seed )
 
-	saveAvgPerformancePerConfig(out=out, data=bestOnTesting, typeset=datasetname, algo=algorithm,
-								name=PERFORMANCE_TESTING, fraction=fration, randomseed=random_seed)
 
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allIndexOnTesting[defaultId],	 name="indexTestingDefaultOnTraining", fraction=fration, randomseed = random_seed )
+
+
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingByFold, typeset=datasetname, algo=algorithm, name=PERFORMANCE_TESTING, fraction=fration, randomseed = random_seed)
+	saveAvgPerformancePerConfig(out=out, data=bestOnTrainingByFold, typeset=datasetname, algo=algorithm,
+								name="performanceOnTraining", fraction=fration, randomseed=random_seed)
+
+	saveDefaultName(out, datasetname=datasetname, algorithm=algorithm,
+			 name="indexTestingDefaultOnTraining", fraction=fration, randomseed=random_seed, default=defaultId)
+
+	#return performanceTestingBestOnTraining,  bestOnTestingByFold[defaultId] , rp_index,srho_index,pmann_index, pwilcoxon_index, rp_performance,srho_performance,pmann_performance,pwilcoxon_performance
 	return dfcomplete
-
-
-def computeAvgPerdiff(X_diff, selectedIndexDiff, allConfig, allDiff, df):
-	performancePerDiff = {}
-	ij = 0
-	for iConfig in range(0, len(allConfig)):
-		currentConfig = allConfig[iConfig]
-		#print("Analyzing  {} config {}/{}".format(iConfig, currentConfig, len(allConfig)))
-
-		valuesOfConfig = df[currentConfig]
-		valuesSelected = []
-
-		diffEvaluated = []
-		for iT in range(0, len(selectedIndexDiff)):
-			iInTrain = selectedIndexDiff[iT]
-			# print("iDiff {}/{} : {} iTraining {}".format(iT, len(train), allDiff[iInTrain],  X_train[iT]))
-			if allDiff[iInTrain] is not X_diff[iT]:
-				print("Error, different diff")
-				return None
-			diffEvaluated.append(allDiff[iInTrain])
-			if not math.isnan(valuesOfConfig[iInTrain]):
-
-				if int(valuesOfConfig[iInTrain] ) is 0:
-					print("found a zero in the matrix!!!")
-					import sys
-					sys.exit(1)
-
-				valuesSelected.append(valuesOfConfig[iInTrain])
-
-		ij+=1
-		##
-
-		avgConfig = np.mean(valuesSelected)
-		#if ij <5:
-		#	print("Total values collected for {}: ({}) {} {}".format(currentConfig, len(valuesSelected), np.mean(valuesSelected), valuesSelected))
-		#	print(diffEvaluated)
-		#print("Avg of config {}: {} ".format(currentConfig, avgConfig))
-		performancePerDiff[currentConfig] = {"c": currentConfig, "av": avgConfig, "t": len(valuesSelected)}
-	return performancePerDiff
 
 
 def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0):
@@ -249,10 +291,8 @@ def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, 
 
 	filename = "{}/summary_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, fraction)
 	fout1 = open(filename, 'w')
-	for conf in data.values():
-			#fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
-			fout1.write("{},{},{}\n".format(conf['c'], conf['av'], conf['t']))
-
+	for conf in data:
+			fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
 	fout1.flush()
 	fout1.close()
 	print("Save results at {}".format(filename))

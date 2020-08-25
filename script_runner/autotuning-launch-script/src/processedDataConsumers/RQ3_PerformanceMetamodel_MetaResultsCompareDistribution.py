@@ -125,6 +125,130 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	print("END-ok")
 	return percentageBest, percentageDefault
 
+def experimentAutoTuning(dfDistances, dfSize, keyBestConfiguration, keyDefaultConfiguration):
+	iRow = 0
+
+	columns = list(dfSize.columns)
+	# We get the name of the configurations
+	allConfig = columns[1:]
+
+	print("All config size {}".format(len(allConfig)))
+
+	rowsDiffOptimized = 0
+
+	rowsDiffAutotuneEqualsBest = 0
+	rowsDiffAutotuneShortestBest = 0
+
+	indexOfConfig = {}
+
+	casesAutoTuneBeatsBest = []
+
+	autoDiffOptimizedBest = []
+
+	totalNan = 0
+
+	# we start in 1 because the first is the diff
+	for i in range(1, len(columns)):
+		indexOfConfig[columns[i]] = i
+
+	# count the cases than auto-tune beats the default, which was not beaten by GridSearch
+	nrAutoTuneBestDefaultSmallerThanBestOP = 0
+
+	#Autoconfig best than the BestSearch when it's the best (it can be better than the best, but the bestSearch is not the best (default is better))
+	nrAutoTuneBestSmallerThanBestWhenItsBest = 0
+
+	totalBestSearchSmallerThanDefault = 0
+
+	for index, row in dfSize.iterrows():
+
+		sizeBestSearchConfig = row[keyBestConfiguration]
+		sizeDefaultConfig = row[keyDefaultConfiguration]
+
+		if math.isnan(sizeBestSearchConfig) or math.isnan(sizeDefaultConfig):
+			#print("{} nan".format(row[0]))
+			totalNan+=1
+			continue
+
+		iRow += 1
+
+		minSize = sizeDefaultConfig
+		minConfig = keyDefaultConfiguration
+		minConfigBeatBest = keyDefaultConfiguration
+		foundSmallerThanDefault  = False
+		#for aConfig in allConfig:
+		autotuneSmallerThanDefaultAndBest = False
+		autotuneSmallerThanDefaultEqualsBest = False
+		autotuneSmallerThanBestSearchWhenItBest = False
+
+		bestSearchSmallerThanDefault = sizeBestSearchConfig < sizeDefaultConfig
+		if bestSearchSmallerThanDefault:
+			totalBestSearchSmallerThanDefault+=1
+
+
+		for aConfig in range(1, len(allConfig)+1):
+			sizeAConfig = row[aConfig]
+			if sizeAConfig < minSize:
+				minSize = sizeAConfig
+				minConfig = aConfig
+				foundSmallerThanDefault = True
+
+				if sizeAConfig ==  sizeBestSearchConfig and  not autotuneSmallerThanDefaultAndBest:
+					autotuneSmallerThanDefaultEqualsBest = True
+				elif sizeAConfig < sizeBestSearchConfig:
+					# now is smaller
+					autotuneSmallerThanDefaultEqualsBest = False
+					autotuneSmallerThanDefaultAndBest = True
+					##we rest one because the index starts in 1 (to iterate over the row)
+					minConfigBeatBest = allConfig[aConfig-1]
+
+					if bestSearchSmallerThanDefault:
+						autotuneSmallerThanBestSearchWhenItBest = True
+
+
+		# finds a small?
+		if foundSmallerThanDefault:
+			rowsDiffOptimized+=1
+
+			# Only auto is best (and not BestSearch) i.e. Default is better
+			if not bestSearchSmallerThanDefault:
+				nrAutoTuneBestDefaultSmallerThanBestOP+=1
+
+		if autotuneSmallerThanDefaultEqualsBest:
+			rowsDiffAutotuneEqualsBest+=1
+
+		if autotuneSmallerThanBestSearchWhenItBest:
+			nrAutoTuneBestSmallerThanBestWhenItsBest+=1
+
+		if autotuneSmallerThanDefaultAndBest:
+			rowsDiffAutotuneShortestBest+=1
+			casesAutoTuneBeatsBest.append({"diff":row[0],"minConfigFoundAutotune":minConfigBeatBest, "isBestSearchSmallerThanDefault":bestSearchSmallerThanDefault, "minSizeFound":minSize, "sizeDefault":sizeDefaultConfig, "sizeBest":sizeBestSearchConfig, "autotuneSmallerThanBestSearchWhenItBest":autotuneSmallerThanBestSearchWhenItBest })
+
+		if iRow % 500 == 0:
+			print(iRow)
+
+		#print("{} {} optimized?  {} min size found {} default size {} bestSearch size {}" .format(iRow, row["diff"],  foundSmallerThanDefault, minSize, sizeDefaultConfig, sizeBestSearchConfig ))
+
+		if False and iRow == 1000:
+			print("!!!!!Stop results!!!!!!")
+			break
+
+	print("Total diffs {}, autotune - optimized w.r.t Default {} , "
+		  "equals best search {}, "
+		  "shortest best search {} , "
+		  "autotune beats default when it is best {},  "
+		  "autoTune beats best search when it the best {},  "
+		  "(SearchRelated) total Best search smaller Default {} ".format(
+		iRow,
+		rowsDiffOptimized,
+		rowsDiffAutotuneEqualsBest,
+		rowsDiffAutotuneShortestBest ,
+		nrAutoTuneBestDefaultSmallerThanBestOP,
+		nrAutoTuneBestSmallerThanBestWhenItsBest,
+		totalBestSearchSmallerThanDefault))
+	print("beating cases ({}): {}".format(len(casesAutoTuneBeatsBest),casesAutoTuneBeatsBest))
+	print("total diff nan {}".format(totalNan))
+	print("END-ok")
+
 def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 
 	print("Comparing Best {} and Default {} ".format(keyBestConfiguration, keyDefaultConfiguration))

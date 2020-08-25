@@ -54,6 +54,8 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 	print("Executing new config")
 
+	start_time_setup = time.time()
+
 	if dfcomplete is None:
 		print("Computing dataset for a first time {}".format(pathResults))
 		dfcomplete = pandas.read_csv(pathResults, sep=",")
@@ -126,10 +128,16 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 	## Here we want to compute the distance from all diffs considered in this fraction (training + testing)
 
 	rd, rd2, bestProportion_general = retrieveESsizeFromMatrix(df, allDiff, allConfig, indexOfConfig)
-
-	saveAvgPerformancePerConfigTPEAll(out=out, name="general", data= bestProportion_general, datasetname=dataset,
+	if False:
+		saveAvgPerformancePerConfigTPEAll(out=out, name="general", data= bestProportion_general, datasetname=dataset,
 			 algorithm=algorithm,
 			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage,)
+
+
+	elapsed_time_setup = time.time() - start_time_setup
+	print("Time setup: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time_setup))))
+
+	start_time_kfold = time.time()
 
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
@@ -171,6 +179,8 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 		print("Total Testing configs {}".format(len(configsTrainingMaps.keys())))
 		keyBestConfigFound_k = None
+
+
 		if runTpe:
 			print("Running TPE")
 			spaceAlgorithms = createSpace(algorithm=algorithm)
@@ -281,6 +291,8 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 			 bestTesting=proportionDefaultInTesting, names=defaultConfigNameList, datasetname=dataset, algorithm=algorithm,
 			 evals=max_evals, franctiondataset=fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage, bestGeneral=proportionDefaultAllDiffFromFraction)
 
+	elapsed_time_kfold = time.time() - start_time_kfold
+	print("Time kfolds: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time_kfold))))
 
 	elapsed_time = time.time() - inittime
 	print("END total time after {} k {}".format(kFold, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
@@ -503,6 +515,11 @@ def saveDiffFromFoldTPE(out, data, typeset, k, algo ="", name ="", fraction=1,  
 
 
 def objectiveFunctionDAT(params):
+
+	if True:
+		print("skip")
+		return 0
+
 	## we attach the data in the parameter space.
 	dataBestConfigurations = params['data']
 

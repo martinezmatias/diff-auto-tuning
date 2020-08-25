@@ -32,6 +32,16 @@ class TestGrid(unittest.TestCase):
 
 			computeGridSearchKFold("{}/distance_per_diff_{}_XyMatcher.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze), kFold=kvalue,	algorithm="XyMatcher", defaultId=defaultConfigurations["XyMatcher"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 
+	def test_B_ComputeBestKFoldComplete(self):
+		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
+							#	NAME_FOLDER_ASTSPOON
+								]:
+			print("\nanalyzing {}".format(folderToAnalyze))
+			kvalue = 4#10
+			random_seed_value = 35
+			fraction = 0.01
+
+			computeGridSearchKFold("{}/editscript_size_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze), kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 
 
 	def _test_C_plot(self):
@@ -87,7 +97,7 @@ class TestGrid(unittest.TestCase):
 												 , "{}/summary_{}_{}_performanceTestingDefaultOnTraining_f_{}.csv".format(locationFileResults, astModel, algorithm,fraction))
 
 	'''For Table of  RQ 1'''
-	def test_D_ComparisonBest_PlotRQ1(self):
+	def _test_D_ComparisonBest_PlotRQ1(self):
 		for astModel in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 			fraction = 1
 

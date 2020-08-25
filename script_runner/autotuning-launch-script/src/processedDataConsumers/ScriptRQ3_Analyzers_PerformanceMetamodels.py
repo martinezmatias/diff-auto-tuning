@@ -31,7 +31,7 @@ class TestHyperOp(unittest.TestCase):
 
 
 
-	def test_CompareDistributionBestGridAndTPE(self):
+	def _test_CompareDistributionBestGridAndTPE(self):
 		folderToAnalyze = NAME_FOLDER_ASTJDT
 		## we want to compare the differences between the best from grid and the best ##SimpleGumtree_0.1_1 from TPE ClassicGumtree_0.1_2000_1
 		bestGrid = "SimpleGumtree_0.1_1"
@@ -48,3 +48,28 @@ class TestHyperOp(unittest.TestCase):
 
 		#compareDistributions(pathResults=pathSizeMatrix, keyBestConfiguration=bestGrid, keyDefaultConfiguration=bestTPE)
 
+
+	def test_CompareAutotune(self):
+		for model in [ NAME_FOLDER_ASTJDT,
+					   NAME_FOLDER_ASTSPOON
+					   ]:
+
+			bestConfig = {}
+
+			bestConfig[NAME_FOLDER_ASTJDT] = "SimpleGumtree_0.1_1"
+			bestConfig[NAME_FOLDER_ASTSPOON] = "ClassicGumtree_0.1_2000_1"
+			algorithm = "Gumtree"
+			pathSizeMatrix = "{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, model,
+																		 algorithm)
+			pathDistances = "{}/distance_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, model,
+																	algorithm)
+
+			#print("reading data for {}".format(pathDistances))
+			#dfDistances = pandas.read_csv(pathDistances, sep=",")
+			print("reading data for {}".format(pathSizeMatrix))
+			dfSize = pandas.read_csv(pathSizeMatrix, sep=",")
+
+			experimentAutoTuning(dfDistances=None,
+						 dfSize=dfSize,
+						keyBestConfiguration=bestConfig[model],
+						 keyDefaultConfiguration=defaultConfigurations["ClassicGumtree"])
