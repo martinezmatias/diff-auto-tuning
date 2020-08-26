@@ -33,7 +33,7 @@ class TestHyperOp(unittest.TestCase):
 			maxeval = 100#202
 			franction = 0.01
 			seed=20
-			TPE = True
+			TPE = False
 			measure  = [True]
 			for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 				for algorithm in ["Gumtree"]:
