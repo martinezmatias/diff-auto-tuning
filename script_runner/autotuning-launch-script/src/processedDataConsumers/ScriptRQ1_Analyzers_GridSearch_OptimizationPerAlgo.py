@@ -37,7 +37,7 @@ class TestGrid(unittest.TestCase):
 							#	NAME_FOLDER_ASTSPOON
 								]:
 			print("\nanalyzing {}".format(folderToAnalyze))
-			kvalue = 4#10
+			kvalue = 2#10
 			random_seed_value = 35
 			fraction = 0.01
 

@@ -99,6 +99,10 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	bestInTrainingK = []
 	bestInTestingK = []
 
+	allProportionBestK = []
+	allProportionDefaultK = []
+	allProportionEqualsK = []
+
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
 		X_train = []#[]
 		X_test = []
@@ -150,7 +154,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		configsForTesting = [bestFromTraining, defaultId]
 
 		##Testing
-
+		print("\nTraining {} size #diff: {}".format(k, len(X_test)))
 		testingSets.append((X_test, test))
 		performanceTestingOfBest = computeAvgPerdiff(X_test, test, configsForTesting, allDiff, df)
 
@@ -164,8 +168,10 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 							 name="performanceTesting",
 							 fraction=fration, randomseed=random_seed)
 
-
-
+		totalPairsCompared, proportionBest, proportionDefault, proportionEqualsBestDefault = computeImprovementsOnTesting(X_test, test, allDiff, df, defaultConfig=defaultId, bestConfigFromTraining=bestFromTraining)
+		allProportionBestK.append(proportionBest)
+		allProportionDefaultK.append(proportionDefault)
+		allProportionEqualsK.append(proportionEqualsBestDefault)
 	# end K
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestInTrainingK,
@@ -177,6 +183,14 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=defaultInTestingK,
 			 name="performanceDefaultOnTesting", fraction=fration, randomseed=random_seed)
 
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allProportionDefaultK,
+			 name="proportionDefaultOnTesting", fraction=fration, randomseed=random_seed)
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allProportionBestK,
+			 name="proportionBestOnTesting", fraction=fration, randomseed=random_seed)
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=allProportionEqualsK,
+			 name="proportionEqualsOnTesting", fraction=fration, randomseed=random_seed)
 
 
 		#now all validate
@@ -237,6 +251,64 @@ def computeAvgPerdiff(X_diff, selectedIndexDiff, allConfig, allDiff, df):
 		#print("Avg of config {}: {} ".format(currentConfig, avgConfig))
 		performancePerDiff[currentConfig] = {"c": currentConfig, "av": avgConfig, "t": len(valuesSelected)}
 	return performancePerDiff
+
+
+def computeImprovementsOnTesting(X_diff, selectedIndexDiff, allDiff, df, defaultConfig, bestConfigFromTraining):
+	performancePerDiff = {}
+	countAnalyzed = 0
+
+
+	valuesOfDefaultConfig = df[defaultConfig]
+	valuesOfBestConfig = df[bestConfigFromTraining]
+	valuesSelected = []
+
+	diffEvaluated = []
+
+	totalEquals = []
+	totalBestTrainingIsBest = []
+	totalDefaultIsBest = []
+	totalbothNan = []
+
+	for iT in range(0, len(selectedIndexDiff)):
+		iInTrain = selectedIndexDiff[iT]
+
+		if allDiff[iInTrain] is not X_diff[iT]:
+			print("Error, different diff")
+			return None
+
+		diffEvaluated.append(allDiff[iInTrain])
+
+		currentDefaultValue = valuesOfDefaultConfig[iInTrain]
+		currentBestValue = valuesOfBestConfig[iInTrain]
+
+		isDefaultNan =  math.isnan(currentDefaultValue)
+		isBestNan = math.isnan(currentBestValue)
+
+		if isDefaultNan and isBestNan:
+			totalbothNan.append( X_diff[iT])
+			continue
+
+		if currentDefaultValue is 0 or currentBestValue is 0:
+			print("found a zero in the matrix!!!")
+			import sys
+			sys.exit(1)
+
+		if isDefaultNan or currentBestValue < currentDefaultValue:
+			totalBestTrainingIsBest.append(X_diff[iT])
+
+		elif isBestNan or  currentDefaultValue < currentBestValue:
+			totalDefaultIsBest.append(X_diff[iT])
+		elif currentDefaultValue == currentBestValue:
+			totalEquals.append(X_diff[iT])
+		else:
+			print("unkonw case! {}".format(X_diff[iT]))
+
+		countAnalyzed+=1
+	##
+	print("Total analyzed: {}, nan {} BestTraining is Best {}, default is best {}, equals {} ".format(countAnalyzed, len(totalbothNan),len(totalBestTrainingIsBest), len(totalDefaultIsBest), len(totalEquals)))
+
+	return countAnalyzed, len(totalBestTrainingIsBest)/countAnalyzed, len(totalDefaultIsBest)/countAnalyzed, len(totalEquals)/countAnalyzed
+
 
 
 def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0):
@@ -312,7 +384,7 @@ def saveList(out,datasetname, data, algorithm, name, fraction, randomseed):
 			fout1.write("{}\n".format(conf))
 	fout1.flush()
 	fout1.close()
-	print("Save results at {}".format(filename))
+	print("Save {} results at {}".format(datasetname, filename))
 
 def saveDefaultName(out,datasetname,  algorithm, name, fraction, randomseed, default):
 
