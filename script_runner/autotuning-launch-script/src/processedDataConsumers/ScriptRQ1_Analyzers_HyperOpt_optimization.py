@@ -18,8 +18,8 @@ class TestHyperOp(unittest.TestCase):
 	def _test_CompteHyperOpt_single_by_algo(self):
 			''''only 1000 '''''
 			kfold = 10
-			maxeval = 1000
-			franction = 0.01
+			maxeval = 202#1000
+			franction = 1
 			seed=20
 			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
 				for algorithm in ["Gumtree", "ChangeDistiller",
@@ -29,9 +29,9 @@ class TestHyperOp(unittest.TestCase):
 
 	def test_CompteHyperOpt_single_by_algo_GumTree(self):
 			''''only 1000 '''''
-			kfold = 5
-			maxeval = 1000
-			franction = 1
+			kfold = 2
+			maxeval = 100#202
+			franction = 0.01
 			seed=20
 			TPE = True
 			measure  = [True]
@@ -39,7 +39,7 @@ class TestHyperOp(unittest.TestCase):
 				for algorithm in ["Gumtree"]:
 					print("\nanalyzing {}".format(folderToAnalyze))
 					for useAvg in measure:
-						computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=False,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+						computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=True,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 
 	def _test_CompteHyperOpt_single_by_algo_ChangeDistiller(self):
 			''''only 1000 '''''

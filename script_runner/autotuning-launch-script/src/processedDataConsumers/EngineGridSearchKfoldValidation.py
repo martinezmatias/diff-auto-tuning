@@ -27,6 +27,8 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
 	k_fold = KFold(kFold, random_state=0)
 
+
+
 	print("Default configuration used {}".format(defaultId))
 
 	if not overwrite and alreadyAnalyzed(out = out, datasetname = datasetname, algorithm=algorithm, franctiondataset =  fration, randomseed=random_seed):
@@ -52,6 +54,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	print("Dataset fraction used {}".format(fration))
 	print("DS size before {} ".format(dfcomplete.size))
+
 
 
 	diffs = dfcomplete['diff']
@@ -88,7 +91,6 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	print("All diffs considered after reduction with proportion {} ({}%): {}".format(fration, fration * 100, len(allDiff)))
 
-	performanceTestingOfBestAll = {}
 
 	testingSets = []
 	allBestFromTraining = []
@@ -154,7 +156,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		configsForTesting = [bestFromTraining, defaultId]
 
 		##Testing
-		print("\nTraining {} size #diff: {}".format(k, len(X_test)))
+		print("\nTesting {} size #diff: {}".format(k, len(X_test)))
 		testingSets.append((X_test, test))
 		performanceTestingOfBest = computeAvgPerdiff(X_test, test, configsForTesting, allDiff, df)
 
@@ -227,11 +229,13 @@ def computeAvgPerdiff(X_diff, selectedIndexDiff, allConfig, allDiff, df):
 		diffEvaluated = []
 		for iT in range(0, len(selectedIndexDiff)):
 			iInTrain = selectedIndexDiff[iT]
-			# print("iDiff {}/{} : {} iTraining {}".format(iT, len(train), allDiff[iInTrain],  X_train[iT]))
-			if allDiff[iInTrain] is not X_diff[iT]:
-				print("Error, different diff")
-				return None
-			diffEvaluated.append(allDiff[iInTrain])
+
+			if allDiff is not None:
+				if allDiff[iInTrain] is not X_diff[iT]:
+					print("Error, different diff")
+					return None
+				diffEvaluated.append(allDiff[iInTrain])
+
 			if not math.isnan(valuesOfConfig[iInTrain]):
 
 				if int(valuesOfConfig[iInTrain] ) is 0:
@@ -242,13 +246,7 @@ def computeAvgPerdiff(X_diff, selectedIndexDiff, allConfig, allDiff, df):
 				valuesSelected.append(valuesOfConfig[iInTrain])
 
 		ij+=1
-		##
-
 		avgConfig = np.mean(valuesSelected)
-		#if ij <5:
-		#	print("Total values collected for {}: ({}) {} {}".format(currentConfig, len(valuesSelected), np.mean(valuesSelected), valuesSelected))
-		#	print(diffEvaluated)
-		#print("Avg of config {}: {} ".format(currentConfig, avgConfig))
 		performancePerDiff[currentConfig] = {"c": currentConfig, "av": avgConfig, "t": len(valuesSelected)}
 	return performancePerDiff
 
@@ -272,11 +270,12 @@ def computeImprovementsOnTesting(X_diff, selectedIndexDiff, allDiff, df, default
 	for iT in range(0, len(selectedIndexDiff)):
 		iInTrain = selectedIndexDiff[iT]
 
-		if allDiff[iInTrain] is not X_diff[iT]:
-			print("Error, different diff")
-			return None
+		if allDiff is not None:
+			if allDiff[iInTrain] is not X_diff[iT]:
+				print("Error, different diff")
+				return None
 
-		diffEvaluated.append(allDiff[iInTrain])
+			diffEvaluated.append(allDiff[iInTrain])
 
 		currentDefaultValue = valuesOfDefaultConfig[iInTrain]
 		currentBestValue = valuesOfBestConfig[iInTrain]
