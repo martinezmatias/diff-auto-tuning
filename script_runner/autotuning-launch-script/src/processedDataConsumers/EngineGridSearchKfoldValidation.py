@@ -384,7 +384,7 @@ def saveList(out,datasetname, data, algorithm, name, fraction, randomseed):
 			fout1.write("{}\n".format(conf))
 	fout1.flush()
 	fout1.close()
-	print("Save {} results at {}".format(datasetname, filename))
+	print("Save {} results at {}".format(name, filename))
 
 def saveDefaultName(out,datasetname,  algorithm, name, fraction, randomseed, default):
 

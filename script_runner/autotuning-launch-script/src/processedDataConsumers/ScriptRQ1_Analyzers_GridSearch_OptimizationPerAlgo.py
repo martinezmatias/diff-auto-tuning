@@ -34,12 +34,12 @@ class TestGrid(unittest.TestCase):
 
 	def test_B_ComputeBestKFoldComplete(self):
 		for folderToAnalyze in [NAME_FOLDER_ASTJDT,
-							#	NAME_FOLDER_ASTSPOON
+								NAME_FOLDER_ASTSPOON
 								]:
 			print("\nanalyzing {}".format(folderToAnalyze))
-			kvalue = 2#10
-			random_seed_value = 35
-			fraction = 0.01
+			kvalue = 5#10
+			random_seed_value = 1
+			fraction = 1
 
 			computeGridSearchKFold("{}/editscript_size_per_diff_{}_Gumtree.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze),overwrite=True, kFold=kvalue, algorithm="Gumtree", defaultId=defaultConfigurations["ClassicGumtree"], random_seed=random_seed_value, datasetname=folderToAnalyze, fration=fraction)
 
