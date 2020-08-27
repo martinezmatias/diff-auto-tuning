@@ -27,8 +27,6 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 	print("----\nRunning {} algoritm {}".format(pathResults, algorithm))
 	k_fold = KFold(kFold, random_state=0)
 
-
-
 	print("Default configuration used {}".format(defaultId))
 
 	if not overwrite and alreadyAnalyzed(out = out, datasetname = datasetname, algorithm=algorithm, franctiondataset =  fration, randomseed=random_seed):
@@ -94,6 +92,7 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 	testingSets = []
 	allBestFromTraining = []
+	namesBestFromTrainingPerK = []
 
 	# For each Fold
 	defaultInTestingK = []
@@ -150,6 +149,8 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		print("Best training {} {}".format(k, performanceTrainingPerDiff[bestFromTraining]))
 		defaultInTrainingK.append(performanceTrainingPerDiff[defaultId]['av'])
 
+		namesBestFromTrainingPerK.append(bestFromTraining)
+
 		if bestFromTraining not in allBestFromTraining:
 			allBestFromTraining.append(bestFromTraining)
 
@@ -174,7 +175,16 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 		allProportionBestK.append(proportionBest)
 		allProportionDefaultK.append(proportionDefault)
 		allProportionEqualsK.append(proportionEqualsBestDefault)
+		print(
+			"K {}: Proportions for best {}	totalPairsCompared {}, proportionBest {}, proportionDefault {}, proportionEqualsBestDefault {} ".format(
+				k, bestFromTraining, totalPairsCompared, proportionBest, proportionDefault,
+				proportionEqualsBestDefault))
+
 	# end K
+
+
+	saveList(out, datasetname=datasetname, algorithm=algorithm, data=namesBestFromTrainingPerK,
+			 name="ConfigNamesBestOnTraining", fraction=fration, randomseed=random_seed)
 
 	saveList(out, datasetname=datasetname, algorithm=algorithm, data=bestInTrainingK,
 			 name="performanceBestOnTraining", fraction=fration, randomseed=random_seed)
@@ -196,24 +206,60 @@ def computeGridSearchKFold(pathResults ="{}/distance_per_diff.csv".format(RESULT
 
 
 		#now all validate
-	bestOnTesting = {}
-	for c in allBestFromTraining:
-		bestOnTesting[c] = []
 
-	print("Now, k fold")
-	for k in range(0,kFold):
-			X_test_i, test_i = testingSets[k]
-			performanceTestingOfBest = computeAvgPerdiff(X_test_i, test_i, allBestFromTraining, allDiff, df)
-			print("Performance testing {} in kfold {}".format(performanceTestingOfBest, k))
-
-
-			for configInTraining in performanceTestingOfBest.keys():
-				bestOnTesting[configInTraining].append(performanceTestingOfBest[configInTraining]['av'])
-
-	saveAvgPerformancePerConfig(out=out, data=bestOnTesting, typeset=datasetname, algo=algorithm,
-								name=PERFORMANCE_TESTING, fraction=fration, randomseed=random_seed)
+	computeFinalTestingPerformanceOfBest(algorithm, allBestFromTraining, allDiff, datasetname, defaultId, df,
+										 None, fration, kFold, out, random_seed, testingSets)
 
 	return dfcomplete
+
+
+
+def computeFinalTestingPerformanceOfBest(algorithm, allBestFromTraining, allDiff, dataset, defaultConfigurationKey, df,
+										 evalsString, fractiondata, kFold, out, random_seed, testingSets):
+	# now all validate
+	bestOnTestingAvg = {}
+	bestOnTestingBest = {}
+	bestOnTestingEquals = {}
+	bestOnTestingWorst = {}
+	for c in allBestFromTraining:
+		bestOnTestingAvg[c] = []
+		bestOnTestingBest[c] = []
+		bestOnTestingEquals[c] = []
+		bestOnTestingWorst[c] = []
+	print("Now, testing all k fold with the best config founds {}".format(allBestFromTraining))
+	for k in range(0, kFold):
+		X_test_i, test_i = testingSets[k]
+		performanceTestingOfBest = computeAvgPerdiff(X_test_i, test_i, allBestFromTraining, allDiff, df)
+		print("Performance testing  in kfold {} {}".format(k, performanceTestingOfBest))
+
+		for configInTraining in performanceTestingOfBest.keys():
+			bestOnTestingAvg[configInTraining].append(performanceTestingOfBest[configInTraining]['av'])
+
+			totalPairsCompared, proportionBest, proportionDefault, proportionEqualsBestDefault = computeImprovementsOnTesting(
+				X_test_i, test_i, allDiff, df, defaultConfig=defaultConfigurationKey,
+				bestConfigFromTraining=configInTraining)
+			bestOnTestingBest[configInTraining].append(proportionBest)
+			bestOnTestingEquals[configInTraining].append(proportionEqualsBestDefault)
+			bestOnTestingWorst[configInTraining].append(proportionBest)
+
+			print(
+				"K {}: Proportions for best {}	totalPairsCompared {}, proportionBest {}, proportionDefault {}, proportionEqualsBestDefault {} ".format(
+					k, configInTraining, totalPairsCompared, proportionBest, proportionDefault,
+					proportionEqualsBestDefault))
+
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingAvg, typeset=dataset, algo=algorithm,
+								name=PERFORMANCE_TESTING, fraction=fractiondata, randomseed=random_seed,
+								evals=evalsString)
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingBest, typeset=dataset, algo=algorithm,
+								name="proportionBestIsBestOnTesting", fraction=fractiondata, randomseed=random_seed,
+								evals=evalsString)
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingEquals, typeset=dataset, algo=algorithm,
+								name="proportionBestIsEqualsOnTesting", fraction=fractiondata, randomseed=random_seed,
+								evals=evalsString)
+	saveAvgPerformancePerConfig(out=out, data=bestOnTestingWorst, typeset=dataset, algo=algorithm,
+								name="proportionBestIsWorstOnTesting", fraction=fractiondata, randomseed=random_seed,
+								evals=evalsString)
+
 
 
 def computeAvgPerdiff(X_diff, selectedIndexDiff, allConfig, allDiff, df):
@@ -304,13 +350,13 @@ def computeImprovementsOnTesting(X_diff, selectedIndexDiff, allDiff, df, default
 
 		countAnalyzed+=1
 	##
-	print("Total analyzed: {}, nan {} BestTraining is Best {}, default is best {}, equals {} ".format(countAnalyzed, len(totalbothNan),len(totalBestTrainingIsBest), len(totalDefaultIsBest), len(totalEquals)))
+	print("Total {}  analyzed: {}, nan {} BestTraining is Best {}, default is best {}, equals {} ".format(bestConfigFromTraining, countAnalyzed, len(totalbothNan),len(totalBestTrainingIsBest), len(totalDefaultIsBest), len(totalEquals)))
 
 	return countAnalyzed, len(totalBestTrainingIsBest)/countAnalyzed, len(totalDefaultIsBest)/countAnalyzed, len(totalEquals)/countAnalyzed
 
 
 
-def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0):
+def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0, evals = None):
 
 	algoName = "allAlgorithms" if algo is None else algo
 	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName, randomseed,
@@ -318,7 +364,7 @@ def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, 
 	if not os.path.exists(randomparentfolder):
 		os.makedirs(randomparentfolder)
 
-	filename = "{}/summary_{}_{}_K_{}_{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, fraction)
+	filename = "{}/summary_{}_{}_K_{}_{}{}_f_{}.csv".format(randomparentfolder, typeset, name, k, algoName, "" if evals is None else evals, fraction)
 	fout1 = open(filename, 'w')
 	for conf in data.values():
 			#fout1.write("{},{},{},{}\n".format(conf['c'], conf['av'], conf['bs'], conf['i']))
@@ -328,7 +374,7 @@ def saveBestPerformances(out, data, typeset, k, algo ="", name ="", fraction=1, 
 	fout1.close()
 	print("Save results at {}".format(filename))
 
-def saveDiffFromFold(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0):
+def saveDiffFromFold(out, data, typeset, k, algo ="", name ="", fraction=1, randomseed=0, evals = None ):
 
 	algoName = "allAlgorithms" if algo is None else algo
 	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName, randomseed,
@@ -346,14 +392,14 @@ def saveDiffFromFold(out, data, typeset, k, algo ="", name ="", fraction=1, rand
 	print("Save results at {}".format(zipname))
 
 
-def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , fraction = 1, randomseed=0):
+def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , fraction = 1, randomseed=0, evals = None):
 
 	algoName =  "allAlgorithms" if algo is None else  algo
 	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, typeset, algoName,randomseed,fraction, name)
 	if not os.path.exists(randomparentfolder):
 		os.makedirs(randomparentfolder)
 
-	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, name, typeset, algoName,fraction)
+	filename = "{}/avg_performance_{}_{}_{}{}_f_{}.csv".format(randomparentfolder, name, typeset, algoName,"" if evals is None else evals ,fraction)
 	fout1 = open(filename, 'w')
 	means = {}
 	for conf in data.keys():
@@ -369,7 +415,7 @@ def saveAvgPerformancePerConfig(out,  typeset, data = {}, algo = "",name = "" , 
 	fout1.close()
 	print("Save results at {}".format(filename))
 
-def saveList(out,datasetname, data, algorithm, name, fraction, randomseed):
+def saveList(out,datasetname, data, algorithm, name, fraction, randomseed, evals = None):
 
 	algoName = "allAlgorithms" if algorithm is None else algorithm
 	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, datasetname, algoName, randomseed,
@@ -377,7 +423,7 @@ def saveList(out,datasetname, data, algorithm, name, fraction, randomseed):
 	if not os.path.exists(randomparentfolder):
 		os.makedirs(randomparentfolder)
 
-	filename = "{}/summary_{}_{}_{}_f_{}.csv".format(randomparentfolder,datasetname,algoName, name, fraction)
+	filename = "{}/summary_{}_{}_{}{}_f_{}.csv".format(randomparentfolder,datasetname,algoName, name, "" if evals is None else evals,  fraction)
 	fout1 = open(filename, 'w')
 	for conf in data:
 			fout1.write("{}\n".format(conf))
@@ -402,14 +448,14 @@ def saveDefaultName(out,datasetname,  algorithm, name, fraction, randomseed, def
 	print("Save results at {}".format(filename))
 
 import os
-def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, randomseed):
+def alreadyAnalyzed(out, datasetname,  algorithm, franctiondataset, randomseed, evals = None):
 	algoName = "allAlgorithms" if algorithm is None else algorithm
 	randomparentfolder = "{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, datasetname, algoName,
 																					randomseed,
 																					franctiondataset)
 
-	filename = "{}/avg_performance_{}_{}_{}_f_{}.csv".format(randomparentfolder, PERFORMANCE_TESTING, datasetname,
-																	 "allAlgorithms" if algorithm is None else algorithm,
+	filename = "{}/avg_performance_{}_{}_{}{}_f_{}.csv".format(randomparentfolder, PERFORMANCE_TESTING, datasetname,
+																	 "allAlgorithms" if algorithm is None else algorithm, "" if evals is None else evals,
 																	 franctiondataset)
 	print("Checking existence of {}".format(filename))
 	return  os.path.exists(filename)

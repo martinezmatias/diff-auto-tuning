@@ -51,7 +51,9 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 	inittime = time.time()
 	random.seed(random_seed)
 
-	if not overwrite and alreadyAnalyzedTPE(out = out, name =CONFIGS_PERFORMANCE, datasetname = dataset,  algorithm=algorithm, evals= max_evals,franctiondataset = fractiondata, isTPE=runTpe, randomseed=random_seed, useAvg=useAverage):
+	evalsString = "_evals_{}".format(max_evals)
+	# useAvg = useAverage
+	if not overwrite and alreadyAnalyzed(out = out, datasetname = dataset,  algorithm=algorithm, evals= evalsString,franctiondataset = fractiondata, randomseed=random_seed):
 		print("EARLY END: Config already analyzed {} {} {} {} {} ".format(out, dataset, algorithm, fractiondata, random_seed))
 		return None
 
@@ -136,6 +138,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 	start_time_kfold = time.time()
 
+	namesBestFromTrainingPerK = []
 	# For each Fold
 	for k, (train, test) in enumerate(k_fold.split(allDiff)):
 		X_train = []
@@ -212,7 +215,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 		##End search
 		print("Best config found: {}".format(keyBestConfigFound_k))
-
+		namesBestFromTrainingPerK.append(keyBestConfigFound_k)
 
 		if keyBestConfigFound_k not in allBestFromTraining:
 			allBestFromTraining.append(keyBestConfigFound_k)
@@ -243,54 +246,44 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 
 		saveBestPerformances(out=out, data=performanceTestingOfBest, typeset=dataset, k=k, algo=algorithm,
 							 name="performanceTesting",
-							 fraction=fractiondata, randomseed=random_seed)
+							 fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 
 		totalPairsCompared, proportionBest, proportionDefault, proportionEqualsBestDefault = computeImprovementsOnTesting(
 			X_test, test, allDiff, df, defaultConfig=defaultConfigurationKey, bestConfigFromTraining=keyBestConfigFound_k)
 		allProportionBestK.append(proportionBest)
 		allProportionDefaultK.append(proportionDefault)
 		allProportionEqualsK.append(proportionEqualsBestDefault)
-
+		print("K {}: Proportions for best {}	totalPairsCompared {}, proportionBest {}, proportionDefault {}, proportionEqualsBestDefault {} ".format(k, keyBestConfigFound_k, totalPairsCompared, proportionBest, proportionDefault, proportionEqualsBestDefault ))
 		##
 
 		elapsed_time = time.time() - start_time
 		print("Time for k {} {}".format(k, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 		## end K
 
+
+	saveList(out, datasetname=dataset, algorithm=algorithm, data=namesBestFromTrainingPerK,
+			 name="ConfigNamesBestOnTraining", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
+
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=bestInTrainingK,
-			 name="performanceBestOnTraining", fraction=fractiondata, randomseed=random_seed)
+			 name="performanceBestOnTraining", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=bestInTestingK,
-			 name="performanceBestOnTesting", fraction=fractiondata, randomseed=random_seed)
+			 name="performanceBestOnTesting", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=defaultInTrainingK,
-			 name="performanceDefaultOnTraining", fraction=fractiondata, randomseed=random_seed)
+			 name="performanceDefaultOnTraining", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=defaultInTestingK,
-			 name="performanceDefaultOnTesting", fraction=fractiondata, randomseed=random_seed)
+			 name="performanceDefaultOnTesting", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=allProportionDefaultK,
-			 name="proportionDefaultOnTesting", fraction=fractiondata, randomseed=random_seed)
+			 name="proportionDefaultOnTesting", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=allProportionBestK,
-			 name="proportionBestOnTesting", fraction=fractiondata, randomseed=random_seed)
+			 name="proportionBestOnTesting", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 
 	saveList(out, datasetname=dataset, algorithm=algorithm, data=allProportionEqualsK,
-			 name="proportionEqualsOnTesting", fraction=fractiondata, randomseed=random_seed)
+			 name="proportionEqualsOnTesting", fraction=fractiondata, randomseed=random_seed, evals=evalsString)
 
-	# now all validate
-	bestOnTesting = {}
-	for c in allBestFromTraining:
-		bestOnTesting[c] = []
-
-	print("Now, k fold")
-	for k in range(0, kFold):
-		X_test_i, test_i = testingSets[k]
-		performanceTestingOfBest = computeAvgPerdiff(X_test_i, test_i, allBestFromTraining, allDiff, df)
-		print("Performance testing {} in kfold {}".format(performanceTestingOfBest, k))
-
-		for configInTraining in performanceTestingOfBest.keys():
-			bestOnTesting[configInTraining].append(performanceTestingOfBest[configInTraining]['av'])
-
-	saveAvgPerformancePerConfig(out=out, data=bestOnTesting, typeset=dataset, algo=algorithm,
-								name=PERFORMANCE_TESTING, fraction=fractiondata, randomseed=random_seed)
+	computeFinalTestingPerformanceOfBest(algorithm, allBestFromTraining, allDiff, dataset, defaultConfigurationKey, df,
+										 evalsString, fractiondata, kFold, out, random_seed, testingSets)
 
 	elapsed_time_kfold = time.time() - start_time_kfold
 	print("Time kfolds: {}".format(time.strftime("%H:%M:%S", time.gmtime(elapsed_time_kfold))))
@@ -299,6 +292,7 @@ def computeHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage = USE
 	print("END total time after {} k {}".format(kFold, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 
 	return dfcomplete
+
 
 
 def createSpace(algorithm = None):
@@ -338,18 +332,6 @@ def createSpace(algorithm = None):
 		spaceAlgorithms =  list(filter(lambda x: algorithm in x['algorithm'], spaceAlgorithms))
 
 	return spaceAlgorithms
-
-def alreadyAnalyzedTPE(out, name, datasetname,  algorithm, franctiondataset, evals, isTPE = True,  randomseed = 0, useAvg = True):
-	executionmode = "hyper_op" if isTPE else "random_op"
-	algoName = "allAlgorithms" if algorithm is None else algorithm
-	randomparentfolder = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(out, executionmode, datasetname,
-																					   algoName,
-																					   randomseed,
-																					   franctiondataset)
-
-	filename = "{}/{}_{}_{}_{}_evals_{}_f_{}_{}.csv".format(randomparentfolder, executionmode , datasetname, name, algoName, evals, franctiondataset,  "avg" if useAvg else "median")
-	print("checking existance of {}".format(filename))
-	return  os.path.exists(filename)
 
 
 def objectiveFunctionDAT(params):
