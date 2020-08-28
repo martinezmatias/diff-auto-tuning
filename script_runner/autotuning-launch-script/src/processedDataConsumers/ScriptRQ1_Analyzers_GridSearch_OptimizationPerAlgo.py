@@ -252,10 +252,12 @@ class TestGrid(unittest.TestCase):
 
 			timeSingleDiff = 469#100 #miliseconds
 			allDiff = 100000
-	
+			trainingSize = 0.8
 			listPerformancePerCong = {}
 			listTimesPerCong = {}
 			listConfigs = {}
+			completeKey = {}
+			cperformances= {}
 			for searchMethod in ["TPE" , "random", "GridSearch"
 								  ]:
 
@@ -339,14 +341,16 @@ class TestGrid(unittest.TestCase):
 								avgEquals = np.mean(allPercentageEqualsAllSeed)
 								avgWorst = np.mean(allPercentageWorstAllSeed)
 
-								listPerformancePerCong[searchMethod].append(avgBest)
-								timesconfig = (timeSingleDiff* (proportionDataset * allDiff) * evals ) / (1000 * 360) # hrs
+								listPerformancePerCong[searchMethod].append(avgBest * 100)
+								timesconfig = ((timeSingleDiff* (proportionDataset * allDiff * trainingSize) * evals ) / (1000 * 3600)  )# hrs
 								listTimesPerCong[searchMethod].append(timesconfig)
-								#nameconfig = "{} d: {}{}".format(searchMethod, (proportionDataset * allDiff), evalString.replace("_evals_", " e: ")).replace(".0", "").replace("GridSearch","GS").replace("random","RS")
+								completeParticularKey = "{} d: {}{}".format(searchMethod, (proportionDataset * allDiff * trainingSize), evalString.replace("_evals_", " e: ")).replace(".0", "").replace("GridSearch","GS").replace("random","RS")
+								completeKey[completeParticularKey] = timesconfig
 								nameconfig = "{}".format(searchMethod).replace(
 									"GridSearch", "GS").replace("random", "RS")
+								cperformances[completeParticularKey] = avgBest
 
-								listConfigs[searchMethod].append((nameconfig, (proportionDataset * allDiff) ) )
+								listConfigs[searchMethod].append((nameconfig, (proportionDataset * allDiff  * trainingSize) ) )
 								print("Time for {}  {} {}".format(timesconfig, nameconfig,avgBest ))
 
 								print(modelName)
@@ -367,8 +371,8 @@ class TestGrid(unittest.TestCase):
 
 			#colorsUsed = ["green", "blue", "red"]
 
-
-
+			for c in completeKey.keys():
+				print("c {} time {:.3f} hs {:.3f} ".format(c, completeKey[c], cperformances[c]*100))
 
 			for method in listPerformancePerCong.keys():
 
@@ -396,13 +400,13 @@ class TestGrid(unittest.TestCase):
 
 				for i in range(0, len(listPerformancePerCong[method])):
 
-					ax.annotate(str(listConfigs[method][i][1]).replace(".0",""), (listTimesPerCong[method][i], listPerformancePerCong[method][i]),size=15, color="black",
+					ax.annotate(str(listConfigs[method][i][1]).replace(".0",""), (listTimesPerCong[method][i], listPerformancePerCong[method][i]),size=18, color="black",
 								rotation=23)
 					#xytext=(z[0]+0.05, y[0]+0.3)
 
 			#plt.xticks(listTimesPerCong, rotation=0)
-			plt.ylabel("% of cases improved",  fontsize=28)
-			plt.xlabel("Time (Hours) (log scale)",  fontsize=28)
+			plt.ylabel("% of cases improved",  fontsize=45)
+			plt.xlabel("Time (Hours) (log scale)",  fontsize=45)
 			#plt.xlim(0, 700)
 		#	ax.legend(bbox_to_anchor=(1.6, 1.05))
 
@@ -414,13 +418,14 @@ class TestGrid(unittest.TestCase):
 			#		  # bbox_to_anchor=(1, 1.15),
 			#		   ncol=7
 			#
-			plt.legend(loc=2, prop={'size': 20})
-			plt.xticks(fontsize=20)
-			plt.yticks(fontsize=20)
+			plt.legend(loc=2, prop={'size': 25})
+			plt.xticks(fontsize=30)
+			plt.yticks(fontsize=30)
 			plt.xscale("log")
 			plt.savefig("figCostPoints.pdf")
 			#legend.get_frame().set_facecolor('white')
 			plt.show()
+			#listTimesPerCong[searchMethod].append(timesconfig)
 
 
 
