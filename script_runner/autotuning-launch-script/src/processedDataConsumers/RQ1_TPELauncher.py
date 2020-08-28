@@ -1,6 +1,7 @@
 
 import sys
 from src.processedDataConsumers.EngineHyperOptDAT import *
+from src.processedDataConsumers.EngineLocalHyperOptDAT import *
 from src.commons.Datalocation import *
 from src.processedDataConsumers.CostParameters import *
 import traceback
@@ -34,7 +35,7 @@ def runTPERangeValues(editscriptsizepath,datasetname, runTPE, algo, seed):
 		kfold = KFOLD_VALUE
 		for i_ratio in RATIO_DATASET:
 			try:
-				datasetDF = computeHyperOpt(pathResults=editscriptsizepath, dfcomplete=datasetDF, kFold=kfold, max_evals=i_eval , algorithm=algo,fractiondata= i_ratio,  dataset = datasetname, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+				datasetDF = computeLocalHyperOpt(pathResults=editscriptsizepath, dfcomplete=datasetDF, kFold=kfold, max_evals=i_eval , algorithm=algo,fractiondata= i_ratio,  dataset = datasetname, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 			except:
 				print("Error executing Hyperopt")
 				print(traceback.format_exc())

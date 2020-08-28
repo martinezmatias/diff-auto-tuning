@@ -1,5 +1,6 @@
 import unittest
 from src.processedDataConsumers.EngineHyperOptDAT import *
+from src.processedDataConsumers.EngineLocalHyperOptDAT import *
 from src.commons.Datalocation import *
 from src.rowDataConsumers.RQ0_Setup_ComputeEDSizeOfConfiguationsFromRowData import *
 from src.processedDataConsumers.CostParameters import *
@@ -26,19 +27,21 @@ class TestHyperOp(unittest.TestCase):
 					print("\nanalyzing {}".format(folderToAnalyze))
 					computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm), kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 
-	def test_CompteHyperOpt_single_by_algo_GumTree(self):
+	def test_LocalCompteHyperOpt_single_by_algo_GumTree(self):
 
 			kfold = 5
-			maxeval = 202
+			maxeval = 10
 			franction = 1
 			seed=1
-			TPE = False
+			TPE = True
 			measure  = [True]
 			for folderToAnalyze in [NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON]:
 				for algorithm in ["Gumtree"]:
 					print("\nanalyzing {}".format(folderToAnalyze))
 					for useAvg in measure:
-						computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=False,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+						computeLocalHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=False,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+
+
 
 	def _test_CompteHyperOpt_single_by_algo_ChangeDistiller(self):
 			''''only 1000 '''''
@@ -53,6 +56,22 @@ class TestHyperOp(unittest.TestCase):
 					print("\nanalyzing {}".format(folderToAnalyze))
 					for useAvg in measure:
 						computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=True,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+
+
+	def _test_CompteHyperOpt_single_by_algo_ChangeDistiller(self):
+			''''only 1000 '''''
+			kfold = 2
+			maxeval = 10
+			franction = 0.01
+			seed=10
+			TPE = True
+			measure  = [True]
+			for folderToAnalyze in [NAME_FOLDER_ASTSPOON, NAME_FOLDER_ASTJDT]:
+				for algorithm in ["ChangeDistiller"]:
+					print("\nanalyzing {}".format(folderToAnalyze))
+					for useAvg in measure:
+						computeHyperOpt(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION,folderToAnalyze, algorithm),overwrite=True,useAverage=useAvg, runTpe=TPE,  kFold=kfold, max_evals=maxeval,fractiondata= franction,  dataset = folderToAnalyze, algorithm = algorithm, out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
+
 
 	def _test_CompteHyperOpt_single_by_algo_Xy(self):
 			''''only 1000 '''''
