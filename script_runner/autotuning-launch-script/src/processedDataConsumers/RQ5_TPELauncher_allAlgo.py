@@ -9,7 +9,7 @@ def runTPERangeValues(distancespath,datasetname, runTPE):
 
 	for i_eval in ABSOLUTE_EVALS_RANGE:
 		kfold = KFOLD_VALUE
-		for i_ratio in ratioDataset:
+		for i_ratio in RATIO_DATASET:
 
 			computeHyperOpt(pathResults=distancespath, kFold=kfold, max_evals=i_eval ,fractiondata= i_ratio,  dataset = datasetname, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION )
 

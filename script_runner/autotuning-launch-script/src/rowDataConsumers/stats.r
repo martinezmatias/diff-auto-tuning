@@ -11,8 +11,7 @@ install.packages('datarium')
 library(tidyverse)
 library(rstatix)
 library(ggpubr)
-
-
+library(effsize)
 library(rcompanion)
 library(lattice)
 library(FSA)
@@ -24,13 +23,18 @@ wilcoxonR(x=m$v1, g=m$v2)
 
 #vda(v1 ~ v2, data=m, ci=TRUE)
 
-library(effsize)
+
 cliff.delta(d = v1, f =  v2)
 
 
 v1 = as.numeric(readLines("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data/paired_values_heigth_1.csv"))#[limitd:limitup]
 v2 = as.numeric(readLines("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/plots/data/paired_values_heigth_2.csv"))#[limitd:limitup]
-wilcox.test(v1,v2, paired = TRUE)
+
+v2 = as.numeric(readLines("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/paired_values_best_ClassicGumtree_0.1_2000_1_1.csv"))#[limitd:limitup]
+v1 = as.numeric(readLines("/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/paired_values_default_ClassicGumtree_0.5_1000_1_2.csv"))#[limitd:limitup]
+
+
+wilcox.test(v1,v2, paired = TRUE , alternative =  "greater")
 m = data.frame(v1, v2)
 wilcoxonR(x=m$v1, g=m$v2)
 

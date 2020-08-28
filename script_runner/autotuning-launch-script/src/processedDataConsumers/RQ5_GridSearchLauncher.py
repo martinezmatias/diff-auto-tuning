@@ -6,7 +6,7 @@ from src.commons.DiffAlgorithmMetadata import *
 def main(distancespath,algorithm,kfold,datasetname, seed):
 
 	datasetComplete = None
-	for i_fraction in ratioDataset:
+	for i_fraction in RATIO_DATASET:
 
 		keyDefault = None
 		if algorithm is None or "Gumtree" in algorithm:

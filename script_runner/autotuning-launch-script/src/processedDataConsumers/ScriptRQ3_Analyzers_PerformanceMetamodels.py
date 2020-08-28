@@ -6,7 +6,8 @@ class TestHyperOp(unittest.TestCase):
 
 	def _test_CompareDistributionBestDefault(self):
 		folderToAnalyze = NAME_FOLDER_ASTSPOON
-		compareDistributions(pathResults="{}/distance_per_diff_{}.csv".format(RESULTS_ROW_LOCATION,folderToAnalyze), keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration=defaultConfigurations["ClassicGumtree"])
+		compareDistributions(pathResults="{}/editscript_size_per_diff_{}_GumTree.csv".format(RESULTS_ROW_LOCATION,folderToAnalyze),
+							 keyBestConfiguration="ClassicGumtree_0.1_2000_1", keyDefaultConfiguration=defaultConfigurations["ClassicGumtree"])
 
 
 	def _test_CompareCrossDistributionBestDefault(self):
@@ -50,13 +51,12 @@ class TestHyperOp(unittest.TestCase):
 
 
 	def test_CompareAutotune(self):
-		for model in [ NAME_FOLDER_ASTJDT,
-					   NAME_FOLDER_ASTSPOON
+		for model in [  NAME_FOLDER_ASTJDT, NAME_FOLDER_ASTSPOON
 					   ]:
 
 			bestConfig = {}
 
-			bestConfig[NAME_FOLDER_ASTJDT] = "SimpleGumtree_0.1_1"
+			bestConfig[NAME_FOLDER_ASTJDT] = "ClassicGumtree_0.1_2000_1"#"SimpleGumtree_0.1_1"
 			bestConfig[NAME_FOLDER_ASTSPOON] = "ClassicGumtree_0.1_2000_1"
 			algorithm = "Gumtree"
 			pathSizeMatrix = "{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, model,

@@ -330,13 +330,20 @@ def computeImprovementsOnTesting(X_diff, selectedIndexDiff, allDiff, df, default
 		isBestNan = math.isnan(currentBestValue)
 
 		if isDefaultNan and isBestNan:
+			#print("Both  Nan best {} default!".format(currentBestValue, currentDefaultValue))
 			totalbothNan.append( X_diff[iT])
+			continue
+
+		if isDefaultNan or isBestNan:
+			#totalbothNan.append(X_diff[iT])
+			print("Only one is Nan best {} default!".format(currentBestValue, currentDefaultValue))
 			continue
 
 		if currentDefaultValue is 0 or currentBestValue is 0:
 			print("found a zero in the matrix!!!")
 			import sys
 			sys.exit(1)
+
 
 		if isDefaultNan or currentBestValue < currentDefaultValue:
 			totalBestTrainingIsBest.append(X_diff[iT])

@@ -32,7 +32,7 @@ def runTPERangeValues(editscriptsizepath,datasetname, runTPE, algo, seed):
 
 	for i_eval in evals_To_execute:
 		kfold = KFOLD_VALUE
-		for i_ratio in ratioDataset:
+		for i_ratio in RATIO_DATASET:
 			try:
 				datasetDF = computeHyperOpt(pathResults=editscriptsizepath, dfcomplete=datasetDF, kFold=kfold, max_evals=i_eval , algorithm=algo,fractiondata= i_ratio,  dataset = datasetname, runTpe= (runTPE.lower() == "true"), out=RESULTS_PROCESSED_LOCATION, random_seed=seed )
 			except:

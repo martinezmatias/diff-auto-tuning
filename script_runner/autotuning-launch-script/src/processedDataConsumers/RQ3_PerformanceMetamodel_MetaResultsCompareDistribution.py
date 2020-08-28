@@ -8,7 +8,7 @@ from scipy.stats import wilcoxon, kruskal
 from src.commons.Datalocation import *
 from src.commons.DiffAlgorithmMetadata import *
 import pingouin as pg
-def compareDistributions(pathResults ="{}/distance_per_diff_GTSPOON.csv".format(RESULTS_PROCESSED_LOCATION), keyBestConfiguration= defaultConfigurations["ClassicGumtree"], keyDefaultConfiguration="ClassicGumtree_0.5_1000_2"):
+def compareDistributions(pathResults ="{}/dd.csv".format(RESULTS_PROCESSED_LOCATION), keyBestConfiguration = "", keyDefaultConfiguration = ""):
 	df = pandas.read_csv(pathResults, sep=",")
 
 	columns = list(df.columns)
@@ -126,6 +126,8 @@ def crossResultsDatasets(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	return percentageBest, percentageDefault
 
 def experimentAutoTuning(dfDistances, dfSize, keyBestConfiguration, keyDefaultConfiguration):
+
+	print("Comparing best {} and default {}".format(keyBestConfiguration, keyDefaultConfiguration ))
 	iRow = 0
 
 	columns = list(dfSize.columns)
@@ -134,16 +136,8 @@ def experimentAutoTuning(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 
 	print("All config size {}".format(len(allConfig)))
 
-	rowsDiffOptimized = 0
-
-	rowsDiffAutotuneEqualsBest = 0
-	rowsDiffAutotuneShortestBest = 0
-
 	indexOfConfig = {}
 
-	casesAutoTuneBeatsBest = []
-
-	autoDiffOptimizedBest = []
 
 	totalNan = 0
 
@@ -151,101 +145,118 @@ def experimentAutoTuning(dfDistances, dfSize, keyBestConfiguration, keyDefaultCo
 	for i in range(1, len(columns)):
 		indexOfConfig[columns[i]] = i
 
-	# count the cases than auto-tune beats the default, which was not beaten by GridSearch
-	nrAutoTuneBestDefaultSmallerThanBestOP = 0
+	totalGlobalSmallerThanDefault = 0
+	totalGlobalEqualsThanDefault = 0
+	totalGlobalWorseThanDefault = 0
 
-	#Autoconfig best than the BestSearch when it's the best (it can be better than the best, but the bestSearch is not the best (default is better))
-	nrAutoTuneBestSmallerThanBestWhenItsBest = 0
+	totalLocalSmallerThanDefault = 0
+	totalLocalEqualsThanDefault = 0
+	totalLocalWorseThanDefault = 0
+	configsLocalSmallerDefaults = {}
 
-	totalBestSearchSmallerThanDefault = 0
+	totalLocalSmallerThanGlobal = 0
+	totalLocalEqualsThanGlobal = 0
+	totalLocalWorstThanGlobal = 0
+	configsLocalSmallerGlobal = {}
 
 	for index, row in dfSize.iterrows():
 
-		sizeBestSearchConfig = row[keyBestConfiguration]
+		sizeBestGlobalConfig = row[keyBestConfiguration]
 		sizeDefaultConfig = row[keyDefaultConfiguration]
 
-		if math.isnan(sizeBestSearchConfig) or math.isnan(sizeDefaultConfig):
+		if math.isnan(sizeBestGlobalConfig) or math.isnan(sizeDefaultConfig):
 			#print("{} nan".format(row[0]))
 			totalNan+=1
 			continue
 
 		iRow += 1
 
-		minSize = sizeDefaultConfig
+		## by default the size of the default
+		localSize = sizeDefaultConfig
 		minConfig = keyDefaultConfiguration
-		minConfigBeatBest = keyDefaultConfiguration
-		foundSmallerThanDefault  = False
-		#for aConfig in allConfig:
-		autotuneSmallerThanDefaultAndBest = False
-		autotuneSmallerThanDefaultEqualsBest = False
-		autotuneSmallerThanBestSearchWhenItBest = False
-
-		bestSearchSmallerThanDefault = sizeBestSearchConfig < sizeDefaultConfig
-		if bestSearchSmallerThanDefault:
-			totalBestSearchSmallerThanDefault+=1
-
 
 		for aConfig in range(1, len(allConfig)+1):
 			sizeAConfig = row[aConfig]
-			if sizeAConfig < minSize:
-				minSize = sizeAConfig
-				minConfig = aConfig
-				foundSmallerThanDefault = True
+			if sizeAConfig < localSize:
+				localSize = sizeAConfig
+				minConfig = allConfig[aConfig-1]
 
-				if sizeAConfig ==  sizeBestSearchConfig and  not autotuneSmallerThanDefaultAndBest:
-					autotuneSmallerThanDefaultEqualsBest = True
-				elif sizeAConfig < sizeBestSearchConfig:
-					# now is smaller
-					autotuneSmallerThanDefaultEqualsBest = False
-					autotuneSmallerThanDefaultAndBest = True
-					##we rest one because the index starts in 1 (to iterate over the row)
-					minConfigBeatBest = allConfig[aConfig-1]
+		if sizeBestGlobalConfig < sizeDefaultConfig:
+			totalGlobalSmallerThanDefault += 1
+		elif sizeBestGlobalConfig > sizeDefaultConfig:
+			totalGlobalWorseThanDefault += 1
+		else:
+			totalGlobalEqualsThanDefault += 1
 
-					if bestSearchSmallerThanDefault:
-						autotuneSmallerThanBestSearchWhenItBest = True
+		if localSize < sizeDefaultConfig:
+			totalLocalSmallerThanDefault += 1
+			if minConfig not in configsLocalSmallerDefaults :
+				configsLocalSmallerDefaults[minConfig] = 0
+			configsLocalSmallerDefaults[minConfig] += 1
 
+		elif localSize > sizeDefaultConfig:
+			totalLocalWorseThanDefault += 1 ## it cannot happed
+		else:
+			totalLocalEqualsThanDefault += 1
 
-		# finds a small?
-		if foundSmallerThanDefault:
-			rowsDiffOptimized+=1
+		if localSize < sizeBestGlobalConfig:
+			totalLocalSmallerThanGlobal += 1
 
-			# Only auto is best (and not BestSearch) i.e. Default is better
-			if not bestSearchSmallerThanDefault:
-				nrAutoTuneBestDefaultSmallerThanBestOP+=1
+			if minConfig not in configsLocalSmallerGlobal :
+				configsLocalSmallerGlobal[minConfig] = 0
+			configsLocalSmallerGlobal[minConfig] += 1
 
-		if autotuneSmallerThanDefaultEqualsBest:
-			rowsDiffAutotuneEqualsBest+=1
+		elif localSize > sizeBestGlobalConfig:
+			totalLocalWorstThanGlobal += 1 ## it cannot exust
+		else:
+			totalLocalEqualsThanGlobal += 1
 
-		if autotuneSmallerThanBestSearchWhenItBest:
-			nrAutoTuneBestSmallerThanBestWhenItsBest+=1
-
-		if autotuneSmallerThanDefaultAndBest:
-			rowsDiffAutotuneShortestBest+=1
-			casesAutoTuneBeatsBest.append({"diff":row[0],"minConfigFoundAutotune":minConfigBeatBest, "isBestSearchSmallerThanDefault":bestSearchSmallerThanDefault, "minSizeFound":minSize, "sizeDefault":sizeDefaultConfig, "sizeBest":sizeBestSearchConfig, "autotuneSmallerThanBestSearchWhenItBest":autotuneSmallerThanBestSearchWhenItBest })
 
 		if iRow % 500 == 0:
 			print(iRow)
 
 		#print("{} {} optimized?  {} min size found {} default size {} bestSearch size {}" .format(iRow, row["diff"],  foundSmallerThanDefault, minSize, sizeDefaultConfig, sizeBestSearchConfig ))
 
-		if False and iRow == 1000:
+		if False and iRow == 100:
 			print("!!!!!Stop results!!!!!!")
 			break
 
-	print("Total diffs {}, autotune - optimized w.r.t Default {} , "
-		  "equals best search {}, "
-		  "shortest best search {} , "
-		  "autotune beats default when it is best {},  "
-		  "autoTune beats best search when it the best {},  "
-		  "(SearchRelated) total Best search smaller Default {} ".format(
-		iRow,
-		rowsDiffOptimized,
-		rowsDiffAutotuneEqualsBest,
-		rowsDiffAutotuneShortestBest ,
-		nrAutoTuneBestDefaultSmallerThanBestOP,
-		nrAutoTuneBestSmallerThanBestWhenItsBest,
-		totalBestSearchSmallerThanDefault))
-	print("beating cases ({}): {}".format(len(casesAutoTuneBeatsBest),casesAutoTuneBeatsBest))
+	print("{} Global vs default:  & {}  ({:.2f}\%) & {} ({:.2f}\%) & {} ({:.2f}\%) ".format(iRow, totalGlobalSmallerThanDefault, (totalGlobalSmallerThanDefault/iRow)* 100,  totalGlobalEqualsThanDefault, (totalGlobalEqualsThanDefault/iRow)* 100 ,  totalGlobalWorseThanDefault, (totalGlobalWorseThanDefault/iRow)* 100))
+
+	print("{} Local vs default:  & {}  ({:.2f}\%) & {} ({:.2f}\%) & {} ({:.2f}\%) ".format(iRow,
+																							totalLocalSmallerThanDefault,
+																							(
+																										totalLocalSmallerThanDefault / iRow) * 100,
+																							totalLocalEqualsThanDefault,
+																							(
+																										totalLocalEqualsThanDefault / iRow) * 100,
+																							totalLocalWorseThanDefault,
+																							(
+																										totalLocalWorseThanDefault / iRow) * 100))
+
+	print("{} Local vs global:  & {}  ({:.2f}\%) & {} ({:.2f}\%) & {} ({:.2f}\%) ".format(iRow,
+																							totalLocalSmallerThanGlobal,
+																							(
+																										totalLocalSmallerThanGlobal / iRow) * 100,
+																							totalLocalEqualsThanGlobal,
+																							(
+																										totalLocalEqualsThanGlobal / iRow) * 100,
+																							totalLocalWorstThanGlobal,
+																							(
+																										totalLocalWorstThanGlobal / iRow) * 100))
+
+	print("configs local  best default".format(configsLocalSmallerDefaults))
+
+	print("configs local  best global {} ".format(configsLocalSmallerGlobal))
+
+	localBestDefault = configsLocalSmallerDefaults.keys()
+	bestLocalDefault = list(sorted(localBestDefault, key=lambda x: configsLocalSmallerDefaults[x], reverse=False))
+	print("order best local vs default".format(bestLocalDefault))
+
+	localBestGlobal = configsLocalSmallerGlobal.keys()
+	bestLocalGlobal = list(sorted(localBestGlobal, key=lambda x: configsLocalSmallerGlobal[x], reverse=False))
+	print("order best local vs default".format(bestLocalGlobal))
+
 	print("total diff nan {}".format(totalNan))
 	print("END-ok")
 
@@ -284,25 +295,25 @@ def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 	plt.hist(xBest, alpha=0.5)
 	plt.hist(xDefault, alpha=0.5)
 	plt.xlim(0, 60)
-	plt.show()
+	#plt.show()
 
 	#ax = sns.violinplot(data=[xBest,xDefault], split=True, orient="v", inner="quartile", cut=0, showfliers = False )
 	#ax.set_xticklabels(['first', 'second'])
 	plt.boxplot([xBest,xDefault], showfliers=False)
-	plt.show()
+	#plt.show()
 
-	if True:
-		return
-
-	stat, p =	scipy.stats.mannwhitneyu(xBest, xDefault, alternative='two-sided')
+	#if True:
+	#	return
+	print("Number of pairs {} ".format(len(xDefault)))
+	stat, p =	scipy.stats.mannwhitneyu( xDefault, xBest, alternative='greater')
 
 	print(' mannwhitneyu stat=%.3f, p=%.3f' % (stat, p))
 
-	stat, p = wilcoxon(xBest, xDefault)
+	stat, p = wilcoxon( xDefault, xBest,alternative='greater')
 
 	print(' wilcoxon stat=%.3f, p=%.3f' % (stat, p))
 
-	stat, p = kruskal(xBest, xDefault)
+	stat, p = kruskal( xDefault, xBest,alternative='greater')
 
 	print(' kruskal stat=%.3f, p=%.3f' % (stat, p))
 
@@ -328,18 +339,19 @@ def compareDistribution(df, keyBestConfiguration, keyDefaultConfiguration):
 	#https://pingouin-stats.org/api.html#effect-sizes
 	#print("eff size % f" % pg.compute_effsize(xBest, xDefault))
 	#https://pingouin-stats.org/generated/pingouin.mwu.html#pingouin.mwu
-	stats = pg.mwu(xBest, xDefault, tail='two-sided')
-	print("pingouin MWU:\n {}".format(stats))
+	#stats = pg.mwu(xBest, xDefault, tail='two-sided')
+	#print("pingouin MWU:\n {}".format(stats))
 	#https://pingouin-stats.org/generated/pingouin.wilcoxon.html?highlight=wilcoxon
-	stats = pg.wilcoxon(xDefault, xBest, tail='two-sided')
-	print("pingouin wilcoxon:\n {}".format(stats))
+	#stats = pg.wilcoxon(xDefault, xBest, tail='two-sided')
+	#print("pingouin wilcoxon:\n {}".format(stats))
 
 	#https://docs.scipy.org/doc/scipy/reference/generated/scipy.stats.kruskal.html
 
-	#saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
-	#saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
+	saveFile("{}/paired_values_best_{}_1.csv".format(RESULTS_ROW_LOCATION,keyBestConfiguration), xBest)
+	saveFile("{}/paired_values_default_{}_2.csv".format(RESULTS_ROW_LOCATION,keyDefaultConfiguration), xDefault)
 
 def saveFile(filename, pvalues1):
+	print("save at {}".format(filename))
 	fout1 = open(filename, 'w')
 	for i in pvalues1:
 		fout1.write("{}\n".format(i))

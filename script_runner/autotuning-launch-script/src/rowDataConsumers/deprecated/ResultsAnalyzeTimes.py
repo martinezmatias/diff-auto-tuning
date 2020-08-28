@@ -17,6 +17,123 @@ keysuccessfulByGroup = "successfulByGroup";
 
 allkeys = [keytimesoutByGroup, keysuccessfulByGroup, keyTimePairAnalysisByGroup, keydiffAnalyzedByGroup, keyTimeSingleConfigurationByGroup]
 
+import math
+
+def analyzeExecutionTime(rootResults, model):
+	print("Starting analyzing folder {}".format(rootResults))
+	files = (os.listdir(rootResults) )
+	files = list(filter(lambda x: os.path.isdir(os.path.join(rootResults,x)), files))
+	totalDiffAnalyzed = 0
+
+	result = {}
+	initResut(result)
+
+	problems = []
+
+	allTimes = []
+	avgTimesPerDiff = []
+
+	sumTimesPerDiff = []
+
+	## Navigate group ids
+	for groupId in sorted(files, key= lambda x: int(x), reverse=False):
+
+
+		if groupId == ".DS_Store":
+			continue
+
+		filesGroup = os.path.join(rootResults, groupId)
+
+		if not os.path.isdir(filesGroup):
+			continue
+
+		initGroup(result, groupId)
+
+		## let's read the diff from csv
+		diffFromGroup = 0
+
+		##Navigates diff
+		for diff in os.listdir(filesGroup):
+
+			if not diff.endswith(".csv") or diff.startswith("metaInfo"):
+				continue
+			try:
+				csvFile = os.path.join(filesGroup, diff)
+				df = pandas.read_csv(csvFile)
+				diffFromGroup += 1
+				#print("{} diff {}  ".format(diffFromGroup, diff))
+
+				## Store times for all (no filter)
+
+				#df["MATCHER"] == "CompleteGumTree" |
+				dfAlgo = df[ (df["MATCHER"] == "ClassicGumtree")]
+				totalDiffAnalyzed+=1
+
+				times = dfAlgo["TIME"].to_list()
+				#print("diff {} {}".format(diff, times))
+				timeouts = dfAlgo["TIMEOUT"].to_list()
+				filteredConfigurationTimes = list(map( lambda  x: float(x) ,filter(lambda x: not math.isnan(x), times)))
+				#print("Total times per diff file:  {}".format((filteredConfigurationTimes)))
+				#avg
+
+				if len(filteredConfigurationTimes) > 0:
+					meanDiff = np.mean(filteredConfigurationTimes)
+					avgTimesPerDiff.append(meanDiff)
+					allTimes.extend(filteredConfigurationTimes)
+					sumTimesPerDiff.append(2 * sum(filteredConfigurationTimes))
+
+				if totalDiffAnalyzed % 1000 == 0:
+					print("analyzed {} diff  ".format(totalDiffAnalyzed))
+
+			except Exception as e:
+				print("Problems with {}".format(diff))
+				print(e)
+				#print(e.with_traceback())
+				problems.append(diff)
+
+
+		#	if totalDiffAnalyzed > 100:
+				#print("Break")
+				#break
+
+
+		#end loop diff
+		sumTimes = 0
+
+
+
+	print("diff analyzed {}".format(totalDiffAnalyzed))
+	print("Avg all times {}".format(np.mean(allTimes)))
+	print("std all times {}".format(np.std(allTimes)))
+	print("mean all times {}".format(np.median(allTimes)))
+
+	print("Avg time per diff {}".format(np.mean(avgTimesPerDiff)))
+
+	print("Total times {}".format(len(allTimes)))
+	print("Total avg diffs {}".format(len(avgTimesPerDiff)))
+
+	print("")
+	print("sum perd diff  analyzed {}".format(sumTimesPerDiff))
+	print("Avg sum perd diff  {}".format(np.mean(sumTimesPerDiff)))
+	print("std sum perd diff  {}".format(np.std(sumTimesPerDiff)))
+	print("mean sum perd diff  {}".format(np.median(sumTimesPerDiff)))
+
+	saveFile("Times{}.txt".format(model), allTimes)
+	saveFile("TimesAutotune{}.txt".format(model), sumTimesPerDiff)
+
+	plt.boxplot(avgTimesPerDiff)
+	plt.savefig("Times{}.pdf".format(model))
+	plt.show()
+
+
+
+def saveFile(filename, pvalues1):
+	print("save at {}".format(filename))
+	fout1 = open(filename, 'w')
+	for i in pvalues1:
+		fout1.write("{}\n".format(i))
+	fout1.flush()
+	fout1.close()
 
 def plotExecutionTime(rootResults):
 	print("Starting analyzing folder {}".format(rootResults))
