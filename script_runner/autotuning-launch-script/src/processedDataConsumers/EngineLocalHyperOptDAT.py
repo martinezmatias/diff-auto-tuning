@@ -129,90 +129,94 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 	print("Default config {}".format(defaultConfigurationKey))
 	total = 0
 	for ind in df.index:
-		print(df['diff'][ind], df[defaultConfigurationKey][ind])
+		try :
+			print(df['diff'][ind], df[defaultConfigurationKey][ind])
 
-		sizeDefaultConfig = (df[defaultConfigurationKey][ind])
+			sizeDefaultConfig = (df[defaultConfigurationKey][ind])
 
-		if math.isnan(sizeDefaultConfig):
-			continue
+			if math.isnan(sizeDefaultConfig):
+				continue
 
-		sizeDefaultConfig = int(sizeDefaultConfig)
+			sizeDefaultConfig = int(sizeDefaultConfig)
 
-		currentI = ind
+			currentI = ind
 
-		keyBestConfigFound_k = None
+			keyBestConfigFound_k = None
 
-		if runTpe:
-			spaceAlgorithms = createSpace(algorithm=algorithm)
-			search_space = {"space": hp.choice('algorithm_type', spaceAlgorithms),
-							}
-			trials = Trials()
-			best = fmin(
-				fn=exterior,
-				space=search_space,
-				algo=tpe.suggest if runTpe else rand.suggest,
-				max_evals=max_evals,
-				trials=trials,
-			)
+			if runTpe:
+				spaceAlgorithms = createSpace(algorithm=algorithm)
+				search_space = {"space": hp.choice('algorithm_type', spaceAlgorithms),
+								}
+				trials = Trials()
+				best = fmin(
+					fn=exterior,
+					space=search_space,
+					algo=tpe.suggest if runTpe else rand.suggest,
+					max_evals=max_evals,
+					trials=trials,
+				)
 
-			eval = hyperopt.space_eval(search_space, best)
+				eval = hyperopt.space_eval(search_space, best)
 
-			keyBestConfigFound_k = recreateConfigurationKey(eval)
-		else:
-			print("Running Random total configs: {}".format(len(allConfig)))
-			minEdlength = 10000000;
-			bestConfigFound = None
-			for iEval in range(0, max_evals):
-				iRandom = random.randint(0, len(allConfig))
-				try:
-					selectedConfig = allConfig[iRandom]
+				keyBestConfigFound_k = recreateConfigurationKey(eval)
+			else:
+				print("Running Random total configs: {}".format(len(allConfig)))
+				minEdlength = 10000000;
+				bestConfigFound = None
+				for iEval in range(0, max_evals):
+					iRandom = random.randint(0, len(allConfig))
+					try:
+						selectedConfig = allConfig[iRandom]
 
 
-					editScriptSelectedConfig = df[selectedConfig][ind]
+						editScriptSelectedConfig = df[selectedConfig][ind]
 
-					if math.isnan(editScriptSelectedConfig):
+						if math.isnan(editScriptSelectedConfig):
+							continue
+
+						editScriptSelectedConfig = int(editScriptSelectedConfig)
+
+						# print("#eval {} random Selected config {} length {} ".format(iEval, selectedConfig,editScriptAvgSize))
+						if editScriptSelectedConfig < minEdlength:
+							minEdlength = editScriptSelectedConfig
+							bestConfigFound = selectedConfig
+					except:
 						continue
 
-					editScriptSelectedConfig = int(editScriptSelectedConfig)
 
-					# print("#eval {} random Selected config {} length {} ".format(iEval, selectedConfig,editScriptAvgSize))
-					if editScriptSelectedConfig < minEdlength:
-						minEdlength = editScriptSelectedConfig
-						bestConfigFound = selectedConfig
-				except:
-					continue
+				if bestConfigFound is not None:
+					keyBestConfigFound_k = bestConfigFound
 
-
-			if bestConfigFound is not None:
-				keyBestConfigFound_k = bestConfigFound
-
-		##End search
-		print("{} Best config found: {}".format(total, keyBestConfigFound_k))
-		fitnessBestConfig = (dfGlobal[keyBestConfigFound_k][currentI])
+			##End search
+			print("{} Best config found: {}".format(total, keyBestConfigFound_k))
+			fitnessBestConfig = (dfGlobal[keyBestConfigFound_k][currentI])
 
 
-		if math.isnan(fitnessBestConfig):
-			continue
+			if math.isnan(fitnessBestConfig):
+				continue
 
-		fitnessBestConfig = int(fitnessBestConfig)
+			fitnessBestConfig = int(fitnessBestConfig)
 
-		print("best {} vs default  {} ".format(fitnessBestConfig, sizeDefaultConfig))
+			print("best {} vs default  {} ".format(fitnessBestConfig, sizeDefaultConfig))
 
-		if fitnessBestConfig < sizeDefaultConfig:
-			totalBest+=1
-		elif fitnessBestConfig == sizeDefaultConfig:
-			totalEquals+=1
-		else:
-			totalWorst+=1
-		total+=1
-		if total % 1000 ==0:
-			print("Partial results {}:".format(total))
-			print("totalBest {} ".format(totalBest))
-			print("totalEquals {} ".format(totalEquals))
-			print("totalWorst {} ".format(totalWorst))
-			print("distances {}".format(distances))
-		
-		distances.append(fitnessBestConfig - sizeDefaultConfig)
+			if fitnessBestConfig < sizeDefaultConfig:
+				totalBest+=1
+			elif fitnessBestConfig == sizeDefaultConfig:
+				totalEquals+=1
+			else:
+				totalWorst+=1
+			total+=1
+			if total % 1000 ==0:
+				print("Partial results {}:".format(total))
+				print("totalBest {} ".format(totalBest))
+				print("totalEquals {} ".format(totalEquals))
+				print("totalWorst {} ".format(totalWorst))
+				print("distances {}".format(distances))
+
+			distances.append(fitnessBestConfig - sizeDefaultConfig)
+		except Exception as e:
+			print("Error ")
+			print(e)
 
 	elapsed_time = time.time() - inittime
 
