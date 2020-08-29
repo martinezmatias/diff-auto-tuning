@@ -130,7 +130,7 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 	total = 0
 	for ind in df.index:
 		try :
-			print(df['diff'][ind], df[defaultConfigurationKey][ind])
+			#print(df['diff'][ind], df[defaultConfigurationKey][ind])
 
 			sizeDefaultConfig = (df[defaultConfigurationKey][ind])
 
