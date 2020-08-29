@@ -160,7 +160,7 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 
 				keyBestConfigFound_k = recreateConfigurationKey(eval)
 			else:
-				print("Running Random total configs: {}".format(len(allConfig)))
+				#print("Running Random total configs: {}".format(len(allConfig)))
 				minEdlength = 10000000;
 				bestConfigFound = None
 				for iEval in range(0, max_evals):
@@ -188,7 +188,7 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 					keyBestConfigFound_k = bestConfigFound
 
 			##End search
-			print("{} Best config found: {}".format(total, keyBestConfigFound_k))
+			#print("{} Best config found: {}".format(total, keyBestConfigFound_k))
 			fitnessBestConfig = (dfGlobal[keyBestConfigFound_k][currentI])
 
 
@@ -197,7 +197,7 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 
 			fitnessBestConfig = int(fitnessBestConfig)
 
-			print("best {} vs default  {} ".format(fitnessBestConfig, sizeDefaultConfig))
+			#print("best {} vs default  {} ".format(fitnessBestConfig, sizeDefaultConfig))
 
 			if fitnessBestConfig < sizeDefaultConfig:
 				totalBest+=1
@@ -211,7 +211,7 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 				print("totalBest {} ".format(totalBest))
 				print("totalEquals {} ".format(totalEquals))
 				print("totalWorst {} ".format(totalWorst))
-				print("distances {}".format(distances))
+				#print("distances {}".format(distances))
 
 			distances.append(fitnessBestConfig - sizeDefaultConfig)
 		except Exception as e:
@@ -223,7 +223,7 @@ def computeLocalHyperOpt(pathResults, overwrite = OVERWRITE_RESULTS, useAverage 
 	print("totalBest {} ".format(totalBest))
 	print("totalEquals {} ".format(totalEquals))
 	print("totalWorst {} ".format(totalWorst))
-	print("distances {}".format(distances))
+	#print("distances {}".format(distances))
 
 	print("END total time after {} k {}".format(kFold, time.strftime("%H:%M:%S", time.gmtime(elapsed_time))))
 
