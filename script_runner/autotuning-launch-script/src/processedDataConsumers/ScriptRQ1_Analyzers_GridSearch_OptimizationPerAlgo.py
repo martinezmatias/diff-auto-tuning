@@ -248,7 +248,7 @@ class TestGrid(unittest.TestCase):
 
 
 
-	def testAnalyzeCostResultsPlotFromPaper(self):
+	def _testAnalyzeCostResultsPlotFromPaper(self):
 
 			timeSingleDiff = 469#100 #miliseconds
 			allDiff = 100000
@@ -426,6 +426,110 @@ class TestGrid(unittest.TestCase):
 			#legend.get_frame().set_facecolor('white')
 			plt.show()
 			#listTimesPerCong[searchMethod].append(timesconfig)
+
+
+	def testLocalAnalyzeCostResultsPlotFromPaper(self):
+
+			timeSingleDiff = 469#100 #miliseconds
+			allDiff = 100000
+			#trainingSize = 0.8
+			listPerformancePerCong = {}
+			listTimesPerCong = {}
+			listConfigs = {}
+			completeKey = {}
+			cperformances= {}
+			for searchMethod in [ "random_local"#"TPE_local" #, "random_local"
+								  ]:
+
+				listPerformancePerCong[ searchMethod] = []
+				listTimesPerCong [ searchMethod] = []
+				listConfigs [ searchMethod] = []
+
+				for modelToAnalyze in [ #NAME_FOLDER_ASTSPOON,
+										NAME_FOLDER_ASTJDT]:
+					modelName = "JDT" if "JDT" in modelToAnalyze else "Spoon"
+					for algo in ["Gumtree"]:
+
+						avgBestPerRange = []
+						avgWorstPerRange = []
+						#rangeSelected = [0.001, 0.005, 0.01, 0.05, 0.1, 0.5, 1]
+						proportionsDataset = [1]#[0.001,  0.01,  0.1, 0.5, 1]
+						proportionEvalsConsidered = [0.01]#[0.01, 0.1, 0.5]
+
+						for proportionDataset in proportionsDataset:
+
+							print("\nproportionDataset: {}".format(proportionDataset))
+							alreadyAnalyzedGrid = False
+							for aProportionEval in proportionEvalsConsidered:
+
+								sizeSpaceAlgo = sizeSearchSpace[algo]
+								evals = int(aProportionEval * sizeSpaceAlgo)
+								# if is zero, we put 1
+								evals = 1 if evals is 0 else evals
+								print("Total evals for {} {}".format(algo, evals))
+
+								evalString = "_evals_{}".format(evals)
+
+								if searchMethod is "GridSearch":
+
+									if alreadyAnalyzedGrid:
+										continue
+									alreadyAnalyzedGrid = True
+
+									evalString = ""
+									evals = 2025
+
+
+								allPercentageBestAllSeed = []
+								allPercentageEqualsAllSeed = []
+								allPercentageWorstAllSeed = []
+
+								for iseed in range(0, 10):
+									try:
+										print("Analyzing seed {}".format(iseed))
+										#NAME_FOLDER_ASTJDT,
+										pathm = "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/results/locals/locals/"
+										location = "{}/{}/dataset_{}/algorithm_{}/seed_{}/fractionds_{}/".format(pathm,searchMethod,modelToAnalyze, algo, iseed,proportionDataset )
+										##Best
+										file = "{}/summary_{}_{}_proportionBestOnTraining{}_f_{}.csv".format(location, modelToAnalyze, algo,evalString,proportionDataset )
+										print("File {}".format(file))
+										res = readFileToFloatList(file)
+										print("Best {}".format(res))
+										allPercentageBestAllSeed.extend(res)
+
+										#Equals
+										file = "{}/summary_{}_{}_proportionEqualsOnraining{}_f_{}.csv".format(location, modelToAnalyze,
+																										  algo, evalString, proportionDataset)
+										res = readFileToFloatList(file)
+										print("Equals {}".format(res))
+										allPercentageEqualsAllSeed.extend(res)
+
+
+									except Exception as ex:
+										print(ex)
+								## end seeds
+
+								avgBest = np.mean(allPercentageBestAllSeed)
+								avgEquals = np.mean(allPercentageEqualsAllSeed)
+								avgWorst = np.mean(allPercentageWorstAllSeed)
+
+								completeParticularKey = "{} d: {}{}".format(searchMethod, (proportionDataset * allDiff), evalString.replace("_evals_", " e: ")).replace(".0", "").replace("GridSearch","GS").replace("random","RS")
+								nameconfig = "{}".format(searchMethod).replace(
+									"GridSearch", "GS").replace("random", "RS")
+								cperformances[completeParticularKey] = avgBest
+
+
+
+								print(modelName)
+								print("& {:.2f}\% & {:.2f}\% & {:.2f}\%  ".format(avgBest * 100, avgEquals * 100, avgWorst * 100))
+								print("Best of fraction {}: av {} all {}".format(proportionDataset, avgBest, allPercentageBestAllSeed))
+								avgBestPerRange.append(avgBest)
+
+
+
+
+			for c in completeKey.keys():
+				print("c {} time {:.3f} hs {:.3f} ".format(c, completeKey[c], cperformances[c]*100))
 
 
 
