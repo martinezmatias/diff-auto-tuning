@@ -14,6 +14,9 @@ import com.github.difflib.UnifiedDiffUtils;
 import com.github.difflib.algorithm.DiffException;
 import com.github.difflib.patch.Patch;
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import com.github.gumtreediff.actions.Diff;
+import com.github.gumtreediff.actions.EditScript;
+import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.client.diff.webdiff.MergelyDiffView2;
 import com.github.gumtreediff.client.diff.webdiff.TextDiffView;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffHtmlBuilder;
@@ -21,9 +24,11 @@ import com.github.gumtreediff.client.diff.webdiff.VanillaDiffView;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.CompositeMatchers.ClassicGumtree;
 import com.github.gumtreediff.matchers.CompositeMatchers.CompleteGumtreeMatcher;
+import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.CompositeMatchers.SimpleGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.ITree;
 import com.github.gumtreediff.tree.TreeContext;
@@ -34,9 +39,7 @@ import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
-import fr.gumtree.treediff.jdt.TreeDiffGumTreeBuilder;
-import gumtree.spoon.diff.DiffImpl;
-import gumtree.spoon.diff.operations.Operation;
+import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 public class ResultVisualizer {
 
@@ -212,15 +215,26 @@ public class ResultVisualizer {
 
 	public void saveVisualization(File fileLeftt, ITree tl, File fileRight, ITree tr, GumTreeProperties properies,
 			Matcher matcher, File fout, String diffId, String configId) throws IOException {
-		DiffImpl result = null;
-		result = new DiffImpl(new TreeContext(), tl, tr, new ChawatheScriptGenerator(), matcher, properies);
 
-		List<Operation> actionsAll = result.getAllOperations();
+		MappingStore mappings = matcher.match(tl, tr);
+		CompositeMatcher cm = (CompositeMatcher) matcher;
+		cm.configure(properies);
+
+		EditScript editScript = new ChawatheScriptGenerator().computeActions(mappings);
+
+		List<Action> actionsAll = editScript.asList();
+
+		TreeContext leftContext = new TreeContext();
+		leftContext.setRoot(tl);
+		TreeContext rightContext = new TreeContext();
+		rightContext.setRoot(tr);
+
+		Diff diffgtt = new Diff(leftContext, rightContext, mappings, editScript);
 
 		File parentDiff = new File(fout.getAbsoluteFile() + File.separator + diffId + File.separator);
 		parentDiff.mkdirs();
 
-		com.github.gumtreediff.actions.Diff diffgtt = saveDiffInfo(parentDiff, result, actionsAll, configId);
+		saveDiffInfo(parentDiff, actionsAll, configId);
 
 		VanillaDiffHtmlBuilder builder = new VanillaDiffHtmlBuilder(fileLeftt, fileRight,
 				(com.github.gumtreediff.actions.Diff) diffgtt);
@@ -241,20 +255,11 @@ public class ResultVisualizer {
 
 	}
 
-	public com.github.gumtreediff.actions.Diff saveDiffInfo(File parentDiff, DiffImpl result,
-			List<Operation> actionsAll, String configId) throws IOException {
-		System.out.println("Size root ops " + result.getRootOperations().size());
+	public void saveDiffInfo(File parentDiff, List<Action> actionsAll, String configId) throws IOException {
 		System.out.println("Size all ops " + actionsAll.size());
-
-		// System.out.println("All " + actionsAll);
-
-		com.github.gumtreediff.actions.Diff diffgtt = result.getNativeDiff();
-
-		System.out.println("Native: Size all ops " + diffgtt.editScript.asList().size());
 
 		JsonObject jsonunif = new JsonObject();
 		jsonunif.addProperty("nrAllActions", actionsAll.size());
-		jsonunif.addProperty("nrRootActions", result.getRootOperations().size());
 
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 
@@ -265,12 +270,11 @@ public class ResultVisualizer {
 		fw.write(json);
 		fw.close();
 
-		return diffgtt;
 	}
 
 	public void saveUnified(String configId, com.github.gumtreediff.actions.Diff diffgtt, File parentDiff)
 			throws IOException {
-		TreeDiffGumTreeBuilder unifiedrep = new TreeDiffGumTreeBuilder();
+		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
 		JsonElement jsonunif = unifiedrep.build(diffgtt);
 
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();

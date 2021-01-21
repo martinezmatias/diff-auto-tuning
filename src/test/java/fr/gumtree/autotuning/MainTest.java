@@ -1,18 +1,16 @@
 package fr.gumtree.autotuning;
 
+import java.io.File;
+
 import org.junit.Test;
 
 public class MainTest {
 
-	public void testCD() {
-		// 1_00b0ec3bcfd8437269d19ad865f3c530bf8b954b
-		// change in comment but changedistiller produce lot of changes
-	}
+	final File rootMegadiff = new File("./examples/megadiff-sample/");
 
 	@Test
 	public void testMain1() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./out/", //
 				"-stop=1", //
 				"-subset=1", "-paralleltype=MATCHER_LEVEL" };
@@ -21,8 +19,7 @@ public class MainTest {
 
 	@Test
 	public void testMain2() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./out/", //
 				"-stop=1", //
 				"-astmodel=JDT", //
@@ -32,8 +29,7 @@ public class MainTest {
 
 	@Test
 	public void testMain2_propertyLevel() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./out/", //
 				"-stop=1", //
 				"-astmodel=JDT", //
@@ -43,8 +39,7 @@ public class MainTest {
 
 	@Test
 	public void testMain3() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./out/", //
 				"-stop=1", //
 				"-astmodel=JDT", //
@@ -54,8 +49,7 @@ public class MainTest {
 
 	@Test
 	public void testMain4_matcher() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./out/", //
 				"-stop=1", //
 				"-subset=1", "-timeout=10", //
@@ -67,8 +61,7 @@ public class MainTest {
 
 	@Test
 	public void testMain5_matcher() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./outxysimpletest/", //
 				"-stop=100000000", //
 				"-begin=15151", "-subset=2",
@@ -80,8 +73,7 @@ public class MainTest {
 
 	@Test
 	public void testMain6_matcher() {
-		String[] command = new String[] {
-				"-path=/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded", //
+		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./outxysimpletest/", //
 				"-stop=1", //
 				// "-begin=1",

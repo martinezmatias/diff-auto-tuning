@@ -23,6 +23,9 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import com.github.gumtreediff.actions.EditScript;
+import com.github.gumtreediff.actions.EditScriptGenerator;
+import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.actions.model.Delete;
 import com.github.gumtreediff.actions.model.Insert;
 import com.github.gumtreediff.actions.model.Move;
@@ -30,19 +33,17 @@ import com.github.gumtreediff.actions.model.TreeDelete;
 import com.github.gumtreediff.actions.model.TreeInsert;
 import com.github.gumtreediff.actions.model.Update;
 import com.github.gumtreediff.matchers.CompositeMatchers;
+import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.ITree;
-import com.github.gumtreediff.tree.TreeContext;
 import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
-import gumtree.spoon.diff.Diff;
-import gumtree.spoon.diff.DiffImpl;
-import gumtree.spoon.diff.operations.Operation;
 
 /**
  * 
@@ -687,24 +688,18 @@ public class TuningEngine {
 	public Map<String, Object> runDiff(ITree tl, ITree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
 		long initSingleDiff = new Date().getTime();
 		Map<String, Object> resultMap = new HashMap<>();
-		Diff result = null;
 
-		result = new DiffImpl(new TreeContext()// scanner.getTreeContext()
-				, tl, tr, new ChawatheScriptGenerator(), matcher, aGumTreeProperties);
-
-		List<Operation> actionsAll = result.getAllOperations();
-
-		List<Operation> actionsRoot = result.getRootOperations();
+		// Calling directly to GT.core
+		List<Action> actionsAll = computeDiff(tl, tr, matcher, aGumTreeProperties);
 
 		resultMap.put(NRACTIONS, actionsAll.size());
-		resultMap.put(NRROOTS, actionsRoot.size());
 
-		resultMap.put(NR_INSERT, actionsAll.stream().filter(e -> e.getAction() instanceof Insert).count());
-		resultMap.put(NR_DELETE, actionsAll.stream().filter(e -> e.getAction() instanceof Delete).count());
-		resultMap.put(NR_UPDATE, actionsAll.stream().filter(e -> e.getAction() instanceof Update).count());
-		resultMap.put(NR_MOVE, actionsAll.stream().filter(e -> e.getAction() instanceof Move).count());
-		resultMap.put(NR_TREEINSERT, actionsAll.stream().filter(e -> e.getAction() instanceof TreeInsert).count());
-		resultMap.put(NR_TREEDELETE, actionsAll.stream().filter(e -> e.getAction() instanceof TreeDelete).count());
+		resultMap.put(NR_INSERT, actionsAll.stream().filter(e -> e instanceof Insert).count());
+		resultMap.put(NR_DELETE, actionsAll.stream().filter(e -> e instanceof Delete).count());
+		resultMap.put(NR_UPDATE, actionsAll.stream().filter(e -> e instanceof Update).count());
+		resultMap.put(NR_MOVE, actionsAll.stream().filter(e -> e instanceof Move).count());
+		resultMap.put(NR_TREEINSERT, actionsAll.stream().filter(e -> e instanceof TreeInsert).count());
+		resultMap.put(NR_TREEDELETE, actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
 
 		long endSingleDiff = new Date().getTime();
 		resultMap.put(TIME, (endSingleDiff - initSingleDiff));
@@ -713,6 +708,25 @@ public class TuningEngine {
 
 		return resultMap;
 
+	}
+
+	public List<Action> computeDiff(ITree tl, ITree tr, Matcher matcher, GumTreeProperties properies) {
+
+		return computeDiff(tl, tr, matcher, new ChawatheScriptGenerator(), properies);
+	}
+
+	public List<Action> computeDiff(ITree tl, ITree tr, Matcher matcher, EditScriptGenerator edGenerator,
+			GumTreeProperties properies) {
+
+		CompositeMatcher cm = (CompositeMatcher) matcher;
+		cm.configure(properies);
+
+		MappingStore mappings = matcher.match(tl, tr);
+
+		EditScript actions = edGenerator.computeActions(mappings);
+
+		List<Action> actionsAll = actions.asList();
+		return actionsAll;
 	}
 
 	public List<GumTreeProperties> computeCartesianProduct(List<ParameterDomain> domains) {

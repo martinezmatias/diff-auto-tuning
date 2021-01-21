@@ -18,6 +18,9 @@
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<github.global.server>github</github.global.server>
+		
+		<gumtree.version>3.0.0-SNAPSHOT</gumtree.version>
+			
 	</properties>
 	<dependencies>
 		<dependency>
@@ -47,12 +50,6 @@
 			<version>4.3.2</version>
 		</dependency>
 
-		<dependency>
-			<groupId>gt3</groupId>
-			<artifactId>gen.jdt</artifactId>
-			<version>3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893</version>
-		</dependency>
-
 
 		<dependency>
 			<groupId>com.google.guava</groupId>
@@ -78,6 +75,17 @@
 			<version>4.5</version>
 		</dependency>
 
+		<dependency>
+			<groupId>com.github.gumtreediff</groupId>
+			<artifactId>gen.jdt</artifactId>
+			<version>${gumtree.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>fr.gumtree</groupId>
+			<artifactId>TreeDiffFormat</artifactId>
+			<version>0.0.1-SNAPSHOT</version>
+		</dependency>
 	</dependencies>
 
 	<build>

@@ -25,10 +25,11 @@ import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
 
 public class EngineTest {
 
+	final File rootMegadiff = new File("./examples/");
+
 	@Test
 	public void testNavigate() throws IOException {
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -45,8 +46,7 @@ public class EngineTest {
 
 	@Test
 	public void testNavigate_SingleDiff() throws IOException {
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -63,8 +63,7 @@ public class EngineTest {
 
 	@Test
 	public void testNavigate_SingleDiff_1_831e3b() throws IOException {
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -86,8 +85,7 @@ public class EngineTest {
 	/// Diff in one annotation
 	@Test
 	public void testNavigate_SingleDiff_1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e() throws IOException {
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -108,8 +106,7 @@ public class EngineTest {
 
 	@Test
 	public void testNavigate_SingleDiff_1_() throws IOException {
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -129,8 +126,7 @@ public class EngineTest {
 	@SuppressWarnings("deprecation")
 	@Test
 	public void testNavigate_CompareTimeouts() throws IOException {
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -236,8 +232,7 @@ public class EngineTest {
 
 	@Test
 	public void testNavigate_SingleMatcher() throws IOException {
-		String pathMegadiff = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded";
-		File rootMegadiff = new File(pathMegadiff);
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -254,8 +249,7 @@ public class EngineTest {
 
 	@Test
 	public void testNavigate_SingleMatcherMatcherParallelTimeout() throws IOException {
-		String pathMegadiff = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded";
-		File rootMegadiff = new File(pathMegadiff);
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();
@@ -272,8 +266,7 @@ public class EngineTest {
 
 	@Test
 	public void testNavigate_SingleMatcherMatcherParallelTimeoutAllMatchers() throws IOException {
-		String pathMegadiff = "/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded";
-		File rootMegadiff = new File(pathMegadiff);
+
 		assertTrue(rootMegadiff.exists());
 
 		TuningEngine reader = new TuningEngine();

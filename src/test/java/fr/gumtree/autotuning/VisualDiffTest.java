@@ -25,6 +25,8 @@ import com.github.gumtreediff.tree.ITree;
 
 public class VisualDiffTest {
 
+	final File rootMegadiff = new File("./examples/");
+
 	@Test
 	public void testDiffForTestJDT() throws IOException {
 		/**
@@ -33,14 +35,13 @@ public class VisualDiffTest {
 		 * /Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_t.java
 		 * --port 4568
 		 */
-		File rootMegadiff = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded");
+
 		assertTrue(rootMegadiff.exists());
 		String diffId = "1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService";
 		String fl = rootMegadiff.getAbsolutePath()
-				+ "/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java";
+				+ "/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java";
 		String fr = rootMegadiff.getAbsolutePath()
-				+ "/1/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_t.java";
+				+ "/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_t.java";
 		System.out.println(fl);
 
 		File fileLeftt = new File(fl);
