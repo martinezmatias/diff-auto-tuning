@@ -134,7 +134,7 @@ public class TuningEngine {
 		}
 	}
 
-	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel)
+	public void navigateMegaDiffAllMatchers(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel)
 			throws IOException {
 		this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
 	}

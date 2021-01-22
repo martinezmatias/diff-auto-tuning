@@ -75,17 +75,41 @@
 			<version>4.5</version>
 		</dependency>
 
+ <!-- V1.b commit 405e -->
+		<dependency>
+			<groupId>gt3</groupId>
+			<artifactId>gen.jdt</artifactId>
+			<version>3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893</version>
+		</dependency>
+
+
+		<dependency>
+			<groupId>com.google.guava</groupId>
+			<artifactId>guava</artifactId>
+			<version>29.0-jre</version>
+		</dependency>
+
+
+	<!--	<dependency>
+			<groupId>gt3</groupId>
+			<artifactId>gen.jdt</artifactId>
+			<version>3.0.0-c13222c6d0e4039eda3db3225ee505d7b7c08893</version>
+		</dependency>
+
+
 		<dependency>
 			<groupId>com.github.gumtreediff</groupId>
 			<artifactId>gen.jdt</artifactId>
 			<version>${gumtree.version}</version>
 		</dependency>
-
+		-->
+<!-- Causes problems
 		<dependency>
 			<groupId>fr.gumtree</groupId>
 			<artifactId>TreeDiffFormat</artifactId>
 			<version>0.0.1-SNAPSHOT</version>
 		</dependency>
+	-->
 	</dependencies>
 
 	<build>
