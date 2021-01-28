@@ -2,6 +2,7 @@ package fr.gumtree.autotuning;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -22,10 +23,15 @@ import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
 
 import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
+import fr.gumtree.autotuning.domain.DoubleParameterDomain;
+import fr.gumtree.autotuning.domain.IntParameterDomain;
+import fr.gumtree.autotuning.entity.CaseResult;
+import fr.gumtree.autotuning.entity.MatcherResult;
+import fr.gumtree.autotuning.entity.SingleDiffResult;
 
 public class EngineTest {
 
-	final File rootMegadiff = new File("./examples/");
+	final File rootMegadiff = new File("./examples/megadiff-sample");
 
 	@Test
 	public void testNavigate() throws IOException {
@@ -39,7 +45,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiffAllMatchers("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
@@ -56,7 +62,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiffAllMatchers("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
@@ -74,7 +80,7 @@ public class EngineTest {
 
 		int megadiff_id = 1;
 
-		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		assertNotNull(result);
@@ -96,7 +102,7 @@ public class EngineTest {
 
 		int megadiff_id = 1;
 
-		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 
 		assertNotNull(result);
@@ -115,7 +121,7 @@ public class EngineTest {
 
 		int megadiff_id = 1;
 
-		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 
 		assertNotNull(result);
@@ -144,21 +150,21 @@ public class EngineTest {
 
 		long tinit = (new Date()).getTime();
 
-		Map<String, Object> result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		long tpropertyparalel = (new Date()).getTime() - tinit;
 
 		assertNotNull(result);
-		Pair<Long, Integer> r1 = getResults(result);
+		Pair<Long, Integer> r1 = computeTotalTime(result);
 
 		reader.setNrThreads(1);
 
 		tinit = (new Date()).getTime();
-		Map<String, Object> result2 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result2 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 		long tpnoneparalel = (new Date()).getTime() - tinit;
 
-		Pair<Long, Integer> r2 = getResults(result2);
+		Pair<Long, Integer> r2 = computeTotalTime(result2);
 
 		Long timeSerial = r2.first;
 		Long timePropertyParallel = r1.first;
@@ -175,11 +181,11 @@ public class EngineTest {
 		assertTrue(tpnoneparalel > tpropertyparalel);
 		System.out.println("Matcher callable");
 		tinit = (new Date()).getTime();
-		Map<String, Object> result3 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result3 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 		long tmatcherparallel = (new Date()).getTime() - tinit;
 
-		Pair<Long, Integer> r3 = getResults(result3);
+		Pair<Long, Integer> r3 = computeTotalTime(result3);
 
 		System.out.println("Results Matcher callable");
 
@@ -211,14 +217,21 @@ public class EngineTest {
 
 	}
 
-	public Pair<Long, Integer> getResults(Map<String, Object> result) {
+	/**
+	 * Computes the number of configurations executed and the total time of those
+	 * configurations.
+	 * 
+	 * @param result
+	 * @return
+	 */
+	public Pair<Long, Integer> computeTotalTime(CaseResult result) {
 		long time = 0;
 		int total = 0;
 		System.out.println(result);
-		for (Object matcher : ((List) result.get(TuningEngine.MATCHERS))) {
-			Map propertiesOfMatcher = (Map) matcher;
-			List<Map> configs = (List<Map>) propertiesOfMatcher.get(TuningEngine.CONFIGS);
-			for (Map config : configs) {
+		for (MatcherResult propertiesOfMatcher : (result.getResultByMatcher().values())) {
+
+			List<SingleDiffResult> configs = propertiesOfMatcher.getAlldiffresults();
+			for (SingleDiffResult config : configs) {
 
 				if (config != null && config.get(TuningEngine.TIME) != null)
 					time += new Long(config.get(TuningEngine.TIME).toString());
@@ -276,7 +289,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiffAllMatchers("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.MATCHER_LEVEL);
 
 	}
@@ -284,15 +297,18 @@ public class EngineTest {
 	@Test
 	public void testTimeout() {
 
-		File s = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
-		File t = new File(
-				"/Users/matias/develop/sketch-repair/git-sketch4repair/datasets/megadiff-expanded/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
+		File s = new File(rootMegadiff.getAbsoluteFile()
+				+ "/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
+		File t = new File(rootMegadiff.getAbsoluteFile()
+				+ "/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
 
 		TuningEngine reader = new TuningEngine();
 
-		reader.analyzeDiff("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t, PARALLEL_EXECUTION.PROPERTY_LEVEL,
-				new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
+		CaseResult caseResult = reader.analyzeCase("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t,
+				PARALLEL_EXECUTION.PROPERTY_LEVEL, new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
+
+		assertNotNull(caseResult);
+		assertNull(caseResult.getFromException());
 	}
 
 	@Test

@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.domain;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -6,7 +6,12 @@ import java.util.stream.IntStream;
 
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 
-public class IntParameterDomain extends ParameterDomain<Integer> {
+/**
+ * 
+ * @author Matias Martinez
+ *
+ */
+public class IntParameterDomain extends NumericParameterDomain<Integer> {
 
 	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer min, Integer max,
 			Integer delta) {
@@ -14,15 +19,12 @@ public class IntParameterDomain extends ParameterDomain<Integer> {
 
 	}
 
-	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer min, Integer max) {
-		super(id, type, defaultValue, min, max);
-
-	}
-
 	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer[] interval) {
-
-		super(id, type, defaultValue, interval[0], interval[interval.length - 1], interval);
-
+		super(id, type, defaultValue, defaultValue, defaultValue, defaultValue);
+		this.id = id;
+		this.type = type;
+		this.defaultValue = defaultValue;
+		this.interval = interval;
 	}
 
 	@Override

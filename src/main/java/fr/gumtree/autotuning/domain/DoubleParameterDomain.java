@@ -1,24 +1,20 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.domain;
 
 import java.util.ArrayList;
 import java.util.List;
 
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 
-public class DoubleParameterDomain extends ParameterDomain<Double> {
-
-	public DoubleParameterDomain(ConfigurationOptions id, Class type, Double defaultValue, Double min, Double max) {
-		super(id, type, defaultValue, min, max);
-
-	}
+/**
+ * 
+ * @author Matias Martinez
+ *
+ */
+public class DoubleParameterDomain extends NumericParameterDomain<Double> {
 
 	public DoubleParameterDomain(ConfigurationOptions id, Class type, Double defaultValue, Double min, Double max,
 			Double delta) {
 		super(id, type, defaultValue, min, max, delta);
-	}
-
-	public DoubleParameterDomain(ConfigurationOptions id, Class type, Double defaultValue, Double[] interval) {
-		super(id, type, defaultValue, interval[0], interval[interval.length - 1], interval);
 	}
 
 	@Override

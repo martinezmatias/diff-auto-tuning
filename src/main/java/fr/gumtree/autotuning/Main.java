@@ -2,10 +2,12 @@ package fr.gumtree.autotuning;
 
 import java.io.File;
 import java.util.Arrays;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
+import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import picocli.CommandLine;
@@ -44,10 +46,23 @@ public class Main implements Callable<Integer> {
 	@Option(names = "-overwriteresults", defaultValue = "false", required = false)
 	boolean overwriteresults;
 
+	List<CaseResult> resultsExecution;
+
 	public static void main(String[] args) {
 		System.out.println("Arguments received: " + Arrays.toString(args));
 		Main m = new Main();
-		CommandLine cl = new CommandLine(m);
+		m.execute(args);
+	}
+
+	public static List<CaseResult> mainAndResults(String[] args) {
+		System.out.println("Arguments received: " + Arrays.toString(args));
+		Main m = new Main();
+		m.execute(args);
+		return m.getResultsExecution();
+	}
+
+	public void execute(String[] args) {
+		CommandLine cl = new CommandLine(this);
 		cl.execute(args);
 	}
 
@@ -130,7 +145,9 @@ public class Main implements Callable<Integer> {
 		}
 		engine.setTreeBuilder(treebuilder);
 
-		engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, execution, this.matchers);
+		// We store the results of the execution
+		this.resultsExecution = engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, execution,
+				this.matchers);
 
 		System.out.println("-END-");
 		return null;
@@ -158,6 +175,10 @@ public class Main implements Callable<Integer> {
 
 	public void setMatchers(String[] matchers) {
 		this.matchers = matchers;
+	}
+
+	public List<CaseResult> getResultsExecution() {
+		return resultsExecution;
 	}
 
 }

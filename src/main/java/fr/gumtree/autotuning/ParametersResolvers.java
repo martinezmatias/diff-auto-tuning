@@ -5,6 +5,9 @@ import java.util.Map;
 
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 
+import fr.gumtree.autotuning.domain.DoubleParameterDomain;
+import fr.gumtree.autotuning.domain.IntParameterDomain;
+
 public class ParametersResolvers {
 
 	public static Map<ConfigurationOptions, ParameterDomain<?>> parametersDomain = new HashMap<>();
