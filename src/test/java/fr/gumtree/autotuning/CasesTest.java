@@ -19,68 +19,11 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 import com.github.gumtreediff.tree.Tree;
 
-import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 public class CasesTest {
-
-//	private SpoonGumTreeBuilder scanner = new SpoonGumTreeBuilder();
-	// private AstComparator diff = new AstComparator();
-
+	SpoonTreeBuilder builder = new SpoonTreeBuilder();
 	final File rootMegadiff = new File("./examples/");
-
-	@Test
-	public void testChangesSpoon() throws Exception {
-
-		assertTrue(rootMegadiff.exists());
-
-		TuningEngine engine = new TuningEngine();
-
-		String fl = rootMegadiff.getAbsolutePath()
-				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";
-		String fr = rootMegadiff.getAbsolutePath()
-				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java";
-
-		Tree tl = null;
-		Tree tr = null;
-		SpoonTreeBuilder builder = new SpoonTreeBuilder();
-		tl = builder.build(new File(fl));
-		tr = builder.build(new File(fr));
-
-		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
-		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
-		System.out.println(actionsAll);
-		assertEquals(1, actionsAll.size());
-	}
-
-	@Test
-	public void testChangesJDT() throws Exception {
-
-		assertTrue(rootMegadiff.exists());
-
-		TuningEngine engine = new TuningEngine();
-
-		String fl = rootMegadiff.getAbsolutePath()
-				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";
-		String fr = rootMegadiff.getAbsolutePath()
-				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java";
-
-		Tree tl = null;
-		Tree tr = null;
-		JDTTreeBuilder builder = new JDTTreeBuilder();
-		tl = builder.build(new File(fl));
-		tr = builder.build(new File(fr));
-
-		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
-		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
-
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
-
-		System.out.println(actionsAll);
-		assertEquals(1, actionsAll.size());
-	}
 
 	@Test
 	public void testChangeInAnnotationSpoonGranularity() throws Exception {
@@ -97,8 +40,8 @@ public class CasesTest {
 		Tree tl = null;
 		Tree tr = null;
 
-		tl = scanner.getTree(diff.getCtType(new File(fl)));
-		tr = scanner.getTree(diff.getCtType(new File(fr)));
+		tl = builder.build(new File(fl));
+		tr = builder.build(new File(fr));
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
@@ -109,53 +52,53 @@ public class CasesTest {
 		// XY has variability
 		GumTreeProperties properies = new GumTreeProperties();
 
-		properies.put(ConfigurationOptions.GT_STM_MH, 1);
-		properies.put(ConfigurationOptions.GT_XYM_SIM, 0.2);
+		properies.put(ConfigurationOptions.st_minprio, 1);// .st_minprio
+		properies.put(ConfigurationOptions.xy_minsim, 0.2);// xy_minsim
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies);
 
 		assertEquals(1, actionsAll.size());
 
-		properies.put(ConfigurationOptions.GT_STM_MH, 3);
-		properies.put(ConfigurationOptions.GT_XYM_SIM, 0.2);
+		properies.put(ConfigurationOptions.st_minprio, 3);// st_minprio
+		properies.put(ConfigurationOptions.xy_minsim, 0.2);// xy_minsim
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies);
 
 		assertEquals(55, actionsAll.size());
 
 		//
-		properies.put(ConfigurationOptions.GT_STM_MH, 2);
-		properies.put(ConfigurationOptions.GT_XYM_SIM, 0.6);
+		properies.put(ConfigurationOptions.st_minprio, 2);// st_minprio
+		properies.put(ConfigurationOptions.xy_minsim, 0.6);// xy_minsim
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies);
 
 		assertEquals(19, actionsAll.size());
 
 		// Now Classic
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.1);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 100);
-		properies.put(ConfigurationOptions.GT_STM_MH, 1);
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 0.1);// bu_minsim
+		properies.put(ConfigurationOptions.bu_minsize, 100);// bu_minsize
+		properies.put(ConfigurationOptions.st_minprio, 1); // st_minprio
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.ClassicGumtree(), edGenerator, properies);
 
 		assertEquals(1, actionsAll.size());
 
 		//
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.2);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 600);
-		properies.put(ConfigurationOptions.GT_STM_MH, 5);
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 0.2);// bu_minsim
+		properies.put(ConfigurationOptions.bu_minsize, 600);// bu_minsize
+		properies.put(ConfigurationOptions.st_minprio, 5);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.ClassicGumtree(), edGenerator, properies);
 
 		assertEquals(1, actionsAll.size());
 
 		/// Forcing to fail
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 0);
-		properies.put(ConfigurationOptions.GT_STM_MH, 299990); // fake value
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 0);
+		properies.put(ConfigurationOptions.bu_minsize, 0);
+		properies.put(ConfigurationOptions.st_minprio, 299990); // fake value
 
 		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
 
@@ -177,8 +120,8 @@ public class CasesTest {
 		Tree tl = null;
 		Tree tr = null;
 
-		tl = scanner.getTree(diff.getCtType(new File(fl)));
-		tr = scanner.getTree(diff.getCtType(new File(fr)));
+		tl = builder.build(new File(fl));
+		tr = builder.build(new File(fr));
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
@@ -228,10 +171,10 @@ public class CasesTest {
 		System.out.println("After configuring");
 		GumTreeProperties properies = new GumTreeProperties();
 		//
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.5);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 1000);
-		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 0.5);
+		properies.put(ConfigurationOptions.bu_minsize, 1000);
+		properies.put(ConfigurationOptions.st_minprio, 2);
 
 		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
 
@@ -240,14 +183,14 @@ public class CasesTest {
 
 		assertEquals(63, actionsAll.size());
 
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 1);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 900);
-		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 1);
+		properies.put(ConfigurationOptions.bu_minsize, 900);
+		properies.put(ConfigurationOptions.st_minprio, 2);
 
 		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
 
-		System.out.println("\n" + properies.getProperties());
+		// System.out.println("\n" + properies.getProperties());
 		System.out.println("Size  " + actionsAll.size());
 		System.out.println("All " + actionsAll);
 
@@ -255,14 +198,14 @@ public class CasesTest {
 
 		int previousSize = actionsAll.size();
 
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.7);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 1900);
-		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 0.7);
+		properies.put(ConfigurationOptions.bu_minsize, 1900);
+		properies.put(ConfigurationOptions.st_minprio, 2);
 
 		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
 
-		System.out.println("\n" + properies.getProperties());
+		// System.out.println("\n" + properies.getProperties());
 		System.out.println("Size  " + actionsAll.size());
 		System.out.println("All " + actionsAll);
 
@@ -271,23 +214,23 @@ public class CasesTest {
 		//
 		assertTrue(actionsAll.size() < previousSize);
 
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.1);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 100);
-		properies.put(ConfigurationOptions.GT_STM_MH, 3);
+		// properies.getProperties().clear();
+		properies.put(ConfigurationOptions.bu_minsim, 0.1);
+		properies.put(ConfigurationOptions.bu_minsize, 100);
+		properies.put(ConfigurationOptions.st_minprio, 3);
 
 		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
 
-		System.out.println("\n" + properies.getProperties());
+		// System.out.println("\n" + properies.getProperties());
 		System.out.println("Size  " + actionsAll.size());
 		System.out.println("All " + actionsAll);
 
 		assertEquals(147, actionsAll.size());
 		// Default 2.1.1
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.5);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 1000);
-		properies.put(ConfigurationOptions.GT_STM_MH, 1);
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.bu_minsim, 0.5);
+		properies.put(ConfigurationOptions.bu_minsize, 1000);
+		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
 
@@ -341,10 +284,9 @@ public class CasesTest {
 
 		System.out.println("After configuring");
 		GumTreeProperties properies = new GumTreeProperties();
-		// vanillaDiffView_best_SimpleGumtree@GT_BUM_SMT_SBUP@0.1@GT_STM_MH@1.html
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT_SBUP, 0.1);
-		properies.put(ConfigurationOptions.GT_STM_MH, 1);
+		// vanillaDiffView_best_SimpleGumtree@bu_minsim_SBUP@0.1@st_minprio@1.html
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
 
@@ -404,10 +346,9 @@ public class CasesTest {
 		System.out.println("After configuring");
 
 		GumTreeProperties properies = new GumTreeProperties();
-		// vanillaDiffView_best_SimpleGumtree@GT_BUM_SMT_SBUP@0.1@GT_STM_MH@1.html
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT_SBUP, 0.1);
-		properies.put(ConfigurationOptions.GT_STM_MH, 1);
+		// vanillaDiffView_best_SimpleGumtree@bu_minsim_SBUP@0.1@st_minprio@1.html
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
 
@@ -467,10 +408,9 @@ public class CasesTest {
 		System.out.println("After configuring");
 
 		GumTreeProperties properies = new GumTreeProperties();
-		// vanillaDiffView_best_SimpleGumtree@GT_BUM_SMT_SBUP@0.1@GT_STM_MH@1.html
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT_SBUP, 0.1);
-		properies.put(ConfigurationOptions.GT_STM_MH, 1);
+		// vanillaDiffView_best_SimpleGumtree@bu_minsim_SBUP@0.1@st_minprio@1.html
+		properies = new GumTreeProperties();
+		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
 

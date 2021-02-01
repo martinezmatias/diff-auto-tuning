@@ -39,7 +39,7 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
@@ -121,8 +121,8 @@ public class TuningEngine {
 
 	public TuningEngine() {
 		super();
-
-		initCacheCombinationProperties();
+		// Not necessary here
+		// initCacheCombinationProperties();
 	}
 
 	public void initCacheCombinationProperties() {
@@ -134,17 +134,17 @@ public class TuningEngine {
 		}
 	}
 
-	public void navigateMegaDiffAllMatchers(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel)
-			throws IOException {
-		this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
+	public List<CaseResult> navigateMegaDiffAllMatchers(String out, File path, int[] subsets, int begin, int stop,
+			PARALLEL_EXECUTION parallel) throws IOException {
+		return this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
 	}
 
-	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel,
-			String[] matchersString) throws Exception {
+	public List<CaseResult> navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop,
+			PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
 
 		if (matchersString == null || matchersString.length == 0) {
 			System.out.println("Using default matchers " + Arrays.toString(this.allMatchers));
-			this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
+			return this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
 		} else {
 			System.out.println("Using existing matchers " + Arrays.toString(matchersString));
 			List<Matcher> selectedMatchers = new ArrayList<Matcher>();
@@ -163,7 +163,7 @@ public class TuningEngine {
 			Matcher[] newMatchers = new Matcher[selectedMatchers.size()];
 			selectedMatchers.toArray(newMatchers);
 
-			this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, newMatchers);
+			return this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, newMatchers);
 		}
 	}
 
@@ -173,14 +173,16 @@ public class TuningEngine {
 	 * @param path    path to megadiff root
 	 * @param subsets subsets of megadiff to consider
 	 * @param stop    max numbers of diff to analyze per subset
+	 * @return
 	 * @throws IOException
 	 */
-	public void navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop, PARALLEL_EXECUTION parallel,
-			Matcher[] matchers) throws IOException {
+	public List<CaseResult> navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop,
+			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
 		this.initCacheCombinationProperties();
 
 		System.out.println("Execution mode " + parallel);
-		// Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
+
+		List<CaseResult> allCasesResults = new ArrayList<>();
 
 		long initTime = (new Date()).getTime();
 
@@ -263,6 +265,10 @@ public class TuningEngine {
 					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
 							+ "_id_" + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
 					metadataToCSV(treeFile, treeProperties, fileResult);
+
+					// Store the result:
+					allCasesResults.add(fileResult);
+
 				}
 			}
 		}
@@ -272,6 +278,7 @@ public class TuningEngine {
 
 		System.out.println("TOTAL Time " + ((endTime - initTime) / 1000) + " secs");
 
+		return allCasesResults;
 	}
 
 	public CaseResult navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
@@ -337,8 +344,8 @@ public class TuningEngine {
 	public CaseResult analyzeCase(String diffId, File previousVersion, File postVersion, PARALLEL_EXECUTION parallel,
 			Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
 		try {
-			ITree tl = this.treeBuilder.build(previousVersion);
-			ITree tr = this.treeBuilder.build(postVersion);
+			Tree tl = this.treeBuilder.build(previousVersion);
+			Tree tr = this.treeBuilder.build(postVersion);
 			long init = (new Date()).getTime();
 
 			long endTree = (new Date()).getTime();
@@ -385,8 +392,7 @@ public class TuningEngine {
 	 * @param matchers
 	 * @return
 	 */
-	public CaseResult analyzeDiffByPropertyParallel(ITree tl, ITree tr, PARALLEL_EXECUTION parallel,
-			Matcher[] matchers) {
+	public CaseResult analyzeDiffByPropertyParallel(Tree tl, Tree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
 
 		CaseResult resultsForCase = new CaseResult();
 
@@ -405,7 +411,7 @@ public class TuningEngine {
 		return resultsForCase;
 	}
 
-	public CaseResult analyzeDiffByMatcherThread(ITree tl, ITree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
+	public CaseResult analyzeDiffByMatcherThread(Tree tl, Tree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
 		// List<MatcherResult> matcherResults = new ArrayList<>();
 
 		CaseResult fileResult = new CaseResult();
@@ -497,7 +503,7 @@ public class TuningEngine {
 	 * @param parallel
 	 * @return
 	 */
-	public MatcherResult runSingleMatcherMultipleConfigurations(ITree tl, ITree tr, Matcher matcher, boolean parallel) {
+	public MatcherResult runSingleMatcherMultipleConfigurations(Tree tl, Tree tr, Matcher matcher, boolean parallel) {
 		long initMatcher = (new Date()).getTime();
 		List<GumTreeProperties> combinations = null;
 
@@ -588,11 +594,11 @@ public class TuningEngine {
 	}
 
 	public class MatcherCallable implements Callable<MatcherResult> {
-		ITree tl;
-		ITree tr;
+		Tree tl;
+		Tree tr;
 		Matcher matcher;
 
-		public MatcherCallable(ITree tl, ITree tr, Matcher matcher) {
+		public MatcherCallable(Tree tl, Tree tr, Matcher matcher) {
 			this.tl = tl;
 			this.tr = tr;
 			this.matcher = matcher;
@@ -606,12 +612,12 @@ public class TuningEngine {
 	}
 
 	public class DiffCallable implements Callable<SingleDiffResult> {
-		ITree tl;
-		ITree tr;
+		Tree tl;
+		Tree tr;
 		Matcher matcher;
 		GumTreeProperties aGumTreeProperties;
 
-		public DiffCallable(ITree tl, ITree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
+		public DiffCallable(Tree tl, Tree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
 			this.tl = tl;
 			this.tr = tr;
 			this.matcher = matcher;
@@ -644,8 +650,8 @@ public class TuningEngine {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<SingleDiffResult> runInParallelMultipleConfigurations(int nrThreads, ITree tl, ITree tr,
-			Matcher matcher, List<GumTreeProperties> combinations, long timeoutSeconds) throws Exception {
+	public List<SingleDiffResult> runInParallelMultipleConfigurations(int nrThreads, Tree tl, Tree tr, Matcher matcher,
+			List<GumTreeProperties> combinations, long timeoutSeconds) throws Exception {
 
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
@@ -695,7 +701,7 @@ public class TuningEngine {
 	 * @param aGumTreeProperties
 	 * @return
 	 */
-	public SingleDiffResult runDiff(ITree tl, ITree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
+	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
 		long initSingleDiff = new Date().getTime();
 		SingleDiffResult resultDiff = new SingleDiffResult();
 
@@ -721,12 +727,12 @@ public class TuningEngine {
 
 	}
 
-	public List<Action> computeDiff(ITree tl, ITree tr, Matcher matcher, GumTreeProperties properies) {
+	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, GumTreeProperties properies) {
 
 		return computeDiff(tl, tr, matcher, new ChawatheScriptGenerator(), properies);
 	}
 
-	public List<Action> computeDiff(ITree tl, ITree tr, Matcher matcher, EditScriptGenerator edGenerator,
+	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, EditScriptGenerator edGenerator,
 			GumTreeProperties properies) {
 
 		CompositeMatcher cm = (CompositeMatcher) matcher;
@@ -866,7 +872,7 @@ public class TuningEngine {
 					//
 					row += config.get(TIME) + sep;
 
-					row += gtp.getProperties().keySet().size() + sep;
+					row += 0 + sep;// gtp.getProperties().keySet().size()
 					// TIMEout
 					row += "0" + sep;
 				}
@@ -915,7 +921,7 @@ public class TuningEngine {
 
 	}
 
-	public JsonObject extractTreeFeatures(ITree tl) {
+	public JsonObject extractTreeFeatures(Tree tl) {
 		JsonObject thFeatures = new JsonObject();
 		thFeatures.addProperty(SIZE, tl.getMetrics().size);
 		thFeatures.addProperty(HEIGHT, tl.getMetrics().height);
@@ -923,7 +929,7 @@ public class TuningEngine {
 		return thFeatures;
 	}
 
-	public Map<String, Object> extractTreeFeaturesMap(ITree tl) {
+	public Map<String, Object> extractTreeFeaturesMap(Tree tl) {
 		Map<String, Object> fileresult = new HashMap<>();
 		fileresult.put(SIZE, tl.getMetrics().size);
 		fileresult.put(HEIGHT, tl.getMetrics().height);
