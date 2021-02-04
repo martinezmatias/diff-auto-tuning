@@ -15,6 +15,7 @@ import com.github.gumtreediff.actions.SimplifiedChawatheScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
+import com.github.gumtreediff.matchers.CompositeMatchers.SimpleGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 import com.github.gumtreediff.tree.Tree;
@@ -437,7 +438,7 @@ public class CasesTest {
 		assertTrue(rootMegadiff.exists());
 
 		String fl = "./examples/java_simple_case_1/T1_s.java";
-		String fr = "./examples/java_simple_case_1/T1_s.java";
+		String fr = "./examples/java_simple_case_1/T1_t.java";
 		System.out.println(fl);
 
 		String lc = new String(Files.readAllBytes(new File(fl).toPath()));
@@ -448,7 +449,9 @@ public class CasesTest {
 
 		TuningEngine engine = new TuningEngine();
 
-		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
+		// CompositeMatchers.ClassicGumtree matcher = new
+		// CompositeMatchers.ClassicGumtree();
+		SimpleGumtree matcher = new SimpleGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
 
@@ -459,8 +462,14 @@ public class CasesTest {
 
 		// assertTrue(actionsAll.size() > 100);
 
+		GumTreeProperties properties = new GumTreeProperties();
+
+		properties = new GumTreeProperties();
+		// Using min = 1, the imports and package declaration are mapped.
+		properties.tryConfigure(ConfigurationOptions.st_minprio, 1);
+
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumTreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, properties);
 		assertEquals(1, actionsAll.size());
 
 		System.out.println(actionsAll);

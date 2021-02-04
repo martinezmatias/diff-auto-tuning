@@ -1,7 +1,5 @@
 package fr.gumtree.autotuning.domain;
 
-import com.github.gumtreediff.matchers.ConfigurationOptions;
-
 import fr.gumtree.autotuning.ParameterDomain;
 
 /**
@@ -11,7 +9,7 @@ import fr.gumtree.autotuning.ParameterDomain;
  */
 public class CategoricalParameterDomain extends ParameterDomain<String> {
 
-	public CategoricalParameterDomain(ConfigurationOptions id, Class type, String defaultValue, String[] interval) {
+	public CategoricalParameterDomain(String id, Class type, String defaultValue, String[] interval) {
 		super(id, type, defaultValue, interval);
 	}
 

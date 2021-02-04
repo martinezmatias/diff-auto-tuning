@@ -3,8 +3,6 @@ package fr.gumtree.autotuning.domain;
 import java.util.ArrayList;
 import java.util.List;
 
-import com.github.gumtreediff.matchers.ConfigurationOptions;
-
 /**
  * 
  * @author Matias Martinez
@@ -12,9 +10,17 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
  */
 public class DoubleParameterDomain extends NumericParameterDomain<Double> {
 
-	public DoubleParameterDomain(ConfigurationOptions id, Class type, Double defaultValue, Double min, Double max,
-			Double delta) {
+	public DoubleParameterDomain(String id, Class type, Double defaultValue, Double min, Double max, Double delta) {
 		super(id, type, defaultValue, min, max, delta);
+	}
+
+	public DoubleParameterDomain(String id, Class type, Double defaultValue, Double[] interval) {
+		// TODO: retrieve min and max
+		super(id, type, defaultValue, -1d, -1d, -1d);
+		this.id = id;
+		this.type = type;
+		this.defaultValue = defaultValue;
+		this.interval = interval;
 	}
 
 	@Override

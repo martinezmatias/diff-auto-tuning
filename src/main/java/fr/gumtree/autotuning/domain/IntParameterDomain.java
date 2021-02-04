@@ -4,8 +4,6 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
-import com.github.gumtreediff.matchers.ConfigurationOptions;
-
 /**
  * 
  * @author Matias Martinez
@@ -13,14 +11,14 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
  */
 public class IntParameterDomain extends NumericParameterDomain<Integer> {
 
-	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer min, Integer max,
-			Integer delta) {
+	public IntParameterDomain(String id, Class type, Integer defaultValue, Integer min, Integer max, Integer delta) {
 		super(id, type, defaultValue, min, max, delta);
 
 	}
 
-	public IntParameterDomain(ConfigurationOptions id, Class type, Integer defaultValue, Integer[] interval) {
-		super(id, type, defaultValue, defaultValue, defaultValue, defaultValue);
+	public IntParameterDomain(String id, Class type, Integer defaultValue, Integer[] interval) {
+		// TODO: retrieve min and max
+		super(id, type, defaultValue, -1, -1, 0);
 		this.id = id;
 		this.type = type;
 		this.defaultValue = defaultValue;

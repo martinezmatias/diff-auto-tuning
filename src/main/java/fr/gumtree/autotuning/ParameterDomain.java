@@ -1,26 +1,24 @@
 package fr.gumtree.autotuning;
 
-import com.github.gumtreediff.matchers.ConfigurationOptions;
-
 /**
  * 
  * @author Matias Martinez
  */
 public class ParameterDomain<T> {
 
-	protected ConfigurationOptions id;
+	protected String id;
 	protected Class type;
 	protected T defaultValue;
 	protected T[] interval;
 
-	public ParameterDomain(ConfigurationOptions id, Class type, T defaultValue) {
+	public ParameterDomain(String id, Class type, T defaultValue) {
 		super();
 		this.id = id;
 		this.type = type;
 		this.defaultValue = defaultValue;
 	}
 
-	public ParameterDomain(ConfigurationOptions id, Class type, T defaultValue, T[] interval) {
+	public ParameterDomain(String id, Class type, T defaultValue, T[] interval) {
 		super();
 		this.id = id;
 		this.type = type;
@@ -33,11 +31,11 @@ public class ParameterDomain<T> {
 
 	}
 
-	public ConfigurationOptions getId() {
+	public String getId() {
 		return id;
 	}
 
-	public void setId(ConfigurationOptions id) {
+	public void setId(String id) {
 		this.id = id;
 	}
 

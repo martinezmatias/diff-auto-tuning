@@ -1,7 +1,5 @@
 package fr.gumtree.autotuning.domain;
 
-import com.github.gumtreediff.matchers.ConfigurationOptions;
-
 import fr.gumtree.autotuning.ParameterDomain;
 
 /**
@@ -16,14 +14,14 @@ public class NumericParameterDomain<T extends Number> extends ParameterDomain<T>
 	protected T max;
 	protected T delta;
 
-	public NumericParameterDomain(ConfigurationOptions id, Class type, T defaultValue, T min, T max, T delta) {
-		super(id, type, delta);
+	public NumericParameterDomain(String id, Class type, T defaultValue, T min, T max, T delta) {
+		super(id, type, defaultValue);
 		this.min = min;
 		this.max = max;
 		this.delta = delta;
 	}
 
-	public NumericParameterDomain(ConfigurationOptions id, Class type, T defaultValue, T[] interval) {
+	public NumericParameterDomain(String id, Class type, T defaultValue, T[] interval) {
 		super(id, type, defaultValue, interval);
 	}
 
