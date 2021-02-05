@@ -17,7 +17,6 @@ import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.actions.EditScript;
 import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.client.diff.webdiff.MergelyDiffView2;
 import com.github.gumtreediff.client.diff.webdiff.TextDiffView;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffHtmlBuilder;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffView;
@@ -27,10 +26,10 @@ import com.github.gumtreediff.matchers.CompositeMatchers.CompleteGumtreeMatcher;
 import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.CompositeMatchers.SimpleGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
-import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.tree.TreeContext;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
@@ -77,20 +76,20 @@ public class ResultVisualizer {
 
 		String rcontent = new String(Files.readAllBytes(fileRight.toPath()));
 
-		ITreeBuilder builder = null;
+		TreeBuilder builder = null;
 		if (isJDTModel) {
 			builder = new JDTTreeBuilder();
 		} else {
 			builder = new SpoonTreeBuilder();
 		}
-		ITree tl = builder.build(fileLeftt);
-		ITree tr = builder.build(fileRight);
+		Tree tl = builder.build(fileLeftt);
+		Tree tr = builder.build(fileRight);
 
 		File fout = new File(pathOut);
 
 		String bestConfig = split[6];
 		System.out.println("--Running for best: " + bestConfig);
-		GumTreeProperties propertiesBest = createProperties(bestConfig);
+		GumtreeProperties propertiesBest = createProperties(bestConfig);
 		Matcher matcherBest = createMatcher(bestConfig);
 		System.out.println(propertiesBest.getProperties());
 		String nameBest = "best_" + bestConfig;
@@ -99,7 +98,7 @@ public class ResultVisualizer {
 		System.out.println("End best");
 
 		String defaultConfig = split[7];
-		GumTreeProperties propertiesDefault = createProperties(defaultConfig);
+		GumtreeProperties propertiesDefault = createProperties(defaultConfig);
 		Matcher matcherDefault = createMatcher(defaultConfig);
 
 		System.out.println("--Running for default: " + defaultConfig);
@@ -110,7 +109,7 @@ public class ResultVisualizer {
 
 		System.out.println("--Running for nonparameters ");
 		String nameDefaultNoparam = "default_noparam";
-		saveVisualization(fileLeftt, tl, fileRight, tr, new GumTreeProperties(), matcherDefault, fout, diffId,
+		saveVisualization(fileLeftt, tl, fileRight, tr, new GumtreeProperties(), matcherDefault, fout, diffId,
 				nameDefaultNoparam);
 		System.out.println("End default");
 
@@ -203,9 +202,9 @@ public class ResultVisualizer {
 		return null;
 	}
 
-	private GumTreeProperties createProperties(String bestConfig) {
+	private GumtreeProperties createProperties(String bestConfig) {
 		String[] props = bestConfig.split("@");
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 		for (int i = 1; i < props.length; i = i + 2) {
 			properies.put(ConfigurationOptions.valueOf(props[i]), props[i + 1]);
 		}
@@ -213,7 +212,7 @@ public class ResultVisualizer {
 		return properies;
 	}
 
-	public void saveVisualization(File fileLeftt, ITree tl, File fileRight, ITree tr, GumTreeProperties properies,
+	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, GumtreeProperties properies,
 			Matcher matcher, File fout, String diffId, String configId) throws IOException {
 
 		MappingStore mappings = matcher.match(tl, tr);

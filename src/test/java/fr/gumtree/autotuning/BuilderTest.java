@@ -12,7 +12,7 @@ import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.SimplifiedChawatheScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.matchers.CompositeMatchers;
-import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
@@ -45,7 +45,7 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
 	}
@@ -71,7 +71,7 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
@@ -98,7 +98,7 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println(actionsAll);
 		assertEquals(7, actionsAll.size());
@@ -126,7 +126,7 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
@@ -157,12 +157,10 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println(actionsAll);
 		assertEquals(4, actionsAll.size());
-
-		assertTrue(actionsAll.get(0).getNode().getMetadata("spoon_object") instanceof CtReturn);
 
 	}
 
@@ -188,7 +186,7 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
@@ -219,7 +217,7 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());

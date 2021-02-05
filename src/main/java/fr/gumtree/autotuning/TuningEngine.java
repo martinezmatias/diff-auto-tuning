@@ -36,7 +36,7 @@ import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
-import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
@@ -117,7 +117,7 @@ public class TuningEngine {
 
 	private boolean overwriteresults = false;
 
-	Map<String, List<GumTreeProperties>> cacheCombinations = new HashMap<String, List<GumTreeProperties>>();
+	Map<String, List<GumtreeProperties>> cacheCombinations = new HashMap<String, List<GumtreeProperties>>();
 
 	public TuningEngine() {
 		super();
@@ -128,7 +128,7 @@ public class TuningEngine {
 	public void initCacheCombinationProperties() {
 		this.cacheCombinations.clear();
 		for (Matcher matcher : allMatchers) {
-			List<GumTreeProperties> allCombinations = computesCombinations(matcher);
+			List<GumtreeProperties> allCombinations = computesCombinations(matcher);
 			this.cacheCombinations.put(matcher.getClass().getCanonicalName(), allCombinations);
 
 		}
@@ -479,13 +479,13 @@ public class TuningEngine {
 
 			resultFromCancelled.setAlldiffresults(alldiffresults);
 
-			List<GumTreeProperties> combinations = getPropertiesCombinations(matcher);
+			List<GumtreeProperties> combinations = getPropertiesCombinations(matcher);
 
-			for (GumTreeProperties gumTreeProperties : combinations) {
+			for (GumtreeProperties GumtreeProperties : combinations) {
 
 				SingleDiffResult notFinishedConfig = new SingleDiffResult();
 				notFinishedConfig.put(TIMEOUT, errortype.ordinal() + 1);
-				notFinishedConfig.put(CONFIG, gumTreeProperties);
+				notFinishedConfig.put(CONFIG, GumtreeProperties);
 
 				alldiffresults.add(notFinishedConfig);
 
@@ -505,7 +505,7 @@ public class TuningEngine {
 	 */
 	public MatcherResult runSingleMatcherMultipleConfigurations(Tree tl, Tree tr, Matcher matcher, boolean parallel) {
 		long initMatcher = (new Date()).getTime();
-		List<GumTreeProperties> combinations = null;
+		List<GumtreeProperties> combinations = null;
 
 		MatcherResult result = new MatcherResult();
 
@@ -524,16 +524,16 @@ public class TuningEngine {
 
 		} else {
 			// The matcher does not allow customization
-			combinations = new ArrayList<GumTreeProperties>();
-			GumTreeProperties properies = new GumTreeProperties();
+			combinations = new ArrayList<GumtreeProperties>();
+			GumtreeProperties properies = new GumtreeProperties();
 			combinations.add(properies);
 
 		}
 
 		if (!parallel) {
-			for (GumTreeProperties aGumTreeProperties : combinations) {
+			for (GumtreeProperties aGumtreeProperties : combinations) {
 
-				SingleDiffResult resDiff = runDiff(tl, tr, matcher, aGumTreeProperties);
+				SingleDiffResult resDiff = runDiff(tl, tr, matcher, aGumtreeProperties);
 
 				alldiffresults.add(resDiff);
 
@@ -563,12 +563,12 @@ public class TuningEngine {
 
 	}
 
-	public List<GumTreeProperties> getPropertiesCombinations(Matcher matcher) {
+	public List<GumtreeProperties> getPropertiesCombinations(Matcher matcher) {
 		return this.cacheCombinations.get(matcher.getClass().getCanonicalName());
 	}
 
-	public List<GumTreeProperties> computesCombinations(Matcher matcher) {
-		List<GumTreeProperties> combinations;
+	public List<GumtreeProperties> computesCombinations(Matcher matcher) {
+		List<GumtreeProperties> combinations;
 		ConfigurableMatcher configurableMatcher = (ConfigurableMatcher) matcher;
 
 		// We collect the options of the matcher
@@ -615,13 +615,13 @@ public class TuningEngine {
 		Tree tl;
 		Tree tr;
 		Matcher matcher;
-		GumTreeProperties aGumTreeProperties;
+		GumtreeProperties aGumtreeProperties;
 
-		public DiffCallable(Tree tl, Tree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
+		public DiffCallable(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
 			this.tl = tl;
 			this.tr = tr;
 			this.matcher = matcher;
-			this.aGumTreeProperties = aGumTreeProperties;
+			this.aGumtreeProperties = aGumtreeProperties;
 		}
 
 		@Override
@@ -633,7 +633,7 @@ public class TuningEngine {
 					matcher.getClass().newInstance()
 					// matcher
 					// matcher
-					, aGumTreeProperties);
+					, aGumtreeProperties);
 		}
 
 	}
@@ -651,14 +651,14 @@ public class TuningEngine {
 	 * @throws Exception
 	 */
 	public List<SingleDiffResult> runInParallelMultipleConfigurations(int nrThreads, Tree tl, Tree tr, Matcher matcher,
-			List<GumTreeProperties> combinations, long timeoutSeconds) throws Exception {
+			List<GumtreeProperties> combinations, long timeoutSeconds) throws Exception {
 
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
 		List<DiffCallable> callables = new ArrayList<>();
 
-		for (GumTreeProperties aGumTreeProperties : combinations) {
-			callables.add(new DiffCallable(tl, tr, matcher, aGumTreeProperties));
+		for (GumtreeProperties aGumtreeProperties : combinations) {
+			callables.add(new DiffCallable(tl, tr, matcher, aGumtreeProperties));
 		}
 
 		List<Future<SingleDiffResult>> result = executor.invokeAll(callables, timeoutSeconds, TimeUnit.SECONDS);
@@ -678,7 +678,7 @@ public class TuningEngine {
 					if (indexFuture >= 0) {
 						// Store the properties of the future not finished
 						DiffCallable icallable = callables.get(indexFuture);
-						notFinishedConfig.put(CONFIG, icallable.aGumTreeProperties);
+						notFinishedConfig.put(CONFIG, icallable.aGumtreeProperties);
 
 					}
 
@@ -698,15 +698,15 @@ public class TuningEngine {
 	 * @param tl
 	 * @param tr
 	 * @param matcher
-	 * @param aGumTreeProperties
+	 * @param aGumtreeProperties
 	 * @return
 	 */
-	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumTreeProperties aGumTreeProperties) {
+	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
 		long initSingleDiff = new Date().getTime();
 		SingleDiffResult resultDiff = new SingleDiffResult();
 
 		// Calling directly to GT.core
-		List<Action> actionsAll = computeDiff(tl, tr, matcher, aGumTreeProperties);
+		List<Action> actionsAll = computeDiff(tl, tr, matcher, aGumtreeProperties);
 
 		long endSingleDiff = new Date().getTime();
 
@@ -719,7 +719,7 @@ public class TuningEngine {
 		resultDiff.put(NR_TREEDELETE, actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
 		resultDiff.put(TIME, (endSingleDiff - initSingleDiff));
 
-		resultDiff.put(CONFIG, aGumTreeProperties);
+		resultDiff.put(CONFIG, aGumtreeProperties);
 
 		// TODO: store edit script
 
@@ -727,13 +727,13 @@ public class TuningEngine {
 
 	}
 
-	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, GumTreeProperties properies) {
+	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties properies) {
 
 		return computeDiff(tl, tr, matcher, new ChawatheScriptGenerator(), properies);
 	}
 
 	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, EditScriptGenerator edGenerator,
-			GumTreeProperties properies) {
+			GumtreeProperties properies) {
 
 		CompositeMatcher cm = (CompositeMatcher) matcher;
 		cm.configure(properies);
@@ -746,26 +746,29 @@ public class TuningEngine {
 		return actionsAll;
 	}
 
-	public List<GumTreeProperties> computeCartesianProduct(List<ParameterDomain> domains) {
+	public List<GumtreeProperties> computeCartesianProduct(List<ParameterDomain> domains) {
 
 		return cartesianProduct(0, domains);
 	}
 
-	private List<GumTreeProperties> cartesianProduct(int index, List<ParameterDomain> domains) {
+	private List<GumtreeProperties> cartesianProduct(int index, List<ParameterDomain> domains) {
 
-		List<GumTreeProperties> ret = new ArrayList<>();
+		List<GumtreeProperties> ret = new ArrayList<>();
 
 		if (index == domains.size()) {
-			ret.add(new GumTreeProperties());
+			ret.add(new GumtreeProperties());
 		} else {
 
 			ParameterDomain domainOfParameters = domains.get(index);
 			for (Object valueFromDomain : domainOfParameters.computeInterval()) {
-				List<GumTreeProperties> configurationFromOthersDomains = cartesianProduct(index + 1, domains);
-				for (GumTreeProperties configFromOthers : configurationFromOthersDomains) {
+				List<GumtreeProperties> configurationFromOthersDomains = cartesianProduct(index + 1, domains);
+				for (GumtreeProperties configFromOthers : configurationFromOthersDomains) {
 
-					configFromOthers.put(domainOfParameters.getId(), valueFromDomain);
-					ret.add(configFromOthers);
+					ConfigurationOptions value = ConfigurationOptions.valueOf(domainOfParameters.getId());
+					if (value != null) {
+						configFromOthers.put(value, valueFromDomain);
+						ret.add(configFromOthers);
+					}
 				}
 			}
 		}
@@ -828,8 +831,8 @@ public class TuningEngine {
 				if (config == null)
 					continue;
 
-				GumTreeProperties gtp = (config.containsKey(CONFIG)) ? (GumTreeProperties) config.get(CONFIG)
-						: new GumTreeProperties();
+				GumtreeProperties gtp = (config.containsKey(CONFIG)) ? (GumtreeProperties) config.get(CONFIG)
+						: new GumtreeProperties();
 				if (config.get(TIMEOUT) != null) {
 
 					row = xmatcher + sep;

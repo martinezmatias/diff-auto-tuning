@@ -9,7 +9,7 @@ import java.util.List;
 import org.junit.Test;
 
 import com.github.gumtreediff.matchers.ConfigurationOptions;
-import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 
 import fr.gumtree.autotuning.domain.CategoricalParameterDomain;
 import fr.gumtree.autotuning.domain.DoubleParameterDomain;
@@ -59,7 +59,7 @@ public class ConfigurationsTest {
 
 		TuningEngine engine = new TuningEngine();
 
-		List<GumTreeProperties> combinations = engine.computeCartesianProduct(domains);
+		List<GumtreeProperties> combinations = engine.computeCartesianProduct(domains);
 
 		int expectedCombinations = intervalInt.length * intervalD.length * intervalIntMH.length;
 
@@ -69,10 +69,10 @@ public class ConfigurationsTest {
 
 		System.out.println("Combinations " + combinations.size());
 		int i = 0;
-		for (GumTreeProperties gumTreeProperties : combinations) {
-			System.out.println("Combination " + ++i + ": " + gumTreeProperties.get(ConfigurationOptions.bu_minsim) + " "
-					+ gumTreeProperties.get(ConfigurationOptions.bu_minsize) + " "
-					+ gumTreeProperties.get(ConfigurationOptions.st_minprio));
+		for (GumtreeProperties GumtreeProperties : combinations) {
+			System.out.println("Combination " + ++i + ": " + GumtreeProperties.get(ConfigurationOptions.bu_minsim) + " "
+					+ GumtreeProperties.get(ConfigurationOptions.bu_minsize) + " "
+					+ GumtreeProperties.get(ConfigurationOptions.st_minprio));
 
 		}
 
@@ -126,7 +126,7 @@ public class ConfigurationsTest {
 		domains.add(categoricalDomain);
 
 		TuningEngine engine = new TuningEngine();
-		List<GumTreeProperties> combinations = engine.computeCartesianProduct(domains);
+		List<GumtreeProperties> combinations = engine.computeCartesianProduct(domains);
 
 		assertEquals(30, combinations.size());
 		// First element

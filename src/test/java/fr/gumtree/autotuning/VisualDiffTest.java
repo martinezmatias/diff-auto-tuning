@@ -19,9 +19,9 @@ import org.junit.Test;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
-import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.Matcher;
-import com.github.gumtreediff.tree.ITree;
+import com.github.gumtreediff.tree.Tree;
 
 public class VisualDiffTest {
 
@@ -46,13 +46,13 @@ public class VisualDiffTest {
 
 		File fileLeftt = new File(fl);
 		String lc = new String(Files.readAllBytes(fileLeftt.toPath()));
-		ITree tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+		Tree tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
 		File fileRight = new File(fr);
 		lc = new String(Files.readAllBytes(fileRight.toPath()));
-		ITree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 
 		properies.getProperties().clear();
 		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.7);

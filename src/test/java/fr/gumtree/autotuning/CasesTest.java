@@ -17,7 +17,7 @@ import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.CompositeMatchers.SimpleGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
-import com.github.gumtreediff.matchers.GumTreeProperties;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -47,11 +47,11 @@ public class CasesTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 		assertEquals(1, actionsAll.size());
 
 		// XY has variability
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 
 		properies.put(ConfigurationOptions.st_minprio, 1);// .st_minprio
 		properies.put(ConfigurationOptions.xy_minsim, 0.2);// xy_minsim
@@ -76,7 +76,7 @@ public class CasesTest {
 		assertEquals(19, actionsAll.size());
 
 		// Now Classic
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 0.1);// bu_minsim
 		properies.put(ConfigurationOptions.bu_minsize, 100);// bu_minsize
 		properies.put(ConfigurationOptions.st_minprio, 1); // st_minprio
@@ -86,7 +86,7 @@ public class CasesTest {
 		assertEquals(1, actionsAll.size());
 
 		//
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 0.2);// bu_minsim
 		properies.put(ConfigurationOptions.bu_minsize, 600);// bu_minsize
 		properies.put(ConfigurationOptions.st_minprio, 5);
@@ -96,7 +96,7 @@ public class CasesTest {
 		assertEquals(1, actionsAll.size());
 
 		/// Forcing to fail
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 0);
 		properies.put(ConfigurationOptions.bu_minsize, 0);
 		properies.put(ConfigurationOptions.st_minprio, 299990); // fake value
@@ -129,7 +129,7 @@ public class CasesTest {
 
 		TuningEngine engine = new TuningEngine();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 		assertEquals(1, actionsAll.size());
 	}
 
@@ -160,7 +160,7 @@ public class CasesTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		System.out.println("Size  " + actionsAll.size());
 		System.out.println("All " + actionsAll);
@@ -170,9 +170,9 @@ public class CasesTest {
 		System.out.println(actionsAll);
 
 		System.out.println("After configuring");
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 		//
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 0.5);
 		properies.put(ConfigurationOptions.bu_minsize, 1000);
 		properies.put(ConfigurationOptions.st_minprio, 2);
@@ -184,7 +184,7 @@ public class CasesTest {
 
 		assertEquals(63, actionsAll.size());
 
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 1);
 		properies.put(ConfigurationOptions.bu_minsize, 900);
 		properies.put(ConfigurationOptions.st_minprio, 2);
@@ -199,7 +199,7 @@ public class CasesTest {
 
 		int previousSize = actionsAll.size();
 
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 0.7);
 		properies.put(ConfigurationOptions.bu_minsize, 1900);
 		properies.put(ConfigurationOptions.st_minprio, 2);
@@ -228,7 +228,7 @@ public class CasesTest {
 
 		assertEquals(147, actionsAll.size());
 		// Default 2.1.1
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.bu_minsim, 0.5);
 		properies.put(ConfigurationOptions.bu_minsize, 1000);
 		properies.put(ConfigurationOptions.st_minprio, 1);
@@ -268,7 +268,7 @@ public class CasesTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -278,15 +278,15 @@ public class CasesTest {
 		assertEquals(886, actionsAll.size());
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumTreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties());
 		assertEquals(543, actionsAll.size());
 
 		System.out.println(actionsAll);
 
 		System.out.println("After configuring");
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 		// vanillaDiffView_best_SimpleGumtree@bu_minsim_SBUP@0.1@st_minprio@1.html
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
@@ -329,7 +329,7 @@ public class CasesTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -339,16 +339,16 @@ public class CasesTest {
 		assertTrue(actionsAll.size() > 100);
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumTreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties());
 		assertTrue(actionsAll.size() > 1);
 
 		System.out.println(actionsAll);
 
 		System.out.println("After configuring");
 
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 		// vanillaDiffView_best_SimpleGumtree@bu_minsim_SBUP@0.1@st_minprio@1.html
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
@@ -391,7 +391,7 @@ public class CasesTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -401,16 +401,16 @@ public class CasesTest {
 		// assertTrue(actionsAll.size() > 100);
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumTreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties());
 		assertTrue(actionsAll.size() > 2);
 
 		System.out.println(actionsAll);
 
 		System.out.println("After configuring");
 
-		GumTreeProperties properies = new GumTreeProperties();
+		GumtreeProperties properies = new GumtreeProperties();
 		// vanillaDiffView_best_SimpleGumtree@bu_minsim_SBUP@0.1@st_minprio@1.html
-		properies = new GumTreeProperties();
+		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
@@ -453,7 +453,7 @@ public class CasesTest {
 		// CompositeMatchers.ClassicGumtree();
 		SimpleGumtree matcher = new SimpleGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumTreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -462,9 +462,9 @@ public class CasesTest {
 
 		// assertTrue(actionsAll.size() > 100);
 
-		GumTreeProperties properties = new GumTreeProperties();
+		GumtreeProperties properties = new GumtreeProperties();
 
-		properties = new GumTreeProperties();
+		properties = new GumtreeProperties();
 		// Using min = 1, the imports and package declaration are mapped.
 		properties.tryConfigure(ConfigurationOptions.st_minprio, 1);
 
