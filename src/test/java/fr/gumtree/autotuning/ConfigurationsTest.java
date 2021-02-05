@@ -11,6 +11,7 @@ import org.junit.Test;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumTreeProperties;
 
+import fr.gumtree.autotuning.domain.CategoricalParameterDomain;
 import fr.gumtree.autotuning.domain.DoubleParameterDomain;
 import fr.gumtree.autotuning.domain.IntParameterDomain;
 
@@ -24,16 +25,16 @@ public class ConfigurationsTest {
 	@Test
 	public void testDomain() {
 
-		IntParameterDomain intdomSz = new IntParameterDomain(ConfigurationOptions.bu_minsize, Integer.class, 1000, 100,
-				2000, 100);
+		IntParameterDomain intdomSz = new IntParameterDomain(ConfigurationOptions.bu_minsize.name(), Integer.class,
+				1000, 100, 2000, 100);
 
 		Integer[] intervalInt = intdomSz.computeInterval();
 
 		System.out.println(Arrays.toString(intervalInt));
 		assertEquals(20, intervalInt.length);
 
-		DoubleParameterDomain doubleDomainSMT = new DoubleParameterDomain(ConfigurationOptions.bu_minsim, Double.class,
-				0.5, 0.1, 1.0, 0.1);
+		DoubleParameterDomain doubleDomainSMT = new DoubleParameterDomain(ConfigurationOptions.bu_minsim.name(),
+				Double.class, 0.5, 0.1, 1.0, 0.1);
 
 		Double[] intervalD = doubleDomainSMT.computeInterval();
 		System.out.println(Arrays.toString(intervalD));
@@ -41,8 +42,8 @@ public class ConfigurationsTest {
 
 		List<ParameterDomain> domains = new ArrayList<>();
 
-		IntParameterDomain intdomMH = new IntParameterDomain(ConfigurationOptions.st_minprio, Integer.class, 2, 1, 5,
-				1);
+		IntParameterDomain intdomMH = new IntParameterDomain(ConfigurationOptions.st_minprio.name(), Integer.class, 2,
+				1, 5, 1);
 
 		Integer[] intervalIntMH = intdomMH.computeInterval();
 
@@ -75,7 +76,7 @@ public class ConfigurationsTest {
 
 		}
 
-		IntParameterDomain intAnother = new IntParameterDomain(ConfigurationOptions.st_minprio, Integer.class, 2,
+		IntParameterDomain intAnother = new IntParameterDomain(ConfigurationOptions.st_minprio.name(), Integer.class, 2,
 				new Integer[] { 1, 2, 3, 4, 5, 6, 7, 8 });
 
 		assertEquals(8, intAnother.computeInterval().length);
@@ -95,5 +96,53 @@ public class ConfigurationsTest {
 		assertEquals(2, result.length);
 		assertEquals("size", result[0]);
 		assertEquals("height", result[1]);
+	}
+
+	@Test
+	public void testCategoricalCombinationTest() {
+		ParameterDomain<String> categoricalDomain = new CategoricalParameterDomain(
+				ConfigurationOptions.cd_labsim.toString(), String.class, "one", new String[] { "one", "two", "many" });
+
+		assertEquals(3, categoricalDomain.interval.length);
+		assertEquals("one", categoricalDomain.interval[0]);
+		assertEquals("two", categoricalDomain.interval[1]);
+		assertEquals("many", categoricalDomain.interval[2]);
+		String[] result = categoricalDomain.computeInterval();
+
+		assertEquals(3, result.length);
+		assertEquals("one", result[0]);
+		assertEquals("two", result[1]);
+		assertEquals("many", result[2]);
+
+		DoubleParameterDomain doubleDomainSMT = new DoubleParameterDomain(ConfigurationOptions.bu_minsim.toString(),
+				Double.class, 0.5, 0.1, 1.0, 0.1);
+
+		Double[] intervalD = doubleDomainSMT.computeInterval();
+		assertEquals(10, intervalD.length);
+
+		List<ParameterDomain> domains = new ArrayList<>();
+
+		domains.add(doubleDomainSMT);
+		domains.add(categoricalDomain);
+
+		TuningEngine engine = new TuningEngine();
+		List<GumTreeProperties> combinations = engine.computeCartesianProduct(domains);
+
+		assertEquals(30, combinations.size());
+		// First element
+		assertEquals("one", combinations.get(0).get(ConfigurationOptions.cd_labsim));
+		assertEquals(0.1, combinations.get(0).get(ConfigurationOptions.bu_minsim));
+
+		// Second element
+		assertEquals("two", combinations.get(1).get(ConfigurationOptions.cd_labsim));
+		assertEquals(0.1, combinations.get(1).get(ConfigurationOptions.bu_minsim));
+
+		//
+		assertEquals(0.2, combinations.get(4).get(ConfigurationOptions.bu_minsim));
+
+		// last one
+		assertEquals("many", combinations.get(29).get(ConfigurationOptions.cd_labsim));
+		assertEquals(1d, (double) combinations.get(29).get(ConfigurationOptions.bu_minsim), 0.01);
+
 	}
 }
