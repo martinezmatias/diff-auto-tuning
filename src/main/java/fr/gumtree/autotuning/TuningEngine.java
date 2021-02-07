@@ -287,10 +287,6 @@ public class TuningEngine {
 	public CaseResult navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
 			PARALLEL_EXECUTION parallel) throws IOException {
 
-		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
-
-		long initTime = (new Date()).getTime();
-
 		File pathSubset = new File(path.getAbsoluteFile() + File.separator + subset + File.separator);
 
 		File commit = new File(
@@ -310,12 +306,29 @@ public class TuningEngine {
 
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
+		CaseResult fileResult = runDatOnPairOfFiles(out, subset, parallel, previousVersion, postVersion, diffId);
+
+		// add the data specific to megadiff.
+
+		fileResult.setCommit(commit.getName());
+		fileResult.setDatasubset(Integer.toString(subset));
+		// let's override the property
+		fileResult.setFileName(fileModif.getName());
+
+		return fileResult;
+
+	}
+
+	public CaseResult runDatOnPairOfFiles(String out, int subset, PARALLEL_EXECUTION parallel, File previousVersion,
+			File postVersion, String diffId) throws IOException {
+		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
+
+		long initTime = (new Date()).getTime();
+
 		CaseResult fileResult = analyzeCase(diffId, previousVersion, postVersion, parallel, treeProperties,
 				allMatchers);
 
-		fileResult.setFileName(fileModif.getName());
-		fileResult.setCommit(commit.getName());
-		fileResult.setDatasubset(Integer.toString(subset));
+		fileResult.setFileName(postVersion.getName());
 
 		File outResults = new File(out + diffId + ".csv");
 
@@ -329,9 +342,7 @@ public class TuningEngine {
 		// "metaInfo_nr_" + nrCommit + "_id_"
 		// + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
 		// metadataToCSV(treeFile, treeProperties, fileResult);
-
 		return fileResult;
-
 	}
 
 	/**
