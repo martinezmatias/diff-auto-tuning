@@ -78,4 +78,10 @@ public class CaseResult {
 		this.fromException = fromException;
 	}
 
+	@Override
+	public String toString() {
+		return "CaseResult [Nr resultByMatcher=" + resultByMatcher.values().size() + ", fileName=" + fileName
+				+ ", commit=" + commit + ", datasubset=" + datasubset + "]";
+	}
+
 }

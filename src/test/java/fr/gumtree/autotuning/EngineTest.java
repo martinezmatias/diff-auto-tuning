@@ -60,68 +60,6 @@ public class EngineTest {
 
 	}
 
-	@Test
-	public void testNavigate_SingleDiff_1_831e3b() throws IOException {
-
-		assertTrue(rootMegadiff.exists());
-
-		TuningEngine reader = new TuningEngine();
-
-		String commitId = "831e3b0420e70f7c2695cb248dd8b488b1fd84b7";
-
-		boolean parallel = false;
-
-		int megadiff_id = 1;
-
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.PROPERTY_LEVEL);
-
-		assertNotNull(result);
-		System.out.println(result);
-
-	}
-
-	/// Diff in one annotation
-	@Test
-	public void testNavigate_SingleDiff_1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e() throws IOException {
-
-		assertTrue(rootMegadiff.exists());
-
-		TuningEngine reader = new TuningEngine();
-
-		String commitId = "02f3fd442349d4e7fdfc9c31a82bb1638db8495e";
-
-		boolean parallel = false;
-
-		int megadiff_id = 1;
-
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.NONE);
-
-		assertNotNull(result);
-		System.out.println(result);
-
-	}
-
-	@Test
-	public void testNavigate_SingleDiff_1_() throws IOException {
-
-		assertTrue(rootMegadiff.exists());
-
-		TuningEngine reader = new TuningEngine();
-
-		String commitId = "0a664d752c4b0e5a7fb6f06d005181a0c9dc2905";
-
-		int megadiff_id = 1;
-
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.NONE);
-
-		assertNotNull(result);
-		System.out.println(result);
-
-	}
-
 	@SuppressWarnings("deprecation")
 	@Test
 	public void testNavigate_CompareTimeouts() throws IOException {

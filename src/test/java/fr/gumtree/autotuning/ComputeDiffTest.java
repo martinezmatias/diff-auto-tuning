@@ -22,7 +22,7 @@ import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
-public class CasesTest {
+public class ComputeDiffTest {
 	SpoonTreeBuilder builder = new SpoonTreeBuilder();
 	final File rootMegadiff = new File("./examples/");
 

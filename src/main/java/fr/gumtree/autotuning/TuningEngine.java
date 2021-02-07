@@ -78,6 +78,9 @@ public class TuningEngine {
 	public static final String COMMIT = "COMMIT";
 	public static final String FILE = "FILE";
 	public static final String TIMEOUT = "TIMEOUT";
+
+	public static final String ACTIONS = "ACTIONS";
+
 	// TIMES:
 	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
 	public static final String TIME_TREES_PARSING = "TIME_TREES_PARSING";
@@ -564,6 +567,10 @@ public class TuningEngine {
 	}
 
 	public List<GumtreeProperties> getPropertiesCombinations(Matcher matcher) {
+
+		if (this.cacheCombinations.isEmpty()) {
+			this.initCacheCombinationProperties();
+		}
 		return this.cacheCombinations.get(matcher.getClass().getCanonicalName());
 	}
 
@@ -721,7 +728,7 @@ public class TuningEngine {
 
 		resultDiff.put(CONFIG, aGumtreeProperties);
 
-		// TODO: store edit script
+		resultDiff.put(ACTIONS, actionsAll);
 
 		return resultDiff;
 
@@ -1030,4 +1037,19 @@ public class TuningEngine {
 	public void setTreeBuilder(ITreeBuilder treeBuilder) {
 		this.treeBuilder = treeBuilder;
 	}
+
+	public Map<String, Object> toGumtreePropertyToMap(GumtreeProperties properties) {
+		Map<String, Object> propMap = new HashMap<>();
+
+		for (ConfigurationOptions option : ConfigurationOptions.values()) {
+			Object value = properties.get(option);
+			if (value != null) {
+				propMap.put(option.name(), value);
+
+			}
+		}
+
+		return propMap;
+	}
+
 }

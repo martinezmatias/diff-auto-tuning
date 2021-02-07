@@ -13,6 +13,8 @@ import com.github.gumtreediff.actions.SimplifiedChawatheScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.GumtreeProperties;
+import com.github.gumtreediff.matchers.heuristic.gt.GreedyBottomUpMatcher;
+import com.github.gumtreediff.matchers.heuristic.gt.GreedySubtreeMatcher;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
@@ -223,6 +225,21 @@ public class BuilderTest {
 		assertEquals(1, actionsAll.size());
 
 		assertTrue(actionsAll.get(0).getNode().getMetadata("spoon_object") instanceof CtAnnotation);
+
+	}
+
+	@Test
+	public void testDefaultClassicGT() throws Exception {
+
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
+
+		assertTrue(matcher.matchers().get(0) instanceof GreedySubtreeMatcher);
+		GreedySubtreeMatcher gms = (GreedySubtreeMatcher) matcher.matchers().get(0);
+		assertEquals(1, gms.getMinPriority());
+
+		assertTrue(matcher.matchers().get(1) instanceof GreedyBottomUpMatcher);
+		GreedyBottomUpMatcher gbu = (GreedyBottomUpMatcher) matcher.matchers().get(1);
+		assertEquals(1000, gbu.getSizeThreshold());
 
 	}
 
