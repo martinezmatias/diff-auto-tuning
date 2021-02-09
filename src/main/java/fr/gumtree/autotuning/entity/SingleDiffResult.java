@@ -1,9 +1,8 @@
 package fr.gumtree.autotuning.entity;
 
 import java.util.HashMap;
-import java.util.List;
 
-import com.github.gumtreediff.actions.model.Action;
+import com.github.gumtreediff.actions.Diff;
 
 /**
  * 
@@ -17,14 +16,14 @@ public class SingleDiffResult extends HashMap<String, Object> {
 	 */
 	private static final long serialVersionUID = 1L;
 
-	List<Action> actions;
+	Diff diff;
 
-	public List<Action> getActions() {
-		return actions;
+	public Diff getDiff() {
+		return diff;
 	}
 
-	public void setActions(List<Action> actions) {
-		this.actions = actions;
+	public void setDiff(Diff actions) {
+		this.diff = actions;
 	}
 
 }

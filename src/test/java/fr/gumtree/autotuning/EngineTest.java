@@ -81,7 +81,7 @@ public class EngineTest {
 
 		long tinit = (new Date()).getTime();
 
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		long tpropertyparalel = (new Date()).getTime() - tinit;
 
@@ -91,7 +91,7 @@ public class EngineTest {
 		reader.setNrThreads(1);
 
 		tinit = (new Date()).getTime();
-		CaseResult result2 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result2 = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 		long tpnoneparalel = (new Date()).getTime() - tinit;
 
@@ -112,7 +112,7 @@ public class EngineTest {
 		assertTrue(tpnoneparalel > tpropertyparalel);
 		System.out.println("Matcher callable");
 		tinit = (new Date()).getTime();
-		CaseResult result3 = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result3 = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 		long tmatcherparallel = (new Date()).getTime() - tinit;
 

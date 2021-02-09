@@ -47,7 +47,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
 	}
@@ -73,7 +74,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
@@ -100,7 +102,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println(actionsAll);
 		assertEquals(7, actionsAll.size());
@@ -128,7 +131,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
@@ -159,7 +163,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println(actionsAll);
 		assertEquals(4, actionsAll.size());
@@ -188,7 +193,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());
@@ -219,7 +225,8 @@ public class BuilderTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println(actionsAll);
 		assertEquals(1, actionsAll.size());

@@ -23,6 +23,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.actions.EditScript;
 import com.github.gumtreediff.actions.EditScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
@@ -41,12 +42,14 @@ import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
+import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
  * 
@@ -78,8 +81,6 @@ public class TuningEngine {
 	public static final String COMMIT = "COMMIT";
 	public static final String FILE = "FILE";
 	public static final String TIMEOUT = "TIMEOUT";
-
-	public static final String ACTIONS = "ACTIONS";
 
 	// TIMES:
 	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
@@ -284,7 +285,7 @@ public class TuningEngine {
 		return allCasesResults;
 	}
 
-	public CaseResult navigateSingleDiffMegaDiff(String out, File path, int subset, String commitId,
+	public CaseResult runSingleDiffMegaDiff(String out, File path, int subset, String commitId,
 			PARALLEL_EXECUTION parallel) throws IOException {
 
 		File pathSubset = new File(path.getAbsoluteFile() + File.separator + subset + File.separator);
@@ -306,7 +307,7 @@ public class TuningEngine {
 
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
-		CaseResult fileResult = runDatOnPairOfFiles(out, subset, parallel, previousVersion, postVersion, diffId);
+		CaseResult fileResult = runSingleOnPairOfFiles(out, subset, parallel, previousVersion, postVersion, diffId);
 
 		// add the data specific to megadiff.
 
@@ -319,7 +320,7 @@ public class TuningEngine {
 
 	}
 
-	public CaseResult runDatOnPairOfFiles(String out, int subset, PARALLEL_EXECUTION parallel, File previousVersion,
+	public CaseResult runSingleOnPairOfFiles(String out, int subset, PARALLEL_EXECUTION parallel, File previousVersion,
 			File postVersion, String diffId) throws IOException {
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
@@ -334,6 +335,8 @@ public class TuningEngine {
 
 		executionResultToCSV(outResults, fileResult);
 
+		executionResultToUnifiedDiff(outResults, fileResult);
+
 		long endTime = (new Date()).getTime();
 
 		System.out.println("Time " + (endTime - initTime) / 1000);
@@ -343,6 +346,49 @@ public class TuningEngine {
 		// + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
 		// metadataToCSV(treeFile, treeProperties, fileResult);
 		return fileResult;
+	}
+
+	private void executionResultToUnifiedDiff(File outResults, CaseResult fileResult) {
+		TreeDiffFormatBuilder builder = new TreeDiffFormatBuilder(false, false);
+
+		for (MatcherResult mr : fileResult.getResultByMatcher().values()) {
+
+			for (SingleDiffResult sd : mr.getAlldiffresults()) {
+
+				EditScript ed = new EditScript();
+
+				List<Action> actions = sd.getDiff().editScript.asList();
+				if (actions == null) {
+					System.out.println("empty actions");
+					continue;
+				}
+
+				for (Action ac : actions) {
+					ed.add(ac);
+				}
+
+				JsonObject jso = new JsonObject();
+				jso.addProperty("matcher", mr.getMatcherName());
+
+				//
+				GumtreeProperties gttp = (GumtreeProperties) sd.get(CONFIG);
+
+				Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
+
+				jso.addProperty("matcher", mr.getMatcherName());
+
+				for (String pKey : propertiesMap.keySet()) {
+
+					jso.addProperty(pKey, propertiesMap.get(pKey).toString());
+
+				}
+
+				JsonElement js = builder.build(null, null, sd.getDiff(), jso);
+
+			}
+
+		}
+
 	}
 
 	/**
@@ -724,7 +770,8 @@ public class TuningEngine {
 		SingleDiffResult resultDiff = new SingleDiffResult();
 
 		// Calling directly to GT.core
-		List<Action> actionsAll = computeDiff(tl, tr, matcher, aGumtreeProperties);
+		Diff diff = computeDiff(tl, tr, matcher, aGumtreeProperties);
+		List<Action> actionsAll = diff.editScript.asList();
 
 		long endSingleDiff = new Date().getTime();
 
@@ -739,18 +786,18 @@ public class TuningEngine {
 
 		resultDiff.put(CONFIG, aGumtreeProperties);
 
-		resultDiff.put(ACTIONS, actionsAll);
+		resultDiff.setDiff(diff);
 
 		return resultDiff;
 
 	}
 
-	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties properies) {
+	public Diff computeDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties properies) {
 
 		return computeDiff(tl, tr, matcher, new ChawatheScriptGenerator(), properies);
 	}
 
-	public List<Action> computeDiff(Tree tl, Tree tr, Matcher matcher, EditScriptGenerator edGenerator,
+	public Diff computeDiff(Tree tl, Tree tr, Matcher matcher, EditScriptGenerator edGenerator,
 			GumtreeProperties properies) {
 
 		CompositeMatcher cm = (CompositeMatcher) matcher;
@@ -760,8 +807,10 @@ public class TuningEngine {
 
 		EditScript actions = edGenerator.computeActions(mappings);
 
-		List<Action> actionsAll = actions.asList();
-		return actionsAll;
+		Diff diff = new Diff(null, null, mappings, actions);
+
+		// List<Action> actionsAll = actions.asList();
+		return diff;
 	}
 
 	public List<GumtreeProperties> computeCartesianProduct(List<ParameterDomain> domains) {

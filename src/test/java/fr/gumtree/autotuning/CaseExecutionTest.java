@@ -34,7 +34,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		assertNotNull(result);
@@ -57,7 +57,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 
 		assertNotNull(result);
@@ -80,7 +80,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 
 		assertNotNull(result);
@@ -118,6 +118,44 @@ public class CaseExecutionTest {
 	}
 
 	@Test
+	public void testDirect_1_02f3fd442349d4e7fdfc9c31a82bb1638db8495() throws IOException {
+
+		assertTrue(rootMegadiff.exists());
+
+		TuningEngine reader = new TuningEngine();
+
+		File fs = new File(
+				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
+		File ft = new File(
+				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
+
+		CaseResult result = reader.runSingleOnPairOfFiles("./out/", 1, PARALLEL_EXECUTION.PROPERTY_LEVEL.NONE, fs, ft,
+				"02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version");
+
+		assertNotNull(result);
+		System.out.println(result);
+
+		SingleDiffResult singleDiffResult = result.getResultByMatcher().values().stream().findFirst().get()
+				.getAlldiffresults().get(0);
+
+		Integer nrActions = (Integer) singleDiffResult.get(TuningEngine.NRACTIONS);
+		assertTrue(nrActions > 0);
+
+		assertTrue(singleDiffResult.getDiff().editScript.asList().size() > 0);
+
+		Map<String, Object> properties = reader
+				.toGumtreePropertyToMap((GumtreeProperties) singleDiffResult.get(TuningEngine.CONFIG));
+		assertNotNull(properties);
+		assertTrue(properties.size() > 0);
+
+		System.out.println(properties);
+
+		MatcherResult resultMatcherSimple = result.getResultByMatcher().values().stream()
+				.filter(e -> e.getMatcherName().equals("SimpleGumtree")).findFirst().get();
+
+	}
+
+	@Test
 	public void testNavigate_SingleDiff_1_() throws IOException {
 
 		assertTrue(rootMegadiff.exists());
@@ -128,7 +166,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		CaseResult result = reader.navigateSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 
 		assertNotNull(result);
