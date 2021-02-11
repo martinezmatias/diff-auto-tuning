@@ -42,13 +42,14 @@ import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
-import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
@@ -86,7 +87,7 @@ public class TuningEngine {
 	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
 	public static final String TIME_TREES_PARSING = "TIME_TREES_PARSING";
 
-	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
+//	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
 
 	long timeOutSeconds = 60 * 60; // 60 min
 
@@ -138,17 +139,17 @@ public class TuningEngine {
 		}
 	}
 
-	public List<CaseResult> navigateMegaDiffAllMatchers(String out, File path, int[] subsets, int begin, int stop,
-			PARALLEL_EXECUTION parallel) throws IOException {
-		return this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
+	public List<CaseResult> navigateMegaDiffAllMatchers(ITreeBuilder treeBuilder, String out, File path, int[] subsets,
+			int begin, int stop, PARALLEL_EXECUTION parallel) throws IOException {
+		return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, parallel, this.allMatchers);
 	}
 
-	public List<CaseResult> navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop,
-			PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
+	public List<CaseResult> navigateMegaDiff(ITreeBuilder treeBuilder, String out, File path, int[] subsets, int begin,
+			int stop, PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
 
 		if (matchersString == null || matchersString.length == 0) {
 			System.out.println("Using default matchers " + Arrays.toString(this.allMatchers));
-			return this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, this.allMatchers);
+			return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, parallel, this.allMatchers);
 		} else {
 			System.out.println("Using existing matchers " + Arrays.toString(matchersString));
 			List<Matcher> selectedMatchers = new ArrayList<Matcher>();
@@ -167,7 +168,7 @@ public class TuningEngine {
 			Matcher[] newMatchers = new Matcher[selectedMatchers.size()];
 			selectedMatchers.toArray(newMatchers);
 
-			return this.navigateMegaDiff(out, path, subsets, begin, stop, parallel, newMatchers);
+			return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, parallel, newMatchers);
 		}
 	}
 
@@ -180,8 +181,8 @@ public class TuningEngine {
 	 * @return
 	 * @throws IOException
 	 */
-	public List<CaseResult> navigateMegaDiff(String out, File path, int[] subsets, int begin, int stop,
-			PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
+	public List<CaseResult> navigateMegaDiff(ITreeBuilder treeBuilder, String out, File path, int[] subsets, int begin,
+			int stop, PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
 		this.initCacheCombinationProperties();
 
 		System.out.println("Execution mode " + parallel);
@@ -238,7 +239,7 @@ public class TuningEngine {
 					String diffId = commit.getName() + "_" + fileModif.getName();
 
 					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
-							+ "_id_" + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
+							+ "_id_" + diffId + "_" + treeBuilder.modelType().name() + ".csv");
 
 					if (!overwriteresults && outResults.exists()) {
 						System.out.println("Already analyzed: " + nrCommit + ": " + outResults.getName());
@@ -250,8 +251,8 @@ public class TuningEngine {
 					long initdiff = (new Date()).getTime();
 
 					System.out.println("\n---diff " + nrCommit + "/" + commits.size() + " id " + diffId);
-					CaseResult fileResult = analyzeCase(diffId, previousVersion, postVersion, parallel, treeProperties,
-							matchers);
+					CaseResult fileResult = analyzeCase(treeBuilder, diffId, previousVersion, postVersion, parallel,
+							treeProperties, matchers);
 
 					// This time includes the creation of tree
 					long timediff = (new Date()).getTime() - initdiff;
@@ -267,7 +268,7 @@ public class TuningEngine {
 					executionResultToCSV(outResults, fileResult);
 
 					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
-							+ "_id_" + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
+							+ "_id_" + diffId + "_" + treeBuilder.modelType().name() + ".csv");
 					metadataToCSV(treeFile, treeProperties, fileResult);
 
 					// Store the result:
@@ -285,8 +286,8 @@ public class TuningEngine {
 		return allCasesResults;
 	}
 
-	public CaseResult runSingleDiffMegaDiff(String out, File path, int subset, String commitId,
-			PARALLEL_EXECUTION parallel) throws IOException {
+	public CaseResult runSingleDiffMegaDiff(ITreeBuilder treeBuilder, String out, File path, int subset,
+			String commitId, PARALLEL_EXECUTION parallel) throws IOException {
 
 		File pathSubset = new File(path.getAbsoluteFile() + File.separator + subset + File.separator);
 
@@ -307,7 +308,8 @@ public class TuningEngine {
 
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
-		CaseResult fileResult = runSingleOnPairOfFiles(out, subset, parallel, previousVersion, postVersion, diffId);
+		CaseResult fileResult = runSingleOnPairOfFiles(treeBuilder, out, subset, parallel, previousVersion, postVersion,
+				diffId);
 
 		// add the data specific to megadiff.
 
@@ -320,13 +322,13 @@ public class TuningEngine {
 
 	}
 
-	public CaseResult runSingleOnPairOfFiles(String out, int subset, PARALLEL_EXECUTION parallel, File previousVersion,
-			File postVersion, String diffId) throws IOException {
+	public CaseResult runSingleOnPairOfFiles(ITreeBuilder treeBuilder, String out, int subset,
+			PARALLEL_EXECUTION parallel, File previousVersion, File postVersion, String diffId) throws IOException {
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
 		long initTime = (new Date()).getTime();
 
-		CaseResult fileResult = analyzeCase(diffId, previousVersion, postVersion, parallel, treeProperties,
+		CaseResult fileResult = analyzeCase(treeBuilder, diffId, previousVersion, postVersion, parallel, treeProperties,
 				allMatchers);
 
 		fileResult.setFileName(postVersion.getName());
@@ -335,7 +337,10 @@ public class TuningEngine {
 
 		executionResultToCSV(outResults, fileResult);
 
-		executionResultToUnifiedDiff(outResults, fileResult);
+		File outdir = new File(out + File.separator + diffId + File.separator + "scripts");
+		outdir.mkdirs();
+
+		executionResultToUnifiedDiff(outdir, fileResult);
 
 		long endTime = (new Date()).getTime();
 
@@ -370,21 +375,44 @@ public class TuningEngine {
 				JsonObject jso = new JsonObject();
 				jso.addProperty("matcher", mr.getMatcherName());
 
-				//
 				GumtreeProperties gttp = (GumtreeProperties) sd.get(CONFIG);
 
 				Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
 
 				jso.addProperty("matcher", mr.getMatcherName());
-
+				String fileKey = "";
 				for (String pKey : propertiesMap.keySet()) {
 
-					jso.addProperty(pKey, propertiesMap.get(pKey).toString());
+					String value = propertiesMap.get(pKey).toString();
+					jso.addProperty(pKey, value);
+
+					String separator = "-";
+					if (!fileKey.isEmpty())
+						fileKey += separator;
+					else {
+						fileKey += mr.getMatcherName() + separator;
+					}
+					fileKey += pKey + separator + value;
 
 				}
+				System.out.println(fileKey);
 
 				JsonElement js = builder.build(null, null, sd.getDiff(), jso);
 
+				Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+				String json = gson.toJson(js);
+
+				try {
+					FileWriter fwriter = new FileWriter(
+							new File(outResults + File.separator + "exhaustive_" + fileKey + ".json"));
+
+					fwriter.write(json);
+					fwriter.flush();
+					fwriter.close();
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 
 		}
@@ -401,11 +429,11 @@ public class TuningEngine {
 	 * @param fileResult
 	 * @return
 	 */
-	public CaseResult analyzeCase(String diffId, File previousVersion, File postVersion, PARALLEL_EXECUTION parallel,
-			Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
+	public CaseResult analyzeCase(ITreeBuilder treeBuilder, String diffId, File previousVersion, File postVersion,
+			PARALLEL_EXECUTION parallel, Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
 		try {
-			Tree tl = this.treeBuilder.build(previousVersion);
-			Tree tr = this.treeBuilder.build(postVersion);
+			Tree tl = treeBuilder.build(previousVersion);
+			Tree tr = treeBuilder.build(postVersion);
 			long init = (new Date()).getTime();
 
 			long endTree = (new Date()).getTime();
@@ -1088,14 +1116,6 @@ public class TuningEngine {
 
 	public void setOverwriteResults(boolean overrideResults) {
 		this.overwriteresults = overrideResults;
-	}
-
-	public ITreeBuilder getTreeBuilder() {
-		return treeBuilder;
-	}
-
-	public void setTreeBuilder(ITreeBuilder treeBuilder) {
-		this.treeBuilder = treeBuilder;
 	}
 
 	public Map<String, Object> toGumtreePropertyToMap(GumtreeProperties properties) {

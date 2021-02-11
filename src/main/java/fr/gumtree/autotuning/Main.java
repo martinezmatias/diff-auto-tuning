@@ -143,10 +143,9 @@ public class Main implements Callable<Integer> {
 		} else {
 			System.err.println("Mode not configured " + model);
 		}
-		engine.setTreeBuilder(treebuilder);
 
 		// We store the results of the execution
-		this.resultsExecution = engine.navigateMegaDiff(out, pathMegadiff, subsets, begin, stop, execution,
+		this.resultsExecution = engine.navigateMegaDiff(treebuilder, out, pathMegadiff, subsets, begin, stop, execution,
 				this.matchers);
 
 		System.out.println("-END-");

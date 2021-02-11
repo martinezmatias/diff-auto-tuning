@@ -47,7 +47,8 @@ public class ComputeDiffTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 		assertEquals(1, actionsAll.size());
 
 		// XY has variability
@@ -56,14 +57,16 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.st_minprio, 1);// .st_minprio
 		properies.put(ConfigurationOptions.xy_minsim, 0.2);// xy_minsim
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies).editScript
+				.asList();
 
 		assertEquals(1, actionsAll.size());
 
 		properies.put(ConfigurationOptions.st_minprio, 3);// st_minprio
 		properies.put(ConfigurationOptions.xy_minsim, 0.2);// xy_minsim
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies).editScript
+				.asList();
 
 		assertEquals(55, actionsAll.size());
 
@@ -71,7 +74,8 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.st_minprio, 2);// st_minprio
 		properies.put(ConfigurationOptions.xy_minsim, 0.6);// xy_minsim
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies).editScript
+				.asList();
 
 		assertEquals(19, actionsAll.size());
 
@@ -81,7 +85,8 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 100);// bu_minsize
 		properies.put(ConfigurationOptions.st_minprio, 1); // st_minprio
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.ClassicGumtree(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.ClassicGumtree(), edGenerator,
+				properies).editScript.asList();
 
 		assertEquals(1, actionsAll.size());
 
@@ -91,7 +96,8 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 600);// bu_minsize
 		properies.put(ConfigurationOptions.st_minprio, 5);
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.ClassicGumtree(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.ClassicGumtree(), edGenerator,
+				properies).editScript.asList();
 
 		assertEquals(1, actionsAll.size());
 
@@ -101,7 +107,7 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 0);
 		properies.put(ConfigurationOptions.st_minprio, 299990); // fake value
 
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
 
 		assertTrue(actionsAll.size() != 1);
 
@@ -129,7 +135,8 @@ public class ComputeDiffTest {
 
 		TuningEngine engine = new TuningEngine();
 
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 		assertEquals(1, actionsAll.size());
 	}
 
@@ -160,7 +167,8 @@ public class ComputeDiffTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		System.out.println("Size  " + actionsAll.size());
 		System.out.println("All " + actionsAll);
@@ -177,7 +185,7 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 1000);
 		properies.put(ConfigurationOptions.st_minprio, 2);
 
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
 
 		System.out.println(actionsAll.size());
 		System.out.println(actionsAll);
@@ -189,7 +197,7 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 900);
 		properies.put(ConfigurationOptions.st_minprio, 2);
 
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
 
 		// System.out.println("\n" + properies.getProperties());
 		System.out.println("Size  " + actionsAll.size());
@@ -204,7 +212,7 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 1900);
 		properies.put(ConfigurationOptions.st_minprio, 2);
 
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
 
 		// System.out.println("\n" + properies.getProperties());
 		System.out.println("Size  " + actionsAll.size());
@@ -220,7 +228,7 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 100);
 		properies.put(ConfigurationOptions.st_minprio, 3);
 
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
 
 		// System.out.println("\n" + properies.getProperties());
 		System.out.println("Size  " + actionsAll.size());
@@ -233,7 +241,7 @@ public class ComputeDiffTest {
 		properies.put(ConfigurationOptions.bu_minsize, 1000);
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
 
 		System.out.println(actionsAll.size());
 		System.out.println(actionsAll);
@@ -268,7 +276,8 @@ public class ComputeDiffTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -278,7 +287,8 @@ public class ComputeDiffTest {
 		assertEquals(886, actionsAll.size());
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties()).editScript
+				.asList();
 		assertEquals(543, actionsAll.size());
 
 		System.out.println(actionsAll);
@@ -289,7 +299,8 @@ public class ComputeDiffTest {
 		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator,
+				properies).editScript.asList();
 
 		System.out.println(actionsAll.size());
 		System.out.println(actionsAll);
@@ -297,7 +308,7 @@ public class ComputeDiffTest {
 		assertEquals(8, actionsAll.size());
 
 		List<Action> actionsSimplified = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(),
-				edGeneratorSimplified, properies);
+				edGeneratorSimplified, properies).editScript.asList();
 
 		assertEquals(1, actionsSimplified.size());
 
@@ -329,7 +340,8 @@ public class ComputeDiffTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -339,7 +351,8 @@ public class ComputeDiffTest {
 		assertTrue(actionsAll.size() > 100);
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties()).editScript
+				.asList();
 		assertTrue(actionsAll.size() > 1);
 
 		System.out.println(actionsAll);
@@ -351,7 +364,8 @@ public class ComputeDiffTest {
 		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator,
+				properies).editScript.asList();
 
 		System.out.println(actionsAll.size());
 		System.out.println(actionsAll);
@@ -359,7 +373,7 @@ public class ComputeDiffTest {
 		assertEquals(1, actionsAll.size());
 
 		List<Action> actionsSimplified = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(),
-				edGeneratorSimplified, properies);
+				edGeneratorSimplified, properies).editScript.asList();
 
 		assertEquals(1, actionsSimplified.size());
 
@@ -391,7 +405,8 @@ public class ComputeDiffTest {
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -401,7 +416,8 @@ public class ComputeDiffTest {
 		// assertTrue(actionsAll.size() > 100);
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties());
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, new GumtreeProperties()).editScript
+				.asList();
 		assertTrue(actionsAll.size() > 2);
 
 		System.out.println(actionsAll);
@@ -413,7 +429,8 @@ public class ComputeDiffTest {
 		properies = new GumtreeProperties();
 		properies.put(ConfigurationOptions.st_minprio, 1);
 
-		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator, properies);
+		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(), edGenerator,
+				properies).editScript.asList();
 
 		System.out.println(actionsAll.size());
 		System.out.println(actionsAll);
@@ -421,7 +438,7 @@ public class ComputeDiffTest {
 		// assertEquals(1, actionsAll.size());
 
 		List<Action> actionsSimplified = engine.computeDiff(tl, tr, new CompositeMatchers.SimpleGumtree(),
-				edGeneratorSimplified, properies);
+				edGeneratorSimplified, properies).editScript.asList();
 
 		assertEquals(3, actionsSimplified.size());
 
@@ -453,7 +470,8 @@ public class ComputeDiffTest {
 		// CompositeMatchers.ClassicGumtree();
 		SimpleGumtree matcher = new SimpleGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
-		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties());
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
 
 		EditScriptGenerator edGeneratorSimplified = new SimplifiedChawatheScriptGenerator();
 
@@ -469,7 +487,7 @@ public class ComputeDiffTest {
 		properties.tryConfigure(ConfigurationOptions.st_minprio, 1);
 
 		// Now simplified
-		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, properties);
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGeneratorSimplified, properties).editScript.asList();
 		assertEquals(1, actionsAll.size());
 
 		System.out.println(actionsAll);

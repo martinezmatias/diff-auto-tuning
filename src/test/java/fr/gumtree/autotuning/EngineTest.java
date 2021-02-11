@@ -21,10 +21,12 @@ import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 public class EngineTest {
 
 	final File rootMegadiff = new File("./examples/megadiff-sample");
+	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
 
 	@Test
 	public void testNavigate() throws IOException {
@@ -38,7 +40,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiffAllMatchers("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiffAllMatchers(treeBuilder, "./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
@@ -55,7 +57,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiffAllMatchers("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiffAllMatchers(treeBuilder, "./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 	}
@@ -81,7 +83,7 @@ public class EngineTest {
 
 		long tinit = (new Date()).getTime();
 
-		CaseResult result = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result = reader.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		long tpropertyparalel = (new Date()).getTime() - tinit;
 
@@ -91,7 +93,7 @@ public class EngineTest {
 		reader.setNrThreads(1);
 
 		tinit = (new Date()).getTime();
-		CaseResult result2 = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result2 = reader.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 		long tpnoneparalel = (new Date()).getTime() - tinit;
 
@@ -112,7 +114,7 @@ public class EngineTest {
 		assertTrue(tpnoneparalel > tpropertyparalel);
 		System.out.println("Matcher callable");
 		tinit = (new Date()).getTime();
-		CaseResult result3 = reader.runSingleDiffMegaDiff("./out/", rootMegadiff, megadiff_id, commitId,
+		CaseResult result3 = reader.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
 				PARALLEL_EXECUTION.NONE);
 		long tmatcherparallel = (new Date()).getTime() - tinit;
 
@@ -186,7 +188,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
 
 	}
@@ -203,7 +205,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiff("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.MATCHER_LEVEL, new Matcher[] { new CompositeMatchers.ChangeDistiller() });
 
 	}
@@ -220,7 +222,7 @@ public class EngineTest {
 		int[] megadiff_ids = new int[] { 1 };
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
-		reader.navigateMegaDiffAllMatchers("./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+		reader.navigateMegaDiffAllMatchers(treeBuilder, "./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
 				PARALLEL_EXECUTION.MATCHER_LEVEL);
 
 	}
@@ -235,7 +237,7 @@ public class EngineTest {
 
 		TuningEngine reader = new TuningEngine();
 
-		CaseResult caseResult = reader.analyzeCase("1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t,
+		CaseResult caseResult = reader.analyzeCase(treeBuilder, "1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL, new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
 
 		assertNotNull(caseResult);
