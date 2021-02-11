@@ -86,6 +86,7 @@ public class GumtreeHttpHandler implements HttpHandler {
 				GTProxy proxy = new GTProxy();
 
 				Diff diff = proxy.run(tl, tr, parameters);
+				System.out.println("actions " + diff.editScript.asList().size());
 
 				handleResponse(httpExchange, "{status=ok, actions=" + diff.editScript.size() + "}");
 
