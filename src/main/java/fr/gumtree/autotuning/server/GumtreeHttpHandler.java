@@ -79,6 +79,10 @@ public class GumtreeHttpHandler implements HttpHandler {
 					return;
 				}
 
+				String out = null;
+				if (queryParams.containsKey("out"))
+					out = queryParams.get("out").get(0);
+
 				String parameters = queryParams.get("parameters").get(0);
 
 				System.out.println("run with params " + parameters);

@@ -7,7 +7,7 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import com.sun.net.httpserver.HttpServer;
 
-public class Main {
+public class ServerLauncher {
 
 	public static void main(String[] args) throws IOException {
 

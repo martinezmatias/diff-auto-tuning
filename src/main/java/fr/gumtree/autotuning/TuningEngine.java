@@ -377,46 +377,50 @@ public class TuningEngine {
 
 				GumtreeProperties gttp = (GumtreeProperties) sd.get(CONFIG);
 
-				Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
-
-				jso.addProperty("matcher", mr.getMatcherName());
-				String fileKey = "";
-				for (String pKey : propertiesMap.keySet()) {
-
-					String value = propertiesMap.get(pKey).toString();
-					jso.addProperty(pKey, value);
-
-					String separator = "-";
-					if (!fileKey.isEmpty())
-						fileKey += separator;
-					else {
-						fileKey += mr.getMatcherName() + separator;
-					}
-					fileKey += pKey + separator + value;
-
-				}
-				System.out.println(fileKey);
-
-				JsonElement js = builder.build(null, null, sd.getDiff(), jso);
-
-				Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-				String json = gson.toJson(js);
-
-				try {
-					FileWriter fwriter = new FileWriter(
-							new File(outResults + File.separator + "exhaustive_" + fileKey + ".json"));
-
-					fwriter.write(json);
-					fwriter.flush();
-					fwriter.close();
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
+				save(builder, outResults, jso, sd.getDiff(), gttp, mr.getMatcherName());
 			}
 
 		}
 
+	}
+
+	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
+			String maattcher) {
+		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
+
+		String fileKey = "";
+		for (String pKey : propertiesMap.keySet()) {
+
+			String value = propertiesMap.get(pKey).toString();
+			jso.addProperty(pKey, value);
+
+			String separator = "-";
+			if (!fileKey.isEmpty())
+				fileKey += separator;
+			else {
+				fileKey += maattcher + separator;
+			}
+			fileKey += pKey + separator + value;
+
+		}
+		System.out.println(fileKey);
+
+		JsonElement js = builder.build(null, null, diff, jso);
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+
+		String json = gson.toJson(js);
+
+		try {
+			FileWriter fwriter = new FileWriter(
+					new File(outResults + File.separator + "exhaustive_" + fileKey + ".json"));
+
+			fwriter.write(json);
+			fwriter.flush();
+			fwriter.close();
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 	}
 
 	/**
