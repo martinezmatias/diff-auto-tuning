@@ -17,8 +17,10 @@ import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.tree.Tree;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 
 import fr.gumtree.autotuning.TuningEngine.ASTMODE;
+import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
@@ -121,10 +123,96 @@ public class GTProxyTest {
 
 	}
 
-	public JsonObject call(String param) throws IOException, InterruptedException {
+	@Test
+	public void testRequestCreateMultiple() throws IOException, InterruptedException {
+
+		File fs = new File("./examples/input_multiple.txt");
+
 		HttpClient client = HttpClient.newHttpClient();
 
+		String operation = "multiple";
+
+		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
+		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + operation
+				+ "?action=load&model=" + ASTMODE.GTSPOON + "&file=" + fs.getAbsolutePath());
+
+		System.out.println(create);
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
+
+		String res = d.body();
+
+		System.out.println("-->" + res);
+
+		JsonObject jsonResponse = new JsonParser().parse(res).getAsJsonObject();
+
+		assertEquals("ok", jsonResponse.get("status").getAsString());
+
+		assertEquals(1, jsonResponse.get("pairs").getAsInt());
+
+		assertEquals("multiplecreate", jsonResponse.get("operation").getAsString());
+
+		String param = "SimpleGumtree-st_priocalc-height-st_minprio-5";
+		JsonObject convertedObject = callMultiple(param);
+		// assertEquals(57, convertedObject.get("actions").getAsInt());
+
+		param = "SimpleGumtree-st_priocalc-size-st_minprio-1";
+		convertedObject = callMultiple(param);
+		System.out.println("response " + convertedObject.toString());
+		assertEquals(1,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
+
+		param = "SimpleGumtree-st_priocalc-size-st_minprio-3";
+		convertedObject = callMultiple(param);
+		System.out.println("response " + convertedObject.toString());
+		assertEquals(9,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
+
+		param = "XyMatcher-st_priocalc-size-st_minprio-4-xy_minsim-1.0";
+		convertedObject = callMultiple(param);
+		System.out.println("response " + convertedObject.toString());
+		assertEquals(19,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
+
+		param = "ClassicGumtree-st_priocalc-size-bu_minsim-0.3-st_minprio-4-bu_minsize-1100";
+		convertedObject = callMultiple(param);
+		System.out.println("response " + convertedObject.toString());
+		assertEquals(1,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
+
+	}
+
+	public JsonObject callMultiple(String param) throws IOException, InterruptedException {
+		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
+
+		HttpClient client = HttpClient.newHttpClient();
+
+		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
+				+ "?action=run&parameters=" + param + "&out=./out");
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
+
+		String res = responseRequest.body();
+		System.out.println(res);
+		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
+
+		System.out.println("-->" + res);
+		System.out.println(convertedObject);
+		return convertedObject;
+
+	}
+
+	public JsonObject call(String param) throws IOException, InterruptedException {
+
 		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
+
+		HttpClient client = HttpClient.newHttpClient();
 
 		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
 				+ "?action=run&parameters=" + param + "&out=./out");

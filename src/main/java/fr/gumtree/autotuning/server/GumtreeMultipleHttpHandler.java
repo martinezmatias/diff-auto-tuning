@@ -8,13 +8,14 @@ import java.io.OutputStream;
 import java.util.ArrayList;
 import java.util.List;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -32,6 +33,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 public class GumtreeMultipleHttpHandler implements HttpHandler {
 
 	List<Pair<Tree, Tree>> files = new ArrayList();
+	List<String> names = new ArrayList();
 
 	String host = "localhost";
 	int port = 8001;
@@ -84,7 +86,7 @@ public class GumtreeMultipleHttpHandler implements HttpHandler {
 			}
 
 			try {
-
+				System.out.println("Creating multiples trees: ");
 				createMultipleTrees(httpExchange, treebuilder, file);
 
 				handleResponse(httpExchange, "{status=ok, operation=multiplecreate, pairs=" + this.files.size() + "}");
@@ -97,24 +99,40 @@ public class GumtreeMultipleHttpHandler implements HttpHandler {
 			}
 
 		} else if (queryParams.get("action").contains("run")) {
+			JsonObject root = new JsonObject();
 
-			for (Pair<Tree, Tree> pair : files) {
+			JsonArray actions = new JsonArray();
+			root.add("actions", actions);
+			String parameters = queryParams.get("parameters").get(0);
+			root.addProperty("parameters", parameters);
 
-				String out = null;
+			System.out.println("run with params " + parameters);
+
+			for (int i = 0; i < this.files.size(); i++) {
+
+				Pair<Tree, Tree> pair = files.get(i);
+
+				File out = null;
 				if (queryParams.containsKey("out"))
-					out = queryParams.get("out").get(0);
-
-				String parameters = queryParams.get("parameters").get(0);
-
-				System.out.println("run with params " + parameters);
+					out = new File(queryParams.get("out").get(0));
 
 				GTProxy proxy = new GTProxy();
 
-				Diff diff = proxy.run(pair.first, pair.second, parameters);
-				System.out.println("actions " + diff.editScript.asList().size());
+				Diff diff = proxy.run(pair.first, pair.second, parameters, out);
+				// System.out.println("actions " + diff.editScript.asList().size());
 
-				handleResponse(httpExchange, "{status=ok, actions=" + diff.editScript.size() + "}");
+				//
+				JsonObject config = new JsonObject();
+				config.addProperty("file", this.names.get(0));
+				config.addProperty("nractions", diff.editScript.asList().size());
+				//
+				actions.add(config);
+
 			}
+			root.addProperty("status", "ok");
+			System.out.println("Output " + root.toString());
+			handleResponse(httpExchange, root.toString());
+
 		}
 	}
 
@@ -128,12 +146,12 @@ public class GumtreeMultipleHttpHandler implements HttpHandler {
 
 		// encode HTML content
 
-		String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
-
 		// this line is a must
 
-		// httpExchange.getResponseHeaders().set("Content-Type", "appication/json");
+		httpExchange.getResponseHeaders().set("Content-Type", "appication/json");
 
+		// String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
+		String htmlResponse = reponse;
 		httpExchange.sendResponseHeaders(200, htmlResponse.length());
 
 		outputStream.write(htmlResponse.getBytes());
@@ -147,6 +165,7 @@ public class GumtreeMultipleHttpHandler implements HttpHandler {
 	public void createMultipleTrees(HttpExchange httpExchange, ITreeBuilder treebuilder, String path)
 			throws IOException {
 		this.files.clear();
+		this.names.clear();
 		BufferedReader reader;
 		try {
 			reader = new BufferedReader(new FileReader(path));
@@ -154,7 +173,7 @@ public class GumtreeMultipleHttpHandler implements HttpHandler {
 			while (line != null) {
 				System.out.println(line);
 
-				line = reader.readLine();
+				System.out.println("Line " + line);
 
 				String[] sp = line.split(" ");
 
@@ -163,11 +182,14 @@ public class GumtreeMultipleHttpHandler implements HttpHandler {
 				Tree tr = treebuilder.build(new File(sp[1]));
 
 				this.files.add(new Pair<Tree, Tree>(tl, tr));
+				this.names.add(sp[0]);
+
+				// Next line
+				line = reader.readLine();
 
 			}
 			reader.close();
 
-			handleResponse(httpExchange, "created");
 		} catch (Exception e) {
 			handleResponse(httpExchange, "error");
 			e.printStackTrace();

@@ -24,7 +24,7 @@ public class ServerLauncher {
 
 		GumtreeMultipleHttpHandler handlerMultiple = new GumtreeMultipleHttpHandler();
 
-		server.createContext("/" + handlerMultiple.getPath(), handler);
+		server.createContext("/" + handlerMultiple.getPath(), handlerMultiple);
 
 		ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 		server.setExecutor(threadPoolExecutor);
