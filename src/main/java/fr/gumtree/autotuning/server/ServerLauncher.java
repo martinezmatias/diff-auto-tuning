@@ -7,19 +7,31 @@ import java.util.concurrent.ThreadPoolExecutor;
 
 import com.sun.net.httpserver.HttpServer;
 
+/**
+ * 
+ * @author Matias Martinez
+ *
+ */
 public class ServerLauncher {
 
 	public static void main(String[] args) throws IOException {
 
-		HttpServer server = HttpServer.create(new InetSocketAddress("localhost", 8001), 0);
+		GumtreeSingleHttpHandler handler = new GumtreeSingleHttpHandler();
 
-		server.createContext("/test", new GumtreeHttpHandler());
+		HttpServer server = HttpServer.create(new InetSocketAddress(handler.getHost(), handler.getPort()), 0);
+
+		server.createContext("/" + handler.getPath(), handler);
+
+		GumtreeMultipleHttpHandler handlerMultiple = new GumtreeMultipleHttpHandler();
+
+		server.createContext("/" + handlerMultiple.getPath(), handler);
+
 		ThreadPoolExecutor threadPoolExecutor = (ThreadPoolExecutor) Executors.newFixedThreadPool(10);
 		server.setExecutor(threadPoolExecutor);
 
 		server.start();
 
-		System.out.println(" Server started on port 8001");
+		System.out.println("Server started on port " + handler.getPort());
 
 	}
 

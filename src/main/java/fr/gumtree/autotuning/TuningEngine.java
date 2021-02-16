@@ -386,6 +386,12 @@ public class TuningEngine {
 
 	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
 			String maattcher) {
+
+		save(builder, outResults, jso, diff, gttp, maattcher, "exhaustive");
+	}
+
+	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
+			String maattcher, String key) {
 		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
 
 		String fileKey = "";
@@ -412,8 +418,7 @@ public class TuningEngine {
 		String json = gson.toJson(js);
 
 		try {
-			FileWriter fwriter = new FileWriter(
-					new File(outResults + File.separator + "exhaustive_" + fileKey + ".json"));
+			FileWriter fwriter = new FileWriter(new File(outResults + File.separator + key + "_" + fileKey + ".json"));
 
 			fwriter.write(json);
 			fwriter.flush();
