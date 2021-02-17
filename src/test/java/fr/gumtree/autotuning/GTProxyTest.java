@@ -274,4 +274,12 @@ public class GTProxyTest {
 		return convertedObject;
 	}
 
+	@Test
+	public void testTPEBridge() {
+
+		TPEEngine rp = new TPEEngine();
+		rp.computeBest(new File("ss"), new File("dd"));
+
+	}
+
 }
