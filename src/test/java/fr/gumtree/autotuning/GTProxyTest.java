@@ -22,6 +22,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 
 import fr.gumtree.autotuning.TuningEngine.ASTMODE;
+import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
@@ -201,6 +202,29 @@ public class GTProxyTest {
 		System.out.println("response " + convertedObject.toString());
 		assertEquals(1,
 				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
+
+	}
+
+	public JsonObject callMultiple(String param, GumtreeAbstractHttpHandler handle)
+			throws IOException, InterruptedException {
+
+		HttpClient client = HttpClient.newHttpClient();
+
+		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
+				+ "?action=run&parameters=" + param + "&out=./out");
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
+
+		String res = responseRequest.body();
+		System.out.println(res);
+		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
+
+		System.out.println("-->" + res);
+		System.out.println(convertedObject);
+		return convertedObject;
 
 	}
 

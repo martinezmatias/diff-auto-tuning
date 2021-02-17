@@ -11,7 +11,6 @@ import org.springframework.web.util.UriComponentsBuilder;
 import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.tree.Tree;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import fr.gumtree.autotuning.GTProxy;
 import fr.gumtree.autotuning.ITreeBuilder;
@@ -24,7 +23,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  * @author Matias Martinez
  *
  */
-public class GumtreeSingleHttpHandler implements HttpHandler {
+public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	int a = 0;
 	String param = "";

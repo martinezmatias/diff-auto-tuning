@@ -17,7 +17,6 @@ import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
-import com.sun.net.httpserver.HttpHandler;
 
 import fr.gumtree.autotuning.GTProxy;
 import fr.gumtree.autotuning.ITreeBuilder;
@@ -30,7 +29,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  * @author Matias Martinez
  *
  */
-public class GumtreeMultipleHttpHandler implements HttpHandler {
+public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	List<Pair<Tree, Tree>> files = new ArrayList();
 	List<String> names = new ArrayList();
