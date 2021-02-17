@@ -11,6 +11,8 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.net.http.HttpResponse.BodyHandlers;
 
+import org.junit.After;
+import org.junit.Before;
 import org.junit.Test;
 
 import com.github.gumtreediff.actions.Diff;
@@ -22,6 +24,7 @@ import com.google.gson.JsonParser;
 import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
+import fr.gumtree.autotuning.server.ServerLauncher;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 /**
@@ -30,6 +33,22 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  *
  */
 public class GTProxyTest {
+
+	ServerLauncher launcher;
+
+	@Before
+	public void setup() throws IOException {
+		System.out.println("Starting server");
+		launcher = new ServerLauncher();
+		launcher.start();
+	}
+
+	@After
+	public void down() throws IllegalAccessException {
+		System.out.println("Shut down server");
+		launcher.stop();
+		System.out.println("End");
+	}
 
 	@Test
 	public void testProxy() throws Exception {

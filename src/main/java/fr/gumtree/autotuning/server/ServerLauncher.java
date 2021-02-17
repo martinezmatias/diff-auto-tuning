@@ -14,15 +14,24 @@ import com.sun.net.httpserver.HttpServer;
  */
 public class ServerLauncher {
 
+	private HttpServer server = null;
+
 	public static void main(String[] args) throws IOException {
 
-		GumtreeSingleHttpHandler handler = new GumtreeSingleHttpHandler();
+		ServerLauncher launcher = new ServerLauncher();
 
-		HttpServer server = HttpServer.create(new InetSocketAddress(handler.getHost(), handler.getPort()), 0);
+		launcher.start();
+
+	}
+
+	public boolean start() throws IOException {
+
+		GumtreeSingleHttpHandler handler = new GumtreeSingleHttpHandler();
+		GumtreeMultipleHttpHandler handlerMultiple = new GumtreeMultipleHttpHandler();
+
+		server = HttpServer.create(new InetSocketAddress(handler.getHost(), handler.getPort()), 0);
 
 		server.createContext("/" + handler.getPath(), handler);
-
-		GumtreeMultipleHttpHandler handlerMultiple = new GumtreeMultipleHttpHandler();
 
 		server.createContext("/" + handlerMultiple.getPath(), handlerMultiple);
 
@@ -33,6 +42,16 @@ public class ServerLauncher {
 
 		System.out.println("Server started on port " + handler.getPort());
 
+		return true;
+
+	}
+
+	public void stop() throws IllegalAccessException {
+
+		if (server == null) {
+			throw new IllegalAccessException("Server is null");
+		}
+		this.server.stop(0);
 	}
 
 }
