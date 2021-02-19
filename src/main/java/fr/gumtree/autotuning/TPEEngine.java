@@ -3,7 +3,6 @@ package fr.gumtree.autotuning;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.InputStreamReader;
-import java.util.Map;
 
 import com.google.gson.JsonObject;
 
@@ -25,9 +24,9 @@ public class TPEEngine {
 	String classpath = System.getProperty("java.class.path");
 	String javahome = System.getProperty("java.home");
 
-	public Map<String, String> computeBest(File left, File right) throws Exception {
+	public String computeBest(File left, File right) throws Exception {
 		// Init server
-
+		;
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();
 		launcher.start();
@@ -41,21 +40,15 @@ public class TPEEngine {
 		String status = responseJSon.get("status").getAsString();
 		if ("created".equals(status)) {
 
-			// Call TPE
+			String best = queryBestConfig(handler);
+			if (best != null) {
 
-			Runtime rt = Runtime.getRuntime();
-			String[] commandAndArguments = { pythonpath, scriptpath, classpath, javahome, handler.getHost(),
-					Integer.toString(handler.getPort()), handler.getPath() };
-			try {
-				Process p = rt.exec(commandAndArguments);
-				String response = readProcessOutput(p);
-				System.out.println(response);
-				String error = readProcessError(p);
-				System.err.println(error);
-
-			} catch (Exception ex) {
-				ex.printStackTrace();
+				JsonObject responseBest = launcher.call(best);
+				System.out.println(responseBest);
 			}
+
+			return best;
+
 		} else {
 			System.out.println("Operation unknown " + status);
 		}
@@ -67,15 +60,46 @@ public class TPEEngine {
 		return null;
 	}
 
+	public String queryBestConfig(GumtreeAbstractHttpHandler handler) {
+		// Call TPE
+
+		Runtime rt = Runtime.getRuntime();
+		String[] commandAndArguments = { pythonpath, scriptpath, classpath, javahome, handler.getHost(),
+				Integer.toString(handler.getPort()), handler.getPath() };
+		try {
+			Process p = rt.exec(commandAndArguments);
+			String response = readProcessOutput(p);
+
+			String error = readProcessError(p);
+			String bestConfig = null;
+			if (response.startsWith("Best config: ")) {
+
+				bestConfig = response.replace("Best config: ", "");
+			}
+
+			System.err.println(error);
+			System.out.println(bestConfig);
+
+			return bestConfig;
+
+		} catch (Exception ex) {
+			ex.printStackTrace();
+			return null;
+		}
+	}
+
 	private String readProcessOutput(Process p) throws Exception {
 		BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
 		String response = "";
 		String line;
+		String last = "";
 		while ((line = reader.readLine()) != null) {
 			response += line + "\r\n";
+			last = line;
 		}
 		reader.close();
-		return response;
+		System.out.println(response);
+		return last;
 	}
 
 	private String readProcessError(Process p) throws Exception {

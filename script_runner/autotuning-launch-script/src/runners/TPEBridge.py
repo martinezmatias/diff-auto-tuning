@@ -10,6 +10,8 @@ import random
 import json
 import requests as req
 import html
+import statistics
+import numpy
 propertiesPerMatcher = {}
 
 defaultConfigurations = {
@@ -46,10 +48,10 @@ rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 rangePriority= ["size", "height"]
 
 
-def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None):
+def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None, xseed = 0):
 
 	##elapsed_time_setup = time.time() - start_time_setup
-
+	rstate = numpy.random.RandomState(seed=xseed)
 	print("Running DatTPE")
 	spaceAlgorithms = createSpace(algorithm=algorithm)
 	search_space = { "space": hp.choice('algorithm_type', spaceAlgorithms),
@@ -63,11 +65,13 @@ def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None):
 		algo=tpe.suggest if runTpe else rand.suggest,
 		max_evals=max_evals,
 		trials=trials,
+		rstate=rstate
 	)
 
 	eval = hyperopt.space_eval(search_space, best)
-	keyBestConfigFound_k = recreateConfigurationKey(eval)
-	print("Best config {}".format(keyBestConfigFound_k))
+	keyBestConfigFound_k = parameters = recreateParametersString(eval) #recreateConfigurationKey(eval)
+	print("Best config: {}".format(keyBestConfigFound_k))
+
 
 propertiesPerMatcher["SimpleGumtree"] = ["st_minprio", "st_priocalc"]
 propertiesPerMatcher["ClassicGumtree"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priocalc"]
@@ -122,17 +126,8 @@ def objectiveFunctionDAT(params):
 	print("param {}".format(params))
 
 	print("-->{} {}".format(cp, javahome))
-	keyConfig = recreateConfigurationKey(params)
 
-	algo = params['space']['algorithm']
-
-	keys = params['space'].keys()
-	print(keys)
-	separator = "-"
-	parameters = algo
-	for k in keys:
-		if "algorithm" != k:
-			parameters += "{}{}{}{}".format(separator , k.replace(algo+"_", "") , separator, params['space'][k])
+	parameters = recreateParametersString(params)
 
 	print("Receiving parameters: {} ".format(parameters))
 
@@ -143,18 +138,32 @@ def objectiveFunctionDAT(params):
 
 
 	print("Response{}".format(resp.text))
-	##status=ok, actions=1}
 
 	responseJson = json.loads(html.unescape(str(resp.text)))
 
 	## As fmin aims at minimizing, so shortest avg is the best
 
-	if responseJson["status"] is 'ok':
-		fitness = int(responseJson[actions])
-		return fitness
-	else:
+	if responseJson["status"] == 'ok':
+		actions = list(responseJson["actions"])
 
-		return 1000000
+		if len(actions) == 1:
+			return int(actions[0]['nractions'])
+		else:
+			fitness = [int(x['nractions']) for x in actions]
+			return statistics.median(fitness)
+	else:
+		return 10000000
+
+
+def recreateParametersString(params):
+	algo = params['space']['algorithm']
+	separator = "-"
+	parameters = algo
+	keys = params['space'].keys()
+	for k in keys:
+		if "algorithm" != k:
+			parameters += "{}{}{}{}".format(separator, k.replace(algo + "_", ""), separator, params['space'][k])
+	return parameters
 
 
 def recreateConfigurationKey(params):
