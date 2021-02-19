@@ -91,13 +91,13 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				tr = treebuilder.build(new File(right));
 
-				handleResponse(httpExchange, "created");
+				handleResponse(httpExchange, "{status=created}");
 
 			} catch (Exception e) {
 				System.out.println("Error loading trees");
 				e.printStackTrace();
 
-				handleResponse(httpExchange, "error");
+				handleResponse(httpExchange, "{status=error}");
 
 			}
 

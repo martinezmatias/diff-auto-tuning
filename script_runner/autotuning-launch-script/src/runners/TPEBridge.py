@@ -1,21 +1,33 @@
 import sys
-
-print("Hello from TPE Python {} {} {}".format( sys.argv[1],  sys.argv[2], sys.argv[3]))
-
-
 import hyperopt
 from hyperopt import tpe, hp, fmin, Trials, rand
 import pandas
 import numpy as np
 import os
-from src.commons.DiffAlgorithmMetadata import *
-from src.processedDataConsumers.EngineGridSearchKfoldValidation import *
-from src.commons.DiffAlgorithmMetadata import *
-from src.commons.Datalocation import *
-from src.processedDataConsumers.CostParameters import *
 import zipfile
 import time
 import random
+
+
+propertiesPerMatcher = {}
+
+defaultConfigurations = {
+	#"SimpleGumtree":"SimpleGumtree_0.4_2", ##as the threshold does not count, we use 0.5, which we have computed it
+"SimpleGumtree":"SimpleGumtree_0.5_2",
+"ClassicGumtree":"ClassicGumtree_0.5_1000_1"	, ## "CompleteGumtreeMatcher_0.5_1000_2", GT2 uses H = 1 , GT 3 uses 2
+"CompleteGumtreeMatcher": "CompleteGumtreeMatcher_0.5_1000_1",#"CompleteGumtreeMatcher_0.5_1000_2",
+"ChangeDistiller": "ChangeDistiller_0.5_4_0.6_0.4",
+"XyMatcher": "XyMatcher_2_0.5"
+			}
+
+sizeSearchSpace = {}
+sizeSearchSpace["Gumtree"] = 2050
+sizeSearchSpace["ChangeDistiller"] = 375
+sizeSearchSpace["XyMatcher"] = 50
+
+
+
+
 
 AVG_CONSTANT = 'av'
 rangeSBUP = [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
@@ -33,9 +45,9 @@ rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 rangePriority= ["size", "height"]
 
 
-def computeHyperOpt(runTpe = true, max_evals=1000, algorithm = None, out = RESULTS_PROCESSED_LOCATION):
+def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None):
 
-	elapsed_time_setup = time.time() - start_time_setup
+	##elapsed_time_setup = time.time() - start_time_setup
 
 	print("Running DatTPE")
 	spaceAlgorithms = createSpace(algorithm=algorithm)
@@ -56,6 +68,13 @@ def computeHyperOpt(runTpe = true, max_evals=1000, algorithm = None, out = RESUL
 	keyBestConfigFound_k = recreateConfigurationKey(eval)
 	print("Best config {}".format(keyBestConfigFound_k))
 
+propertiesPerMatcher["SimpleGumtree"] = ["st_minprio", "st_priority"]
+propertiesPerMatcher["ClassicGumtree"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priority"]
+propertiesPerMatcher["CompleteGumtreeMatcher"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priority"]
+propertiesPerMatcher["ChangeDistiller"] = ["cd_labsim", "cd_maxleaves","cd_structsim1",  "cd_structsim2"]
+propertiesPerMatcher["XyMatcher"] = ["st_minprio", "st_priority"]
+
+
 def createSpace(algorithm = None):
 	spaceAlgorithms = [
 		{  # ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
@@ -67,8 +86,8 @@ def createSpace(algorithm = None):
 			'algorithm': 'ClassicGumtree',
 			"ClassicGumtree_bu_minsim": hp.choice("ClassicGumtree_bu_minsim", rangeGT_BUM_SMT),
 			"ClassicGumtree_bu_minsize": hp.choice("ClassicGumtree_bu_minsize", rangeGT_BUM_SZT),
-			"ClassicGumtree_st_minprio": hp.choice("CompleteGumtreeMatcher_st_minprio", rangeMH),
-			"ClassicGumtree_st_priority": hp.choice("CompleteGumtreeMatcher_st_priority", rangePriority),
+			"ClassicGumtree_st_minprio": hp.choice("ClassicGumtree_st_minprio", rangeMH),
+			"ClassicGumtree_st_priority": hp.choice("ClassicGumtree_st_priority", rangePriority),
 		},
 		{  # ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
 			'algorithm': 'CompleteGumtreeMatcher',
@@ -81,15 +100,14 @@ def createSpace(algorithm = None):
 			'algorithm': 'ChangeDistiller',
 			"ChangeDistiller_cd_labsim": hp.choice("ChangeDistiller_cd_labsim", rangeLSIM),
 			"ChangeDistiller_cd_maxleaves": hp.choice("ChangeDistiller_cd_maxleaves", rangeML),
-			"ChangeDistiller_GT_CD_SSIM1": hp.choice("ChangeDistiller_cd_structsim1", rangeSSIM1),
-			"ChangeDistiller_GT_CD_SSIM2": hp.choice("ChangeDistiller_cd_structsim2", rangeSSIM2),
+			"ChangeDistiller_cd_structsim1": hp.choice("ChangeDistiller_cd_structsim1", rangeSSIM1),
+			"ChangeDistiller_cd_structsim2": hp.choice("ChangeDistiller_cd_structsim2", rangeSSIM2),
 		},
 		# ["GT_STM_MH", "GT_XYM_SIM"]
 		{
 			'algorithm': 'XyMatcher',
 			"XyMatcher_st_minprio": hp.choice("XyMatcher_st_minprio", rangeMH),
 			"XyMatcher_st_priority": hp.choice("XyMatcher_st_priority", rangePriority),
-			"XyMatcher_xy_minsim": hp.choice("XyMatcher_xy_minsim", rangeXYSIM),
 		},
 	]
 	if algorithm is not None:
@@ -100,21 +118,31 @@ def createSpace(algorithm = None):
 
 def objectiveFunctionDAT(params):
 
-	global X_trainingGlobal
-	global trainingGlobal
-	global dfGlobal
+	print("param {}".format(params))
 
+	print("-->{} {} {} {}".format(cp, left, right, javahome))
 	keyConfig = recreateConfigurationKey(params)
 
-	configsForTraining = [keyConfig]
+	algo = params['space']['algorithm']
 
-	performanceTrainingOfBest = computeAvgPerdiff(X_trainingGlobal, trainingGlobal, configsForTraining, None, dfGlobal)
+	keys = params['space'].keys()
+	print(keys)
+	separator = "-"
+	parameters = algo
+	for k in keys:
+		parameters += "{}{}{}{}".format(separator , k.replace(algo+"_", "") , separator, params['space'][k])
 
-	dataOfConfig = performanceTrainingOfBest[keyConfig]
-	editScriptAvgSize = dataOfConfig[AVG_CONSTANT]
-	#print("--> Config {} edSize {} ".format(keyConfig, editScriptAvgSize))
+	print("Receiving parameters: {} ".format(parameters))
+
+	from subprocess import Popen, PIPE
+
+	process = Popen(["{}/bin/java".format(javahome), "-la", "."], stdout=PIPE)
+	(output, err) = process.communicate()
+	exit_code = process.wait()
+
+
 	## As fmin aims at minimizing, so shortest avg is the best
-	return editScriptAvgSize
+	return -1
 
 
 def recreateConfigurationKey(params):
@@ -125,3 +153,17 @@ def recreateConfigurationKey(params):
 	keyConfig = ("_".join(key)).replace("_1.0", "_1")
 	return keyConfig
 
+###
+print("Hello from TPE Python {} {} {}".format( sys.argv[1],  sys.argv[2], sys.argv[3]))
+global cp
+global left
+global right
+global javahome
+
+cp = sys.argv[1]
+left = sys.argv[2]
+right = sys.argv[3]
+javahome = sys.argv[4]
+
+print("Running TPEBridge:")
+computeHyperOpt()

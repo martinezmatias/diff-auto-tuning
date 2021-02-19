@@ -1,11 +1,22 @@
 package fr.gumtree.autotuning.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.net.InetSocketAddress;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.net.http.HttpResponse.BodyHandlers;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
+import com.google.gson.Gson;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
+
+import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 
 /**
  * 
@@ -52,6 +63,83 @@ public class ServerLauncher {
 			throw new IllegalAccessException("Server is null");
 		}
 		this.server.stop(0);
+	}
+
+	public JsonObject callWithHandle(String param, GumtreeAbstractHttpHandler handle)
+			throws IOException, InterruptedException {
+
+		HttpClient client = HttpClient.newHttpClient();
+
+		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
+				+ "?action=run&parameters=" + param + "&out=./out");
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
+
+		String res = responseRequest.body();
+		System.out.println(res);
+		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
+
+		System.out.println("-->" + res);
+		System.out.println(convertedObject);
+		return convertedObject;
+
+	}
+
+	public JsonObject callMultiple(String param) throws IOException, InterruptedException {
+		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
+
+		return callWithHandle(param, handle);
+
+	}
+
+	public JsonObject call(String param) throws IOException, InterruptedException {
+
+		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
+
+		return callWithHandle(param, handle);
+	}
+
+	public JsonObject initSimple(File fs, File ft) throws IOException, InterruptedException {
+		HttpClient client = HttpClient.newHttpClient();
+
+		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
+		URI create = URI.create(
+				"http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath() + "?action=load&model="
+						+ ASTMODE.GTSPOON + "&left=" + fs.getAbsolutePath() + "&right=" + ft.getAbsolutePath());
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
+
+		String res = d.body();
+		System.out.println("-->" + res);
+		JsonObject responseJSon = new Gson().fromJson(res, JsonObject.class);
+		return responseJSon;
+	}
+
+	public JsonObject initMultiple(File fs) throws IOException, InterruptedException {
+		HttpClient client = HttpClient.newHttpClient();
+
+		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
+
+		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
+				+ "?action=load&model=" + ASTMODE.GTSPOON + "&file=" + fs.getAbsolutePath());
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
+
+		String res = d.body();
+
+		System.out.println("-->" + res);
+
+		JsonObject jsonResponse = new JsonParser().parse(res).getAsJsonObject();
+		return jsonResponse;
 	}
 
 }

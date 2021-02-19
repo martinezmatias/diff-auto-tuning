@@ -5,26 +5,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.net.http.HttpResponse.BodyHandlers;
 
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.tree.Tree;
-import com.google.gson.Gson;
 import com.google.gson.JsonObject;
-import com.google.gson.JsonParser;
 
-import fr.gumtree.autotuning.TuningEngine.ASTMODE;
-import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
-import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
-import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
@@ -101,44 +91,28 @@ public class GTProxyTest {
 		File ft = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
-		HttpClient client = HttpClient.newHttpClient();
+		JsonObject responseJSon = this.launcher.initSimple(fs, ft);
 
-		String operation = "single";
-
-		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
-		URI create = URI
-				.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + operation + "?action=load&model="
-						+ ASTMODE.GTSPOON + "&left=" + fs.getAbsolutePath() + "&right=" + ft.getAbsolutePath());
-
-		System.out.println(create);
-
-		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
-		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
-
-		String res = d.body();
-
-		System.out.println("-->" + res);
-
-		assertEquals("created", res);
+		assertEquals("created", responseJSon.get("status").getAsString());
 
 		String param = "SimpleGumtree-st_priocalc-height-st_minprio-5";
-		JsonObject convertedObject = call(param);
+		JsonObject convertedObject = this.launcher.call(param);
 		// assertEquals(57, convertedObject.get("actions").getAsInt());
 
 		param = "SimpleGumtree-st_priocalc-size-st_minprio-1";
-		convertedObject = call(param);
+		convertedObject = this.launcher.call(param);
 		assertEquals(1, convertedObject.get("actions").getAsInt());
 
 		param = "SimpleGumtree-st_priocalc-size-st_minprio-3";
-		convertedObject = call(param);
+		convertedObject = this.launcher.call(param);
 		assertEquals(9, convertedObject.get("actions").getAsInt());
 
 		param = "XyMatcher-st_priocalc-size-st_minprio-4-xy_minsim-1.0";
-		convertedObject = call(param);
+		convertedObject = this.launcher.call(param);
 		assertEquals(19, convertedObject.get("actions").getAsInt());
 
 		param = "ClassicGumtree-st_priocalc-size-bu_minsim-0.3-st_minprio-4-bu_minsize-1100";
-		convertedObject = call(param);
+		convertedObject = this.launcher.call(param);
 		assertEquals(1, convertedObject.get("actions").getAsInt());
 
 	}
@@ -148,26 +122,7 @@ public class GTProxyTest {
 
 		File fs = new File("./examples/input_multiple.txt");
 
-		HttpClient client = HttpClient.newHttpClient();
-
-		String operation = "multiple";
-
-		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
-		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + operation
-				+ "?action=load&model=" + ASTMODE.GTSPOON + "&file=" + fs.getAbsolutePath());
-
-		System.out.println(create);
-
-		System.out.println(create);
-
-		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
-		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
-
-		String res = d.body();
-
-		System.out.println("-->" + res);
-
-		JsonObject jsonResponse = new JsonParser().parse(res).getAsJsonObject();
+		JsonObject jsonResponse = this.launcher.initMultiple(fs);
 
 		assertEquals("ok", jsonResponse.get("status").getAsString());
 
@@ -176,106 +131,38 @@ public class GTProxyTest {
 		assertEquals("multiplecreate", jsonResponse.get("operation").getAsString());
 
 		String param = "SimpleGumtree-st_priocalc-height-st_minprio-5";
-		JsonObject convertedObject = callMultiple(param);
+		JsonObject convertedObject = this.launcher.callMultiple(param);
 		// assertEquals(57, convertedObject.get("actions").getAsInt());
 
 		param = "SimpleGumtree-st_priocalc-size-st_minprio-1";
-		convertedObject = callMultiple(param);
+		convertedObject = this.launcher.callMultiple(param);
 		System.out.println("response " + convertedObject.toString());
 		assertEquals(1,
 				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 		param = "SimpleGumtree-st_priocalc-size-st_minprio-3";
-		convertedObject = callMultiple(param);
+		convertedObject = this.launcher.callMultiple(param);
 		System.out.println("response " + convertedObject.toString());
 		assertEquals(9,
 				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 		param = "XyMatcher-st_priocalc-size-st_minprio-4-xy_minsim-1.0";
-		convertedObject = callMultiple(param);
+		convertedObject = this.launcher.callMultiple(param);
 		System.out.println("response " + convertedObject.toString());
 		assertEquals(19,
 				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 		param = "ClassicGumtree-st_priocalc-size-bu_minsim-0.3-st_minprio-4-bu_minsize-1100";
-		convertedObject = callMultiple(param);
+		convertedObject = this.launcher.callMultiple(param);
 		System.out.println("response " + convertedObject.toString());
 		assertEquals(1,
 				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 	}
 
-	public JsonObject callMultiple(String param, GumtreeAbstractHttpHandler handle)
-			throws IOException, InterruptedException {
-
-		HttpClient client = HttpClient.newHttpClient();
-
-		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
-				+ "?action=run&parameters=" + param + "&out=./out");
-
-		System.out.println(create);
-
-		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
-		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
-
-		String res = responseRequest.body();
-		System.out.println(res);
-		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
-
-		System.out.println("-->" + res);
-		System.out.println(convertedObject);
-		return convertedObject;
-
-	}
-
-	public JsonObject callMultiple(String param) throws IOException, InterruptedException {
-		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
-
-		HttpClient client = HttpClient.newHttpClient();
-
-		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
-				+ "?action=run&parameters=" + param + "&out=./out");
-
-		System.out.println(create);
-
-		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
-		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
-
-		String res = responseRequest.body();
-		System.out.println(res);
-		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
-
-		System.out.println("-->" + res);
-		System.out.println(convertedObject);
-		return convertedObject;
-
-	}
-
-	public JsonObject call(String param) throws IOException, InterruptedException {
-
-		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
-
-		HttpClient client = HttpClient.newHttpClient();
-
-		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
-				+ "?action=run&parameters=" + param + "&out=./out");
-
-		System.out.println(create);
-
-		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
-		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
-
-		String res = responseRequest.body();
-
-		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
-
-		System.out.println("-->" + res);
-		System.out.println(convertedObject);
-		return convertedObject;
-	}
-
 	@Test
-	public void testTPEBridge() {
+	@Ignore
+	public void testTPEBridge() throws Exception {
 
 		TPEEngine rp = new TPEEngine();
 		rp.computeBest(new File("ss"), new File("dd"));
