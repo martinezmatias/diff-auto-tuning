@@ -35,8 +35,6 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 	int port = 8001;
 	String path = "single";
 
-	GTProxy proxy = new GTProxy();
-
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {
 
@@ -116,9 +114,9 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			String parameters = queryParams.get("parameters").get(0);
 
 			System.out.println("run with params " + parameters);
-
+			GTProxy proxy = new GTProxy();
 			Diff diff = proxy.run(tl, tr, parameters, out);
-			System.out.println("actions " + diff.editScript.asList().size());
+			System.out.println("Computed GumTree actions " + diff.editScript.asList().size());
 
 			handleResponse(httpExchange, "{status=ok, actions=" + diff.editScript.size() + "}");
 

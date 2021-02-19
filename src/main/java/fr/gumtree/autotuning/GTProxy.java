@@ -24,29 +24,35 @@ public class GTProxy {
 	}
 
 	public Diff run(Tree tleft, Tree tright, String params, File out) {
-		String[] paramSplit = split(params);
+		try {
+			String[] paramSplit = split(params);
 
-		GumtreeProperties properties = parseProperty(paramSplit);
+			GumtreeProperties properties = parseProperty(paramSplit);
 
-		String algoName = paramSplit[0];
+			String algoName = paramSplit[0];
 
-		ConfigurableMatcher cmatcher = getMatcher(algoName);
+			ConfigurableMatcher cmatcher = getMatcher(algoName);
 
-		cmatcher.configure(properties);
+			cmatcher.configure(properties);
 
-		System.out.println(properties);
+			System.out.println(properties);
 
-		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
+			ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
-		Diff diff = engine.computeDiff(tleft, tright, cmatcher, edGenerator, properties);
+			Diff diff = engine.computeDiff(tleft, tright, cmatcher, edGenerator, properties);
 
-		if (out != null) {
-			JsonObject jso = new JsonObject();
-			engine.save(builder, out, jso, diff, properties, cmatcher.getClass().getSimpleName(), "single");
-			System.out.println("Saved");
+			if (out != null) {
+				JsonObject jso = new JsonObject();
+				engine.save(builder, out, jso, diff, properties, cmatcher.getClass().getSimpleName(), "single");
+				System.out.println("Saved");
+			}
+
+			return diff;
+		} catch (Exception e) {
+			System.err.println("Error computing diff");
+			e.printStackTrace();
+			return null;
 		}
-
-		return diff;
 	}
 
 	public String[] split(String params) {
@@ -70,6 +76,7 @@ public class GTProxy {
 
 			properties.tryConfigure(ConfigurationOptions.valueOf(si), siv);
 		}
+		System.out.println("Fininsh config - ");
 		return properties;
 	}
 

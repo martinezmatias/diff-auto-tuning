@@ -8,7 +8,6 @@ import java.io.IOException;
 
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.gumtreediff.actions.Diff;
@@ -157,15 +156,6 @@ public class GTProxyTest {
 		System.out.println("response " + convertedObject.toString());
 		assertEquals(1,
 				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
-
-	}
-
-	@Test
-	@Ignore
-	public void testTPEBridge() throws Exception {
-
-		TPEEngine rp = new TPEEngine();
-		rp.computeBest(new File("ss"), new File("dd"));
 
 	}
 

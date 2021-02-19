@@ -27,6 +27,9 @@ public class ServerLauncher {
 
 	private HttpServer server = null;
 
+	private GumtreeSingleHttpHandler handlerSimple;
+	private GumtreeMultipleHttpHandler handlerMultiple;
+
 	public static void main(String[] args) throws IOException {
 
 		ServerLauncher launcher = new ServerLauncher();
@@ -37,12 +40,12 @@ public class ServerLauncher {
 
 	public boolean start() throws IOException {
 
-		GumtreeSingleHttpHandler handler = new GumtreeSingleHttpHandler();
-		GumtreeMultipleHttpHandler handlerMultiple = new GumtreeMultipleHttpHandler();
+		handlerSimple = new GumtreeSingleHttpHandler();
+		handlerMultiple = new GumtreeMultipleHttpHandler();
 
-		server = HttpServer.create(new InetSocketAddress(handler.getHost(), handler.getPort()), 0);
+		server = HttpServer.create(new InetSocketAddress(handlerSimple.getHost(), handlerSimple.getPort()), 0);
 
-		server.createContext("/" + handler.getPath(), handler);
+		server.createContext("/" + handlerSimple.getPath(), handlerSimple);
 
 		server.createContext("/" + handlerMultiple.getPath(), handlerMultiple);
 
@@ -51,7 +54,7 @@ public class ServerLauncher {
 
 		server.start();
 
-		System.out.println("Server started on port " + handler.getPort());
+		System.out.println("Server started on port " + handlerSimple.getPort());
 
 		return true;
 
@@ -89,17 +92,14 @@ public class ServerLauncher {
 	}
 
 	public JsonObject callMultiple(String param) throws IOException, InterruptedException {
-		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
 
-		return callWithHandle(param, handle);
+		return callWithHandle(param, handlerMultiple);
 
 	}
 
 	public JsonObject call(String param) throws IOException, InterruptedException {
 
-		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
-
-		return callWithHandle(param, handle);
+		return callWithHandle(param, handlerSimple);
 	}
 
 	public JsonObject initSimple(File fs, File ft) throws IOException, InterruptedException {
@@ -140,6 +140,14 @@ public class ServerLauncher {
 
 		JsonObject jsonResponse = new JsonParser().parse(res).getAsJsonObject();
 		return jsonResponse;
+	}
+
+	public GumtreeSingleHttpHandler getHandlerSimple() {
+		return handlerSimple;
+	}
+
+	public GumtreeMultipleHttpHandler getHandlerMultiple() {
+		return handlerMultiple;
 	}
 
 }
