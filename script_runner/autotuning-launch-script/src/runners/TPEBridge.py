@@ -7,8 +7,9 @@ import os
 import zipfile
 import time
 import random
-
-
+import json
+import requests as req
+import html
 propertiesPerMatcher = {}
 
 defaultConfigurations = {
@@ -68,11 +69,11 @@ def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None):
 	keyBestConfigFound_k = recreateConfigurationKey(eval)
 	print("Best config {}".format(keyBestConfigFound_k))
 
-propertiesPerMatcher["SimpleGumtree"] = ["st_minprio", "st_priority"]
-propertiesPerMatcher["ClassicGumtree"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priority"]
-propertiesPerMatcher["CompleteGumtreeMatcher"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priority"]
+propertiesPerMatcher["SimpleGumtree"] = ["st_minprio", "st_priocalc"]
+propertiesPerMatcher["ClassicGumtree"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priocalc"]
+propertiesPerMatcher["CompleteGumtreeMatcher"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priocalc"]
 propertiesPerMatcher["ChangeDistiller"] = ["cd_labsim", "cd_maxleaves","cd_structsim1",  "cd_structsim2"]
-propertiesPerMatcher["XyMatcher"] = ["st_minprio", "st_priority"]
+propertiesPerMatcher["XyMatcher"] = ["st_minprio", "st_priocalc"]
 
 
 def createSpace(algorithm = None):
@@ -80,21 +81,21 @@ def createSpace(algorithm = None):
 		{  # ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
 			'algorithm': 'SimpleGumtree',
 			"SimpleGumtree_st_minprio": hp.choice("SimpleGumtree_st_minprio", rangeMH),
-			"SimpleGumtree_st_priority": hp.choice("SimpleGumtree_st_priority", rangePriority),
+			"SimpleGumtree_st_priocalc": hp.choice("SimpleGumtree_st_priocalc", rangePriority),
 		},
 		{  # ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
 			'algorithm': 'ClassicGumtree',
 			"ClassicGumtree_bu_minsim": hp.choice("ClassicGumtree_bu_minsim", rangeGT_BUM_SMT),
 			"ClassicGumtree_bu_minsize": hp.choice("ClassicGumtree_bu_minsize", rangeGT_BUM_SZT),
 			"ClassicGumtree_st_minprio": hp.choice("ClassicGumtree_st_minprio", rangeMH),
-			"ClassicGumtree_st_priority": hp.choice("ClassicGumtree_st_priority", rangePriority),
+			"ClassicGumtree_st_priocalc": hp.choice("ClassicGumtree_st_priocalc", rangePriority),
 		},
 		{  # ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
 			'algorithm': 'CompleteGumtreeMatcher',
 			"CompleteGumtreeMatcher_bu_minsim": hp.choice("CompleteGumtreeMatcher_bu_minsim", rangeGT_BUM_SMT),
 			"CompleteGumtreeMatcher_bu_minsize": hp.choice("CompleteGumtreeMatcher_bu_minsize", rangeGT_BUM_SZT),
 			"CompleteGumtreeMatcher_st_minprio": hp.choice("CompleteGumtreeMatcher_st_minprio", rangeMH),
-			"CompleteGumtreeMatcher_st_priority": hp.choice("CompleteGumtreeMatcher_st_priority", rangePriority),
+			"CompleteGumtreeMatcher_st_priocalc": hp.choice("CompleteGumtreeMatcher_st_priocalc", rangePriority),
 		},
 		{  # ["GT_CD_LSIM", "GT_CD_ML","GT_CD_SSIM1",  "GT_CD_SSIM2"]
 			'algorithm': 'ChangeDistiller',
@@ -107,7 +108,7 @@ def createSpace(algorithm = None):
 		{
 			'algorithm': 'XyMatcher',
 			"XyMatcher_st_minprio": hp.choice("XyMatcher_st_minprio", rangeMH),
-			"XyMatcher_st_priority": hp.choice("XyMatcher_st_priority", rangePriority),
+			"XyMatcher_st_priocalc": hp.choice("XyMatcher_st_priocalc", rangePriority),
 		},
 	]
 	if algorithm is not None:
@@ -120,7 +121,7 @@ def objectiveFunctionDAT(params):
 
 	print("param {}".format(params))
 
-	print("-->{} {} {} {}".format(cp, left, right, javahome))
+	print("-->{} {}".format(cp, javahome))
 	keyConfig = recreateConfigurationKey(params)
 
 	algo = params['space']['algorithm']
@@ -130,19 +131,30 @@ def objectiveFunctionDAT(params):
 	separator = "-"
 	parameters = algo
 	for k in keys:
-		parameters += "{}{}{}{}".format(separator , k.replace(algo+"_", "") , separator, params['space'][k])
+		if "algorithm" != k:
+			parameters += "{}{}{}{}".format(separator , k.replace(algo+"_", "") , separator, params['space'][k])
 
 	print("Receiving parameters: {} ".format(parameters))
 
-	from subprocess import Popen, PIPE
 
-	process = Popen(["{}/bin/java".format(javahome), "-la", "."], stdout=PIPE)
-	(output, err) = process.communicate()
-	exit_code = process.wait()
+	connectionString = "http://{}:{}/{}?action=run&parameters={}".format(host, port, path, parameters)
+	print("Connection string: {}\n".format(connectionString))
+	resp = req.get(connectionString)
 
+
+	print("Response{}".format(resp.text))
+	##status=ok, actions=1}
+
+	responseJson = json.loads(html.unescape(str(resp.text)))
 
 	## As fmin aims at minimizing, so shortest avg is the best
-	return -1
+
+	if responseJson["status"] is 'ok':
+		fitness = int(responseJson[actions])
+		return fitness
+	else:
+
+		return 1000000
 
 
 def recreateConfigurationKey(params):
@@ -154,16 +166,19 @@ def recreateConfigurationKey(params):
 	return keyConfig
 
 ###
-print("Hello from TPE Python {} {} {}".format( sys.argv[1],  sys.argv[2], sys.argv[3]))
+print("Hello from TPE Python {} {}".format( sys.argv[1],  sys.argv[2]))
 global cp
-global left
-global right
 global javahome
+global host
+global port
+global path
+
 
 cp = sys.argv[1]
-left = sys.argv[2]
-right = sys.argv[3]
-javahome = sys.argv[4]
+javahome = sys.argv[2]
+host = sys.argv[3]
+port = sys.argv[4]
+path= sys.argv[5]
 
-print("Running TPEBridge:")
+print("Running TPEBridge: {} {} {} {} {} ".format(host, port, path, cp, javahome))
 computeHyperOpt()

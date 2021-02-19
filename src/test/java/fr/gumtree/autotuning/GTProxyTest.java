@@ -100,19 +100,23 @@ public class GTProxyTest {
 
 		param = "SimpleGumtree-st_priocalc-size-st_minprio-1";
 		convertedObject = this.launcher.call(param);
-		assertEquals(1, convertedObject.get("actions").getAsInt());
+		assertEquals(1,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 		param = "SimpleGumtree-st_priocalc-size-st_minprio-3";
 		convertedObject = this.launcher.call(param);
-		assertEquals(9, convertedObject.get("actions").getAsInt());
+		assertEquals(9,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 		param = "XyMatcher-st_priocalc-size-st_minprio-4-xy_minsim-1.0";
 		convertedObject = this.launcher.call(param);
-		assertEquals(19, convertedObject.get("actions").getAsInt());
+		assertEquals(19,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 		param = "ClassicGumtree-st_priocalc-size-bu_minsim-0.3-st_minprio-4-bu_minsize-1100";
 		convertedObject = this.launcher.call(param);
-		assertEquals(1, convertedObject.get("actions").getAsInt());
+		assertEquals(1,
+				convertedObject.get("actions").getAsJsonArray().get(0).getAsJsonObject().get("nractions").getAsInt());
 
 	}
 

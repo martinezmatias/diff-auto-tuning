@@ -2,14 +2,14 @@ package fr.gumtree.autotuning.server;
 
 import java.io.File;
 import java.io.IOException;
-import java.io.OutputStream;
 
-import org.apache.commons.lang3.StringEscapeUtils;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
 import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.tree.Tree;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.GTProxy;
@@ -34,6 +34,8 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 	String host = "localhost";
 	int port = 8001;
 	String path = "single";
+
+	String nameLeft = null;
 
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {
@@ -85,6 +87,7 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			}
 
 			try {
+				this.nameLeft = left;
 				tl = treebuilder.build(new File(left));
 
 				tr = treebuilder.build(new File(right));
@@ -118,36 +121,27 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			Diff diff = proxy.run(tl, tr, parameters, out);
 			System.out.println("Computed GumTree actions " + diff.editScript.asList().size());
 
-			handleResponse(httpExchange, "{status=ok, actions=" + diff.editScript.size() + "}");
+			/////////
+			JsonObject root = new JsonObject();
+
+			JsonArray actions = new JsonArray();
+			root.add("actions", actions);
+
+			root.addProperty("parameters", parameters);
+
+			System.out.println("run with params " + parameters);
+
+			JsonObject config = new JsonObject();
+			config.addProperty("file", this.nameLeft);
+			config.addProperty("nractions", diff.editScript.asList().size());
+			//
+			actions.add(config);
+
+			root.addProperty("status", "ok");
+			System.out.println("Output " + root.toString());
+			handleResponse(httpExchange, root.toString());
 
 		}
-	}
-
-	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
-
-		System.out.println("a: " + a++);
-		OutputStream outputStream = httpExchange.getResponseBody();
-
-		StringBuilder htmlBuilder = new StringBuilder();
-
-		htmlBuilder.append(reponse);
-
-		// encode HTML content
-
-		String htmlResponse = StringEscapeUtils.escapeHtml4(htmlBuilder.toString());
-
-		// this line is a must
-
-		// httpExchange.getResponseHeaders().set("Content-Type", "appication/json");
-
-		httpExchange.sendResponseHeaders(200, htmlResponse.length());
-
-		outputStream.write(htmlResponse.getBytes());
-
-		outputStream.flush();
-
-		outputStream.close();
-
 	}
 
 	public String getHost() {
