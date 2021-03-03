@@ -1,0 +1,30 @@
+<space>
+	<parameter name="parD" type="double" default="0.3" min="0.1"
+		max="1" range="0.2"></parameter>
+
+	<parameter name="parD2" type="double" default="0.50" min="0.1"
+		max="1" range="0.2">
+		<value>0.25</value>
+		<value>0.50</value>
+		<value>0.75</value>
+	</parameter>
+	
+	
+	<parameter name="parI" type="integer" default="5" min="1"
+		max="10" range="1"></parameter>
+		
+	<parameter name="parIv" type="integer" default="8" min="1"
+		max="10" range="1">
+		<value>2</value>
+		<value>5</value>
+		<value>8</value>
+	</parameter>
+	
+	
+	<parameter name="parS1" type="string" default="length">
+		<value>size</value>
+		<value>length</value>
+		<value>weight</value>
+	</parameter>
+	
+</space>

@@ -69,8 +69,8 @@ def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None, xse
 	)
 
 	eval = hyperopt.space_eval(search_space, best)
-	keyBestConfigFound_k = parameters = recreateParametersString(eval) #recreateConfigurationKey(eval)
-	print("Best config: {}".format(keyBestConfigFound_k))
+	keyBestConfigFound_k =  recreateParametersString(eval)
+	print("{}{}".format(header_res, keyBestConfigFound_k))
 
 
 propertiesPerMatcher["SimpleGumtree"] = ["st_minprio", "st_priocalc"]
@@ -181,6 +181,7 @@ global javahome
 global host
 global port
 global path
+global header_res
 
 
 cp = sys.argv[1]
@@ -188,6 +189,7 @@ javahome = sys.argv[2]
 host = sys.argv[3]
 port = sys.argv[4]
 path= sys.argv[5]
+header_res = sys.argv[6]
 
-print("Running TPEBridge: {} {} {} {} {} ".format(host, port, path, cp, javahome))
+print("Running TPEBridge: host {} port {} path {} cp {} javahome {} header {}".format(host, port, path, cp, javahome, header_res))
 computeHyperOpt()
