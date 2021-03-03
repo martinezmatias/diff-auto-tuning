@@ -117,17 +117,20 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 				GTProxy proxy = new GTProxy();
 
 				Diff diff = proxy.run(pair.first, pair.second, parameters, out);
-				// System.out.println("actions " + diff.editScript.asList().size());
 
-				//
-				JsonObject config = new JsonObject();
-				config.addProperty("file", this.names.get(0));
-				config.addProperty("nractions", diff.editScript.asList().size());
-				//
-				actions.add(config);
-
+				if (diff != null) {
+					JsonObject config = new JsonObject();
+					config.addProperty("file", this.names.get(0));
+					config.addProperty("nractions", diff.editScript.asList().size());
+					//
+					actions.add(config);
+				}
 			}
-			root.addProperty("status", "ok");
+
+			if (actions.size() > 0)
+				root.addProperty("status", "ok");
+			else
+				root.addProperty("status", "error");
 			System.out.println("Output " + root.toString());
 			handleResponse(httpExchange, root.toString());
 

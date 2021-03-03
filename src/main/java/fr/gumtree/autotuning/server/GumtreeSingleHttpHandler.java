@@ -119,25 +119,31 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			System.out.println("run with params " + parameters);
 			GTProxy proxy = new GTProxy();
 			Diff diff = proxy.run(tl, tr, parameters, out);
-			System.out.println("Computed GumTree actions " + diff.editScript.asList().size());
 
 			/////////
 			JsonObject root = new JsonObject();
+			if (diff != null) {
 
-			JsonArray actions = new JsonArray();
-			root.add("actions", actions);
+				System.out.println("Computed GumTree actions " + diff.editScript.asList().size());
 
-			root.addProperty("parameters", parameters);
+				JsonArray actions = new JsonArray();
+				root.add("actions", actions);
 
-			System.out.println("run with params " + parameters);
+				root.addProperty("parameters", parameters);
 
-			JsonObject config = new JsonObject();
-			config.addProperty("file", this.nameLeft);
-			config.addProperty("nractions", diff.editScript.asList().size());
-			//
-			actions.add(config);
+				System.out.println("run with params " + parameters);
 
-			root.addProperty("status", "ok");
+				JsonObject config = new JsonObject();
+				config.addProperty("file", this.nameLeft);
+				config.addProperty("nractions", diff.editScript.asList().size());
+				//
+				actions.add(config);
+
+				root.addProperty("status", "ok");
+
+			} else {
+				root.addProperty("status", "error");
+			}
 			System.out.println("Output " + root.toString());
 			handleResponse(httpExchange, root.toString());
 
