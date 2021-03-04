@@ -12,6 +12,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.sun.net.httpserver.HttpServer;
@@ -121,6 +122,24 @@ public class ServerLauncher {
 		String res = d.body();
 		System.out.println("-->" + res);
 		JsonObject responseJSon = new Gson().fromJson(res, JsonObject.class);
+		return responseJSon;
+	}
+
+	public JsonArray retrieveInfoSimple() throws IOException, InterruptedException {
+		HttpClient client = HttpClient.newHttpClient();
+
+		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
+		URI create = URI.create(
+				"http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath() + "?action=info");
+
+		System.out.println(create);
+
+		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
+		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
+
+		String res = d.body();
+		System.out.println("-->" + res);
+		JsonArray responseJSon = new Gson().fromJson(res, JsonArray.class);
 		return responseJSon;
 	}
 

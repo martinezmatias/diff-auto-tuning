@@ -1,12 +1,15 @@
 package fr.gumtree.autotuning;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 
 import org.junit.Test;
 
 import com.github.gumtreediff.actions.Diff;
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -60,5 +63,23 @@ public class TPEBridgeTest {
 
 		assertEquals(5, diff.editScript.asList().size());
 
+		JsonArray infoEvaluations = rp.launcher.retrieveInfoSimple();
+
+		System.out.println(infoEvaluations);
+		// 100 + the re- evaluation of the best
+		assertEquals(101, infoEvaluations.size());
+		boolean existMin = false;
+		for (JsonElement ieval : infoEvaluations) {
+			if (ieval.getAsJsonObject().get("status").getAsString().equals("ok")) {
+
+				int currentNrActions = ieval.getAsJsonObject().get("actions").getAsJsonArray().get(0).getAsJsonObject()
+						.get("nractions").getAsInt();
+				assertTrue(currentNrActions >= diff.editScript.asList().size());
+				if (currentNrActions == diff.editScript.asList().size())
+					existMin = true;
+			}
+
+		}
+		assertTrue(existMin);
 	}
 }

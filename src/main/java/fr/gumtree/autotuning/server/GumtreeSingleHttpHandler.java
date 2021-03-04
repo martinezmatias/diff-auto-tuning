@@ -37,6 +37,9 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	String nameLeft = null;
 
+	/**
+	 * Stores the different calls to run
+	 */
 	JsonArray cacheResults = new JsonArray();
 
 	@Override
@@ -87,7 +90,9 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			}
 
 			try {
+				// Reset the cache
 				cacheResults = new JsonArray();
+
 				this.nameLeft = left;
 				tl = treebuilder.build(new File(left));
 
@@ -152,6 +157,9 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			handleResponse(httpExchange, root.toString());
 
 		} else if (queryParams.get("action").contains("info")) {
+
+			System.out.println("Output info" + cacheResults.toString());
+			handleResponse(httpExchange, cacheResults.toString());
 
 		}
 	}
