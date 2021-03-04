@@ -88,7 +88,8 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 				cacheResults = new JsonArray();
 				createMultipleTrees(httpExchange, treebuilder, file);
 
-				handleResponse(httpExchange, "{status=ok, operation=multiplecreate, pairs=" + this.files.size() + "}");
+				handleResponse(httpExchange,
+						"{status=created, operation=multiplecreate, pairs=" + this.files.size() + "}");
 
 			} catch (Exception e) {
 				System.out.println("Error loading trees");

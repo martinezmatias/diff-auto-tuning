@@ -2,6 +2,7 @@ package fr.gumtree.autotuning;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.IOException;
 import java.io.InputStreamReader;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -45,13 +46,43 @@ public class TPEEngine {
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();
 		launcher.start();
-
+		ResponseBestParameter resultGeneral = null;
 		// Call Load
 
 		GumtreeAbstractHttpHandler handler = launcher.getHandlerSimple();
 
 		JsonObject responseJSon = launcher.initSimple(left, right);
 
+		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
+
+		launcher.stop();
+		System.out.println("End");
+
+		return resultGeneral;
+	}
+
+	public ResponseBestParameter computeBest(File dataFilePairs) throws Exception {
+
+		System.out.println("Starting server");
+		launcher = new ServerLauncher();
+		launcher.start();
+		ResponseBestParameter resultGeneral = null;
+		// Call Load
+
+		GumtreeAbstractHttpHandler handler = launcher.getHandlerMultiple();
+
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs);
+
+		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
+
+		launcher.stop();
+		System.out.println("End");
+
+		return resultGeneral;
+	}
+
+	public ResponseBestParameter processOutput(ResponseBestParameter resultGeneral, GumtreeAbstractHttpHandler handler,
+			JsonObject responseJSon) throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
 		if ("created".equals(status)) {
 
@@ -59,7 +90,7 @@ public class TPEEngine {
 			if (best != null) {
 
 				System.out.println("Checking obtaining Best: ");
-				JsonObject responseBest = launcher.call(best);
+				JsonObject responseBest = launcher.callWithHandle(best, handler);
 				System.out.println(responseBest);
 
 				JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);
@@ -88,21 +119,15 @@ public class TPEEngine {
 				double median = stats.getPercentile(50);
 				result.setMedian(median);
 
-				return result;
+				resultGeneral = result;
 
 			}
-
-			return null;
 
 		} else {
 			System.out.println("Operation unknown " + status);
 		}
 		// Stop server
-
-		launcher.stop();
-		System.out.println("End");
-
-		return null;
+		return resultGeneral;
 	}
 
 	/**

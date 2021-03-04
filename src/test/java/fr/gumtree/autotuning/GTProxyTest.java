@@ -127,7 +127,7 @@ public class GTProxyTest {
 
 		JsonObject jsonResponse = this.launcher.initMultiple(fs);
 
-		assertEquals("ok", jsonResponse.get("status").getAsString());
+		assertEquals("created", jsonResponse.get("status").getAsString());
 
 		assertEquals(1, jsonResponse.get("pairs").getAsInt());
 

@@ -83,4 +83,15 @@ public class TPEBridgeTest {
 		}
 		assertTrue(existMin);
 	}
+
+	@Test
+	public void testTPBridgeMultiple_1() throws Exception {
+
+		File fs = new File("./examples/input_multiple.txt");
+		TPEEngine rp = new TPEEngine();
+		ResponseBestParameter bestConfig = rp.computeBest(fs);
+		System.out.println(bestConfig);
+
+	}
+
 }
