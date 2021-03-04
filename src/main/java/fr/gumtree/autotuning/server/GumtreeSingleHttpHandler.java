@@ -37,6 +37,8 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	String nameLeft = null;
 
+	JsonArray cacheResults = new JsonArray();
+
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {
 
@@ -56,10 +58,8 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			} else {
 
-				if (httpExchange.getRequestURI().getPath().equals("/multiple")) {
-				} else {
-					System.err.println("Error: unknown path: " + httpExchange.getRequestURI().getPath());
-				}
+				System.err.println("Error: unknown path: " + httpExchange.getRequestURI().getPath());
+
 			}
 
 		}
@@ -87,6 +87,7 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			}
 
 			try {
+				cacheResults = new JsonArray();
 				this.nameLeft = left;
 				tl = treebuilder.build(new File(left));
 
@@ -144,8 +145,13 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 			} else {
 				root.addProperty("status", "error");
 			}
+
+			cacheResults.add(root);
+
 			System.out.println("Output " + root.toString());
 			handleResponse(httpExchange, root.toString());
+
+		} else if (queryParams.get("action").contains("info")) {
 
 		}
 	}

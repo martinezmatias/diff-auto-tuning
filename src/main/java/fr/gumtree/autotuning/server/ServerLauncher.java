@@ -103,12 +103,15 @@ public class ServerLauncher {
 	}
 
 	public JsonObject initSimple(File fs, File ft) throws IOException, InterruptedException {
+		return initSimple(fs, ft, ASTMODE.GTSPOON);
+	}
+
+	public JsonObject initSimple(File fs, File ft, ASTMODE astmode) throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newHttpClient();
 
 		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
-		URI create = URI.create(
-				"http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath() + "?action=load&model="
-						+ ASTMODE.GTSPOON + "&left=" + fs.getAbsolutePath() + "&right=" + ft.getAbsolutePath());
+		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
+				+ "?action=load&model=" + astmode + "&left=" + fs.getAbsolutePath() + "&right=" + ft.getAbsolutePath());
 
 		System.out.println(create);
 
@@ -122,12 +125,16 @@ public class ServerLauncher {
 	}
 
 	public JsonObject initMultiple(File fs) throws IOException, InterruptedException {
+		return initMultiple(fs, ASTMODE.GTSPOON);
+	}
+
+	public JsonObject initMultiple(File fs, ASTMODE astomode) throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newHttpClient();
 
 		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
 
 		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
-				+ "?action=load&model=" + ASTMODE.GTSPOON + "&file=" + fs.getAbsolutePath());
+				+ "?action=load&model=" + astomode + "&file=" + fs.getAbsolutePath());
 
 		System.out.println(create);
 
