@@ -37,11 +37,6 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	String nameLeft = null;
 
-	/**
-	 * Stores the different calls to run
-	 */
-	JsonArray cacheResults = new JsonArray();
-
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {
 

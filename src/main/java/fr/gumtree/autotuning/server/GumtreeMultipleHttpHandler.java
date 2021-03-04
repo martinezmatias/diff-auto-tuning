@@ -85,6 +85,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			try {
 				System.out.println("Creating multiples trees: ");
+				cacheResults = new JsonArray();
 				createMultipleTrees(httpExchange, treebuilder, file);
 
 				handleResponse(httpExchange, "{status=ok, operation=multiplecreate, pairs=" + this.files.size() + "}");
@@ -131,8 +132,15 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 				root.addProperty("status", "ok");
 			else
 				root.addProperty("status", "error");
+
+			cacheResults.add(root);
 			System.out.println("Output " + root.toString());
 			handleResponse(httpExchange, root.toString());
+
+		} else if (queryParams.get("action").contains("info")) {
+
+			System.out.println("Output info" + cacheResults.toString());
+			handleResponse(httpExchange, cacheResults.toString());
 
 		}
 	}

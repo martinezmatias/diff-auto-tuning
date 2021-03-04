@@ -22,7 +22,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 public class TPEBridgeTest {
 
 	@Test
-	public void testTPEBridge_1() throws Exception {
+	public void testTPEBridge_Simple_1() throws Exception {
 
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
@@ -38,7 +38,7 @@ public class TPEBridgeTest {
 	}
 
 	@Test
-	public void testTPEBridge_2() throws Exception {
+	public void testTPEBridge_Simple_2() throws Exception {
 
 		File fs = new File(
 				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
@@ -72,6 +72,7 @@ public class TPEBridgeTest {
 		for (JsonElement ieval : infoEvaluations) {
 			if (ieval.getAsJsonObject().get("status").getAsString().equals("ok")) {
 
+				assertEquals(1, ieval.getAsJsonObject().get("actions").getAsJsonArray());
 				int currentNrActions = ieval.getAsJsonObject().get("actions").getAsJsonArray().get(0).getAsJsonObject()
 						.get("nractions").getAsInt();
 				assertTrue(currentNrActions >= diff.editScript.asList().size());

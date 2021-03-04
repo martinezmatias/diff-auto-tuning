@@ -126,9 +126,23 @@ public class ServerLauncher {
 	}
 
 	public JsonArray retrieveInfoSimple() throws IOException, InterruptedException {
-		HttpClient client = HttpClient.newHttpClient();
 
 		GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
+
+		return retrieveInfo(handle);
+	}
+
+	public JsonArray retrieveInfoMultiple() throws IOException, InterruptedException {
+
+		GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
+
+		return retrieveInfo(handle);
+	}
+
+	public JsonArray retrieveInfo(GumtreeAbstractHttpHandler handle) throws IOException, InterruptedException {
+		HttpClient client = HttpClient.newHttpClient();
+
+		// GumtreeSingleHttpHandler handle = new GumtreeSingleHttpHandler();
 		URI create = URI.create(
 				"http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath() + "?action=info");
 

@@ -3,6 +3,7 @@ package fr.gumtree.autotuning.server;
 import java.io.IOException;
 import java.io.OutputStream;
 
+import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
@@ -18,6 +19,11 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 	public abstract int getPort();
 
 	public abstract String getPath();
+
+	/**
+	 * Stores the different calls to run
+	 */
+	JsonArray cacheResults = new JsonArray();
 
 	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
 
