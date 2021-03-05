@@ -12,6 +12,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import fr.gumtree.autotuning.TuningEngine.ASTMODE;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
@@ -42,16 +43,19 @@ public class TPEEngine {
 	}
 
 	public ResponseBestParameter computeBest(File left, File right) throws Exception {
+		return computeBest(left, right, ASTMODE.GTSPOON);
+	}
+
+	public ResponseBestParameter computeBest(File left, File right, ASTMODE astmode) throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
-		// Call Load
 
 		GumtreeAbstractHttpHandler handler = launcher.getHandlerSimple();
 
-		JsonObject responseJSon = launcher.initSimple(left, right);
+		JsonObject responseJSon = launcher.initSimple(left, right, astmode);
 
 		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
 
@@ -62,16 +66,19 @@ public class TPEEngine {
 	}
 
 	public ResponseBestParameter computeBest(File dataFilePairs) throws Exception {
+		return computeBest(dataFilePairs, ASTMODE.GTSPOON);
+	}
+
+	public ResponseBestParameter computeBest(File dataFilePairs, ASTMODE astmode) throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
-		// Call Load
 
 		GumtreeAbstractHttpHandler handler = launcher.getHandlerMultiple();
 
-		JsonObject responseJSon = launcher.initMultiple(dataFilePairs);
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode);
 
 		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
 

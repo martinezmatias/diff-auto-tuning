@@ -92,6 +92,20 @@ public class TPEBridgeTest {
 		ResponseBestParameter bestConfig = rp.computeBest(fs);
 		System.out.println(bestConfig);
 
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+	}
+
+	@Test
+	public void testTPBridgeMultiple_2() throws Exception {
+
+		File fs = new File("./examples/input_multiple2.txt");
+		TPEEngine rp = new TPEEngine();
+		ResponseBestParameter bestConfig = rp.computeBest(fs);
+		System.out.println(bestConfig);
+
+		assertEquals(2, bestConfig.getNumberOfEvaluatedPairs());
+
 	}
 
 }
