@@ -109,7 +109,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			System.out.println("\n**run with params " + parameters);
 			System.out.println("--current analyzed in cache: " + this.cacheResults.size());
 			for (int i = 0; i < this.files.size(); i++) {
-				System.out.println("running " + i + 1 + "/" + this.files.size());
+				System.out.println("running " + (i + 1) + "/" + this.files.size());
 				Pair<Tree, Tree> pair = files.get(i);
 
 				File out = null;

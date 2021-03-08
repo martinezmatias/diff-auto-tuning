@@ -1,5 +1,7 @@
 package fr.gumtree.autotuning.entity;
 
+import com.google.gson.JsonArray;
+
 /**
  * 
  * @author Matias Martinez
@@ -10,6 +12,7 @@ public class ResponseBestParameter {
 	String best;
 	int numberOfEvaluatedPairs;
 	double median;
+	JsonArray infoEvaluations;
 
 	@Override
 	public String toString() {
@@ -39,5 +42,13 @@ public class ResponseBestParameter {
 
 	public void setMedian(double median) {
 		this.median = median;
+	}
+
+	public JsonArray getInfoEvaluations() {
+		return infoEvaluations;
+	}
+
+	public void setInfoEvaluations(JsonArray infoEvaluations) {
+		this.infoEvaluations = infoEvaluations;
 	}
 }

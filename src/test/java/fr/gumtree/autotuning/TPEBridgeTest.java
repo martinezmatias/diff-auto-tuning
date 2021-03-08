@@ -47,6 +47,9 @@ public class TPEBridgeTest {
 
 		TPEEngine rp = new TPEEngine();
 		ResponseBestParameter bestConfig = rp.computeBest(fs, ft);
+
+		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
 		assertEquals("CompleteGumtreeMatcher-bu_minsim-1.0-bu_minsize-1500-st_minprio-1-st_priocalc-size",
 				bestConfig.getBest());
 
@@ -63,8 +66,6 @@ public class TPEBridgeTest {
 
 		assertEquals(5, diff.editScript.asList().size());
 
-		JsonArray infoEvaluations = rp.launcher.retrieveInfoSimple();
-
 		System.out.println(infoEvaluations);
 		// 100 + the re- evaluation of the best
 		assertEquals(101, infoEvaluations.size());
@@ -72,9 +73,9 @@ public class TPEBridgeTest {
 		for (JsonElement ieval : infoEvaluations) {
 			if (ieval.getAsJsonObject().get("status").getAsString().equals("ok")) {
 
-				assertEquals(1, ieval.getAsJsonObject().get("actions").getAsJsonArray());
-				int currentNrActions = ieval.getAsJsonObject().get("actions").getAsJsonArray().get(0).getAsJsonObject()
-						.get("nractions").getAsInt();
+				JsonArray asJsonArray = ieval.getAsJsonObject().get("actions").getAsJsonArray();
+				assertEquals(1, asJsonArray.size());
+				int currentNrActions = asJsonArray.get(0).getAsJsonObject().get("nractions").getAsInt();
 				assertTrue(currentNrActions >= diff.editScript.asList().size());
 				if (currentNrActions == diff.editScript.asList().size())
 					existMin = true;
@@ -102,9 +103,39 @@ public class TPEBridgeTest {
 		File fs = new File("./examples/input_multiple2.txt");
 		TPEEngine rp = new TPEEngine();
 		ResponseBestParameter bestConfig = rp.computeBest(fs);
+
+		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
 		System.out.println(bestConfig);
 
 		assertEquals(2, bestConfig.getNumberOfEvaluatedPairs());
+		assertEquals(3.0d, bestConfig.getMedian(), 0.001);
+
+		assertEquals("CompleteGumtreeMatcher-bu_minsim-1.0-bu_minsize-1500-st_minprio-1-st_priocalc-size",
+				bestConfig.getBest());
+
+		// {"actions":[{"file":"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java","nractions":1},{"file":"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java","nractions":5}],"parameters":"CompleteGumtreeMatcher-bu_minsim-1.0-bu_minsize-1500-st_minprio-1-st_priocalc-size","status":"ok"}
+
+		System.out.println(infoEvaluations);
+		// 100 + the re- evaluation of the best
+		assertEquals(101, infoEvaluations.size());
+		boolean existMin = false;
+		for (JsonElement ieval : infoEvaluations) {
+			if (ieval.getAsJsonObject().get("status").getAsString().equals("ok")) {
+
+				JsonArray asJsonArray = ieval.getAsJsonObject().get("actions").getAsJsonArray();
+				assertEquals(2, asJsonArray.size());
+				int currentNrActions = 0;
+
+				for (JsonElement jsonElement : asJsonArray) {
+					currentNrActions += jsonElement.getAsJsonObject().get("nractions").getAsInt();
+				}
+				if (currentNrActions == 6) // 5 + 1
+					existMin = true;
+			}
+
+		}
+		assertTrue(existMin);
 
 	}
 

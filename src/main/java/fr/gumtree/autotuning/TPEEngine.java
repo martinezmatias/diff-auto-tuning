@@ -59,8 +59,12 @@ public class TPEEngine {
 
 		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
 
+		JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
+		if (resultGeneral != null)
+			resultGeneral.setInfoEvaluations(infoEvaluations);
+
 		launcher.stop();
-		System.out.println("End");
+		System.out.println("End Simple");
 
 		return resultGeneral;
 	}
@@ -82,8 +86,12 @@ public class TPEEngine {
 
 		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
 
+		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
+		if (resultGeneral != null)
+			resultGeneral.setInfoEvaluations(infoEvaluations);
+
 		launcher.stop();
-		System.out.println("End");
+		System.out.println("End Multiple");
 
 		return resultGeneral;
 	}
