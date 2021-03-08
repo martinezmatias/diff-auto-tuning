@@ -14,7 +14,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.GTProxy;
 import fr.gumtree.autotuning.ITreeBuilder;
-import fr.gumtree.autotuning.TuningEngine.ASTMODE;
+import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 

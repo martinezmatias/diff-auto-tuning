@@ -51,7 +51,8 @@ public class NodeCreator extends CtInheritanceScanner {
 		modifiers1.addAll(m.getModifiers());
 
 		for (ModifierKind kind : modifiers1) {
-			Tree modifier = builder.createNode("Modifier", kind.toString());
+			// TODO: I added the kind of the modifier in the type
+			Tree modifier = builder.createNode("Modifier_" + kind.toString(), kind.toString());
 			modifiers.addChild(modifier);
 			// We wrap the modifier (which is not a ctelement)
 			modifier.setMetadata(SpoonGumTreeBuilder.SPOON_OBJECT, new CtWrapper(kind, m));

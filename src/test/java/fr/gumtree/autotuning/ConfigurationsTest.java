@@ -57,7 +57,7 @@ public class ConfigurationsTest {
 
 		// Cartesian
 
-		TuningEngine engine = new TuningEngine();
+		ExhaustiveEngine engine = new ExhaustiveEngine();
 
 		List<GumtreeProperties> combinations = engine.computeCartesianProduct(domains);
 
@@ -125,7 +125,7 @@ public class ConfigurationsTest {
 		domains.add(doubleDomainSMT);
 		domains.add(categoricalDomain);
 
-		TuningEngine engine = new TuningEngine();
+		ExhaustiveEngine engine = new ExhaustiveEngine();
 		List<GumtreeProperties> combinations = engine.computeCartesianProduct(domains);
 
 		assertEquals(30, combinations.size());

@@ -4,7 +4,7 @@ import java.io.File;
 
 import com.github.gumtreediff.tree.Tree;
 
-import fr.gumtree.autotuning.TuningEngine.ASTMODE;
+import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 
 public interface ITreeBuilder {
 

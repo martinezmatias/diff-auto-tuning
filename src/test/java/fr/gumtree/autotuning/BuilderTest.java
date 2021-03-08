@@ -31,7 +31,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";
@@ -58,7 +58,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";
@@ -86,7 +86,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java";
@@ -114,7 +114,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905/FlowControlService/1_0a664d752c4b0e5a7fb6f06d005181a0c9dc2905_FlowControlService_s.java";
@@ -146,7 +146,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java";
@@ -176,7 +176,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";
@@ -208,7 +208,7 @@ public class BuilderTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";

@@ -13,7 +13,7 @@ import org.junit.Test;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
 
-import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
+import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
@@ -28,7 +28,7 @@ public class CaseExecutionTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		String commitId = "831e3b0420e70f7c2695cb248dd8b488b1fd84b7";
 
@@ -51,7 +51,7 @@ public class CaseExecutionTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		String commitId = "02f3fd442349d4e7fdfc9c31a82bb1638db8495e";
 
@@ -66,7 +66,7 @@ public class CaseExecutionTest {
 		System.out.println(result);
 
 		Integer nrActions = (Integer) result.getResultByMatcher().values().stream().findFirst().get()
-				.getAlldiffresults().get(0).get(TuningEngine.NRACTIONS);
+				.getAlldiffresults().get(0).get(Constants.NRACTIONS);
 		assertTrue(nrActions > 0);
 
 	}
@@ -76,7 +76,7 @@ public class CaseExecutionTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		String commitId = "02f3fd442349d4e7fdfc9c31a82bb1638db8495e";
 
@@ -91,11 +91,11 @@ public class CaseExecutionTest {
 		SingleDiffResult singleDiffResult = result.getResultByMatcher().values().stream().findFirst().get()
 				.getAlldiffresults().get(0);
 
-		Integer nrActions = (Integer) singleDiffResult.get(TuningEngine.NRACTIONS);
+		Integer nrActions = (Integer) singleDiffResult.get(Constants.NRACTIONS);
 		assertTrue(nrActions > 0);
 
-		Map<String, Object> properties = reader
-				.toGumtreePropertyToMap((GumtreeProperties) singleDiffResult.get(TuningEngine.CONFIG));
+		Map<String, Object> properties = GTProxy
+				.toGumtreePropertyToMap((GumtreeProperties) singleDiffResult.get(Constants.CONFIG));
 		assertNotNull(properties);
 		assertTrue(properties.size() > 0);
 
@@ -108,8 +108,8 @@ public class CaseExecutionTest {
 
 		SingleDiffResult resultSimpleDiff = resultMatcherSimple.getAlldiffresults().get(0);
 
-		Map<String, Object> propertiesSimple = reader
-				.toGumtreePropertyToMap((GumtreeProperties) resultSimpleDiff.get(TuningEngine.CONFIG));
+		Map<String, Object> propertiesSimple = GTProxy
+				.toGumtreePropertyToMap((GumtreeProperties) resultSimpleDiff.get(Constants.CONFIG));
 
 		System.out.println(propertiesSimple);
 		assertEquals(2, propertiesSimple.keySet().size());
@@ -124,7 +124,7 @@ public class CaseExecutionTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
@@ -140,13 +140,13 @@ public class CaseExecutionTest {
 		SingleDiffResult singleDiffResult = result.getResultByMatcher().values().stream().findFirst().get()
 				.getAlldiffresults().get(0);
 
-		Integer nrActions = (Integer) singleDiffResult.get(TuningEngine.NRACTIONS);
+		Integer nrActions = (Integer) singleDiffResult.get(Constants.NRACTIONS);
 		assertTrue(nrActions > 0);
 
 		assertTrue(singleDiffResult.getDiff().editScript.asList().size() > 0);
 
-		Map<String, Object> properties = reader
-				.toGumtreePropertyToMap((GumtreeProperties) singleDiffResult.get(TuningEngine.CONFIG));
+		Map<String, Object> properties = GTProxy
+				.toGumtreePropertyToMap((GumtreeProperties) singleDiffResult.get(Constants.CONFIG));
 		assertNotNull(properties);
 		assertTrue(properties.size() > 0);
 
@@ -162,7 +162,7 @@ public class CaseExecutionTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		String commitId = "0a664d752c4b0e5a7fb6f06d005181a0c9dc2905";
 

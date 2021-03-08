@@ -19,7 +19,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.GTProxy;
 import fr.gumtree.autotuning.ITreeBuilder;
-import fr.gumtree.autotuning.TuningEngine.ASTMODE;
+import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
@@ -30,8 +30,8 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  */
 public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
-	List<Pair<Tree, Tree>> files = new ArrayList();
-	List<String> names = new ArrayList();
+	List<Pair<Tree, Tree>> files = new ArrayList<>();
+	List<String> names = new ArrayList<>();
 
 	String host = "localhost";
 	int port = 8001;

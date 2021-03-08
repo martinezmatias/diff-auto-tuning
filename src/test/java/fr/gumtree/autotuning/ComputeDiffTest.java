@@ -31,7 +31,7 @@ public class ComputeDiffTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		String fl = rootMegadiff.getAbsolutePath()
 				+ "/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java";
@@ -133,7 +133,7 @@ public class ComputeDiffTest {
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
 				.asList();
@@ -163,7 +163,7 @@ public class ComputeDiffTest {
 		lc = new String(Files.readAllBytes(new File(fr).toPath()));
 		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
@@ -272,7 +272,7 @@ public class ComputeDiffTest {
 		lc = new String(Files.readAllBytes(new File(fr).toPath()));
 		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
@@ -336,7 +336,7 @@ public class ComputeDiffTest {
 		lc = new String(Files.readAllBytes(new File(fr).toPath()));
 		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
@@ -401,7 +401,7 @@ public class ComputeDiffTest {
 		lc = new String(Files.readAllBytes(new File(fr).toPath()));
 		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
@@ -464,7 +464,7 @@ public class ComputeDiffTest {
 		lc = new String(Files.readAllBytes(new File(fr).toPath()));
 		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
 
-		TuningEngine engine = new TuningEngine();
+		GTProxy engine = new GTProxy();
 
 		// CompositeMatchers.ClassicGumtree matcher = new
 		// CompositeMatchers.ClassicGumtree();

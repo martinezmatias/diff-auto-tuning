@@ -23,28 +23,15 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
-import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.actions.EditScript;
-import com.github.gumtreediff.actions.EditScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.actions.model.Delete;
-import com.github.gumtreediff.actions.model.Insert;
-import com.github.gumtreediff.actions.model.Move;
-import com.github.gumtreediff.actions.model.TreeDelete;
-import com.github.gumtreediff.actions.model.TreeInsert;
-import com.github.gumtreediff.actions.model.Update;
 import com.github.gumtreediff.matchers.CompositeMatchers;
-import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
-import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.CaseResult;
@@ -57,35 +44,9 @@ import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
  * @author Matias Martinez
  *
  */
-public class TuningEngine {
-	// TODO: CHange to enum
-	public static final String NR_TREEDELETE = "NR_TREEDELETE";
-	public static final String NR_TREEINSERT = "NR_TREEINSERT";
-	public static final String NR_MOVE = "NR_MOVE";
-	public static final String NR_UPDATE = "NR_UPDATE";
-	public static final String NR_DELETE = "NR_DELETE";
-	public static final String NR_INSERT = "NR_INSERT";
-	public static final String CONFIGS = "r";
-	public static final String MATCHER = "MATCHER";
-	public static final String TIME_MATCHER_ALL_CONFIGS = "TIME_MATCHER_ALL_CONFIGS";
-	public static final String MATCHERS = "MATCHERS";
-	public static final String TRIGHT = "TRIGHT";
-	public static final String TLEFT = "TLEFT";
-	public static final String CONFIG = "CONFIG";
-	public static final String TIME = "TIME";
-	public static final String NRROOTS = "NRROOTS";
-	public static final String NRACTIONS = "NRACTIONS";
-	public static final String STRUCTHASH = "STRUCTHASH";
-	public static final String HEIGHT = "HEIGHT";
-	public static final String SIZE = "SIZE";
-	public static final String MEGADIFFSET = "MEGADIFFSET";
-	public static final String COMMIT = "COMMIT";
-	public static final String FILE = "FILE";
-	public static final String TIMEOUT = "TIMEOUT";
+public class ExhaustiveEngine {
 
-	// TIMES:
-	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
-	public static final String TIME_TREES_PARSING = "TIME_TREES_PARSING";
+	GTProxy gumtreeproxy = new GTProxy();
 
 //	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
 
@@ -120,11 +81,11 @@ public class TuningEngine {
 	 */
 	private int nrThreads = 10;
 
-	private boolean overwriteresults = false;
+	private boolean overwriteresults = true;
 
 	Map<String, List<GumtreeProperties>> cacheCombinations = new HashMap<String, List<GumtreeProperties>>();
 
-	public TuningEngine() {
+	public ExhaustiveEngine() {
 		super();
 		// Not necessary here
 		// initCacheCombinationProperties();
@@ -375,57 +336,13 @@ public class TuningEngine {
 				JsonObject jso = new JsonObject();
 				jso.addProperty("matcher", mr.getMatcherName());
 
-				GumtreeProperties gttp = (GumtreeProperties) sd.get(CONFIG);
+				GumtreeProperties gttp = (GumtreeProperties) sd.get(Constants.CONFIG);
 
-				save(builder, outResults, jso, sd.getDiff(), gttp, mr.getMatcherName());
+				// save(builder, outResults, jso, sd.getDiff(), gttp, mr.getMatcherName());
 			}
 
 		}
 
-	}
-
-	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
-			String maattcher) {
-
-		save(builder, outResults, jso, diff, gttp, maattcher, "exhaustive");
-	}
-
-	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
-			String maattcher, String key) {
-		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
-
-		String fileKey = "";
-		for (String pKey : propertiesMap.keySet()) {
-
-			String value = propertiesMap.get(pKey).toString();
-			jso.addProperty(pKey, value);
-
-			String separator = "-";
-			if (!fileKey.isEmpty())
-				fileKey += separator;
-			else {
-				fileKey += maattcher + separator;
-			}
-			fileKey += pKey + separator + value;
-
-		}
-		System.out.println(fileKey);
-
-		JsonElement js = builder.build(null, null, diff, jso);
-
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(js);
-
-		try {
-			FileWriter fwriter = new FileWriter(new File(outResults + File.separator + key + "_" + fileKey + ".json"));
-
-			fwriter.write(json);
-			fwriter.flush();
-			fwriter.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 	}
 
 	/**
@@ -581,8 +498,8 @@ public class TuningEngine {
 			for (GumtreeProperties GumtreeProperties : combinations) {
 
 				SingleDiffResult notFinishedConfig = new SingleDiffResult();
-				notFinishedConfig.put(TIMEOUT, errortype.ordinal() + 1);
-				notFinishedConfig.put(CONFIG, GumtreeProperties);
+				notFinishedConfig.put(Constants.TIMEOUT, errortype.ordinal() + 1);
+				notFinishedConfig.put(Constants.CONFIG, GumtreeProperties);
 
 				alldiffresults.add(notFinishedConfig);
 
@@ -630,7 +547,7 @@ public class TuningEngine {
 		if (!parallel) {
 			for (GumtreeProperties aGumtreeProperties : combinations) {
 
-				SingleDiffResult resDiff = runDiff(tl, tr, matcher, aGumtreeProperties);
+				SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
 				alldiffresults.add(resDiff);
 
@@ -728,7 +645,7 @@ public class TuningEngine {
 		@Override
 		public SingleDiffResult call() throws Exception {
 
-			return runDiff(tl, tr,
+			return gumtreeproxy.runDiff(tl, tr,
 					// TODO: Workaround: we cannot used the same instance of a matcher to match in
 					// parallel two diffs
 					matcher.getClass().newInstance()
@@ -773,13 +690,13 @@ public class TuningEngine {
 				else {
 
 					SingleDiffResult notFinishedConfig = new SingleDiffResult();
-					notFinishedConfig.put(TIMEOUT, "true");
+					notFinishedConfig.put(Constants.TIMEOUT, "true");
 
 					int indexFuture = result.indexOf(e);
 					if (indexFuture >= 0) {
 						// Store the properties of the future not finished
 						DiffCallable icallable = callables.get(indexFuture);
-						notFinishedConfig.put(CONFIG, icallable.aGumtreeProperties);
+						notFinishedConfig.put(Constants.CONFIG, icallable.aGumtreeProperties);
 
 					}
 
@@ -791,63 +708,6 @@ public class TuningEngine {
 				return null;
 			}
 		}).collect(Collectors.toList());
-	}
-
-	/**
-	 * Computes the diff given a matcher and property.
-	 * 
-	 * @param tl
-	 * @param tr
-	 * @param matcher
-	 * @param aGumtreeProperties
-	 * @return
-	 */
-	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
-		long initSingleDiff = new Date().getTime();
-		SingleDiffResult resultDiff = new SingleDiffResult();
-
-		// Calling directly to GT.core
-		Diff diff = computeDiff(tl, tr, matcher, aGumtreeProperties);
-		List<Action> actionsAll = diff.editScript.asList();
-
-		long endSingleDiff = new Date().getTime();
-
-		resultDiff.put(NRACTIONS, actionsAll.size());
-		resultDiff.put(NR_INSERT, actionsAll.stream().filter(e -> e instanceof Insert).count());
-		resultDiff.put(NR_DELETE, actionsAll.stream().filter(e -> e instanceof Delete).count());
-		resultDiff.put(NR_UPDATE, actionsAll.stream().filter(e -> e instanceof Update).count());
-		resultDiff.put(NR_MOVE, actionsAll.stream().filter(e -> e instanceof Move).count());
-		resultDiff.put(NR_TREEINSERT, actionsAll.stream().filter(e -> e instanceof TreeInsert).count());
-		resultDiff.put(NR_TREEDELETE, actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
-		resultDiff.put(TIME, (endSingleDiff - initSingleDiff));
-
-		resultDiff.put(CONFIG, aGumtreeProperties);
-
-		resultDiff.setDiff(diff);
-
-		return resultDiff;
-
-	}
-
-	public Diff computeDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties properies) {
-
-		return computeDiff(tl, tr, matcher, new ChawatheScriptGenerator(), properies);
-	}
-
-	public Diff computeDiff(Tree tl, Tree tr, Matcher matcher, EditScriptGenerator edGenerator,
-			GumtreeProperties properies) {
-
-		CompositeMatcher cm = (CompositeMatcher) matcher;
-		cm.configure(properies);
-
-		MappingStore mappings = matcher.match(tl, tr);
-
-		EditScript actions = edGenerator.computeActions(mappings);
-
-		Diff diff = new Diff(null, null, mappings, actions);
-
-		// List<Action> actionsAll = actions.asList();
-		return diff;
 	}
 
 	public List<GumtreeProperties> computeCartesianProduct(List<ParameterDomain> domains) {
@@ -935,9 +795,10 @@ public class TuningEngine {
 				if (config == null)
 					continue;
 
-				GumtreeProperties gtp = (config.containsKey(CONFIG)) ? (GumtreeProperties) config.get(CONFIG)
+				GumtreeProperties gtp = (config.containsKey(Constants.CONFIG))
+						? (GumtreeProperties) config.get(Constants.CONFIG)
 						: new GumtreeProperties();
-				if (config.get(TIMEOUT) != null) {
+				if (config.get(Constants.TIMEOUT) != null) {
 
 					row = xmatcher + sep;
 
@@ -958,46 +819,46 @@ public class TuningEngine {
 					row += "" + sep;
 
 					// TIMEout
-					row += config.get(TIMEOUT) + sep;
+					row += config.get(Constants.TIMEOUT) + sep;
 
 				} else {
 
 					row = xmatcher + sep;
 
-					row += config.get(NRACTIONS) + sep;
+					row += config.get(Constants.NRACTIONS) + sep;
 
-					row += config.get(NRROOTS) + sep;
-
-					//
-					row += config.get(NR_INSERT) + sep;
-					row += config.get(NR_DELETE) + sep;
-					row += config.get(NR_UPDATE) + sep;
-					row += config.get(NR_MOVE) + sep;
-					row += config.get(NR_TREEINSERT) + sep;
-					row += config.get(NR_TREEDELETE) + sep;
+					row += config.get(Constants.NRROOTS) + sep;
 
 					//
-					row += config.get(TIME) + sep;
+					row += config.get(Constants.NR_INSERT) + sep;
+					row += config.get(Constants.NR_DELETE) + sep;
+					row += config.get(Constants.NR_UPDATE) + sep;
+					row += config.get(Constants.NR_MOVE) + sep;
+					row += config.get(Constants.NR_TREEINSERT) + sep;
+					row += config.get(Constants.NR_TREEDELETE) + sep;
+
+					//
+					row += config.get(Constants.TIME) + sep;
 
 					row += 0 + sep;// gtp.getProperties().keySet().size()
 					// TIMEout
 					row += "0" + sep;
 				}
 				if (first) {
-					header += MATCHER + sep;
-					header += NRACTIONS + sep;
-					header += NRROOTS + sep;
+					header += Constants.MATCHER + sep;
+					header += Constants.NRACTIONS + sep;
+					header += Constants.NRROOTS + sep;
 
-					header += NR_INSERT + sep;
-					header += NR_DELETE + sep;
-					header += NR_UPDATE + sep;
-					header += NR_MOVE + sep;
-					header += NR_TREEINSERT + sep;
-					header += NR_TREEDELETE + sep;
+					header += Constants.NR_INSERT + sep;
+					header += Constants.NR_DELETE + sep;
+					header += Constants.NR_UPDATE + sep;
+					header += Constants.NR_MOVE + sep;
+					header += Constants.NR_TREEINSERT + sep;
+					header += Constants.NR_TREEDELETE + sep;
 
-					header += TIME + sep;
+					header += Constants.TIME + sep;
 					header += "NROPTIONS" + sep;
-					header += TIMEOUT + sep;
+					header += Constants.TIMEOUT + sep;
 
 				}
 
@@ -1030,17 +891,17 @@ public class TuningEngine {
 
 	public JsonObject extractTreeFeatures(Tree tl) {
 		JsonObject thFeatures = new JsonObject();
-		thFeatures.addProperty(SIZE, tl.getMetrics().size);
-		thFeatures.addProperty(HEIGHT, tl.getMetrics().height);
-		thFeatures.addProperty(STRUCTHASH, tl.getMetrics().structureHash);
+		thFeatures.addProperty(Constants.SIZE, tl.getMetrics().size);
+		thFeatures.addProperty(Constants.HEIGHT, tl.getMetrics().height);
+		thFeatures.addProperty(Constants.STRUCTHASH, tl.getMetrics().structureHash);
 		return thFeatures;
 	}
 
 	public Map<String, Object> extractTreeFeaturesMap(Tree tl) {
 		Map<String, Object> fileresult = new HashMap<>();
-		fileresult.put(SIZE, tl.getMetrics().size);
-		fileresult.put(HEIGHT, tl.getMetrics().height);
-		fileresult.put(STRUCTHASH, tl.getMetrics().structureHash);
+		fileresult.put(Constants.SIZE, tl.getMetrics().size);
+		fileresult.put(Constants.HEIGHT, tl.getMetrics().height);
+		fileresult.put(Constants.STRUCTHASH, tl.getMetrics().structureHash);
 		return fileresult;
 	}
 
@@ -1049,9 +910,9 @@ public class TuningEngine {
 
 		String sep = ",";
 		String endline = "\n";
-		String header = "DIFFID" + sep + "L_" + SIZE + sep + "L_" + HEIGHT + sep + "L_" + STRUCTHASH + sep + "R_" + SIZE
-				+ sep + "R_" + HEIGHT + sep + "R_" + STRUCTHASH + sep + TIME_TREES_PARSING + sep
-				+ TIME_ALL_MATCHER_DIFF;
+		String header = "DIFFID" + sep + "L_" + Constants.SIZE + sep + "L_" + Constants.HEIGHT + sep + "L_"
+				+ Constants.STRUCTHASH + sep + "R_" + Constants.SIZE + sep + "R_" + Constants.HEIGHT + sep + "R_"
+				+ Constants.STRUCTHASH + sep + Constants.TIME_TREES_PARSING + sep + Constants.TIME_ALL_MATCHER_DIFF;
 
 		for (Matcher matcher : allMatchers) {
 			header += (sep + matcher.getClass().getSimpleName());
@@ -1071,12 +932,12 @@ public class TuningEngine {
 
 			Pair<Map, Map> t = treeProperties.get(id);
 			row += id + sep;
-			row += t.first.get(SIZE) + sep;
-			row += t.first.get(HEIGHT) + sep;
-			row += t.first.get(STRUCTHASH) + sep;
-			row += t.second.get(SIZE) + sep;
-			row += t.second.get(HEIGHT) + sep;
-			row += t.second.get(STRUCTHASH) + sep;
+			row += t.first.get(Constants.SIZE) + sep;
+			row += t.first.get(Constants.HEIGHT) + sep;
+			row += t.first.get(Constants.STRUCTHASH) + sep;
+			row += t.second.get(Constants.SIZE) + sep;
+			row += t.second.get(Constants.HEIGHT) + sep;
+			row += t.second.get(Constants.STRUCTHASH) + sep;
 
 			// Times:
 
@@ -1125,20 +986,6 @@ public class TuningEngine {
 
 	public void setOverwriteResults(boolean overrideResults) {
 		this.overwriteresults = overrideResults;
-	}
-
-	public Map<String, Object> toGumtreePropertyToMap(GumtreeProperties properties) {
-		Map<String, Object> propMap = new HashMap<>();
-
-		for (ConfigurationOptions option : ConfigurationOptions.values()) {
-			Object value = properties.get(option);
-			if (value != null) {
-				propMap.put(option.name(), value);
-
-			}
-		}
-
-		return propMap;
 	}
 
 }

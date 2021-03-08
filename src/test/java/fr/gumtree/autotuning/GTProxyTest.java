@@ -1,6 +1,7 @@
 package fr.gumtree.autotuning;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -10,11 +11,15 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 
+import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.Diff;
+import com.github.gumtreediff.matchers.CompositeMatchers;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.tree.Tree;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.server.ServerLauncher;
+import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 /**
@@ -38,6 +43,154 @@ public class GTProxyTest {
 		System.out.println("Shut down server");
 		launcher.stop();
 		System.out.println("End");
+	}
+
+	/// Users/matias/develop/gt-tuning/git-code-gpgt/./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java
+	/// Users/matias/develop/gt-tuning/git-code-gpgt/./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java
+
+	@Test
+	public void testProxy1_Passing_Clic() throws Exception {
+		GTProxy proxy = new GTProxy();
+
+		File fs = new File(
+				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
+		File ft = new File(
+				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
+
+		ITreeBuilder treebuilder = null;
+
+		treebuilder = new SpoonTreeBuilder();
+
+		Tree tl = treebuilder.build((fs));
+
+		Tree tr = treebuilder.build((ft));
+
+		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.CompleteGumtreeMatcher(),
+				new ChawatheScriptGenerator(), null);
+
+		assertNotNull(d1);
+
+		System.out.println("" + d1.editScript.asList());
+
+		assertTrue(d1.editScript.size() > 0);
+
+	}
+
+	@Test
+	public void testProxy2_Passing_Clic() throws Exception {
+		GTProxy proxy = new GTProxy();
+
+		File fs = new File(
+				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
+		File ft = new File(
+				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
+
+		ITreeBuilder treebuilder = null;
+
+		treebuilder = new SpoonTreeBuilder();
+
+		Tree tl = treebuilder.build((fs));
+
+		Tree tr = treebuilder.build((ft));
+
+		Diff d1 = proxy.run(tl, tr,
+				"CompleteGumtreeMatcher-st_priocalc-size-bu_minsim-0.1-st_minprio-2-bu_minsize-100");
+
+		assertNotNull(d1);
+
+		System.out.println("" + d1.editScript.asList());
+
+		assertTrue(d1.editScript.size() > 0);
+
+	}
+
+	// 1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance
+
+	@Test
+	public void testProxy2_NPE_Clic_Acquaintance() throws Exception {
+		GTProxy proxy = new GTProxy();
+
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_t.java");
+
+		ITreeBuilder treebuilder = null;
+
+		treebuilder = new SpoonTreeBuilder();
+
+		Tree tl = treebuilder.build((fs));
+
+		Tree tr = treebuilder.build((ft));
+
+		Diff d1 = proxy.run(tl, tr,
+				"CompleteGumtreeMatcher-st_priocalc-size-bu_minsim-0.1-st_minprio-2-bu_minsize-100");
+
+		assertNotNull(d1);
+
+		System.out.println("" + d1.editScript.asList());
+
+		assertTrue(d1.editScript.size() > 0);
+		// CompleteGumtreeMatcher_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
+		// bu_minsize=100
+	}
+
+	@Test
+	public void testProxy3_PASSING_Clic_Acquaintance_Spoon() throws Exception {
+		GTProxy proxy = new GTProxy();
+
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_t.java");
+
+		ITreeBuilder treebuilder = null;
+
+		treebuilder = new SpoonTreeBuilder();
+
+		Tree tl = treebuilder.build((fs));
+
+		Tree tr = treebuilder.build((ft));
+
+		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.CompleteGumtreeMatcher(),
+				new ChawatheScriptGenerator(), null);
+
+		assertNotNull(d1);
+
+		System.out.println("" + d1.editScript.asList());
+
+		assertTrue(d1.editScript.size() > 0);
+		// CompleteGumtreeMatcher_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
+		// bu_minsize=100
+	}
+
+	@Test
+	public void testProxy3_NPE_Clic_Acquaintance_JDT() throws Exception {
+		GTProxy proxy = new GTProxy();
+
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_t.java");
+
+		ITreeBuilder treebuilder = null;
+
+		treebuilder = new JDTTreeBuilder();
+
+		Tree tl = treebuilder.build((fs));
+
+		Tree tr = treebuilder.build((ft));
+
+		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.CompleteGumtreeMatcher(),
+				new ChawatheScriptGenerator(), null);
+
+		assertNotNull(d1);
+
+		System.out.println("" + d1.editScript.asList());
+
+		assertTrue(d1.editScript.size() > 0);
+		// CompleteGumtreeMatcher_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
+		// bu_minsize=100
 	}
 
 	@Test

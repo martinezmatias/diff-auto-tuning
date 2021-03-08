@@ -17,7 +17,7 @@ import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
 
-import fr.gumtree.autotuning.TuningEngine.PARALLEL_EXECUTION;
+import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
@@ -33,7 +33,7 @@ public class EngineTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		boolean parallel = true;
 		// Let's try with sets between 1 and 20
@@ -50,7 +50,7 @@ public class EngineTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		boolean parallel = true;
 		// Let's try with set 1
@@ -62,13 +62,30 @@ public class EngineTest {
 
 	}
 
+	@Test
+	public void testNavigate_SingleDiff_macher() throws IOException {
+
+		assertTrue(rootMegadiff.exists());
+
+		ExhaustiveEngine reader = new ExhaustiveEngine();
+
+		boolean parallel = true;
+		// Let's try with set 1
+		int[] megadiff_ids = new int[] { 1 };
+		// let's simply try 1 diff per group
+		int limitDiffPerGroup = 1;
+		reader.navigateMegaDiffAllMatchers(treeBuilder, "./out/", rootMegadiff, megadiff_ids, 0, limitDiffPerGroup,
+				PARALLEL_EXECUTION.MATCHER_LEVEL);
+
+	}
+
 	@SuppressWarnings("deprecation")
 	@Test
 	public void testNavigate_CompareTimeouts() throws IOException {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		String commitId = // "014af81101851b42c4c8b6216225c55d9d0b7ff3";//
 				"025055b307b6ef358d5153c7b50a1740e2b17f35";
@@ -166,8 +183,8 @@ public class EngineTest {
 			List<SingleDiffResult> configs = propertiesOfMatcher.getAlldiffresults();
 			for (SingleDiffResult config : configs) {
 
-				if (config != null && config.get(TuningEngine.TIME) != null)
-					time += new Long(config.get(TuningEngine.TIME).toString());
+				if (config != null && config.get(Constants.TIME) != null)
+					time += new Long(config.get(Constants.TIME).toString());
 				total += 1;
 			}
 
@@ -181,7 +198,7 @@ public class EngineTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		boolean parallel = true;
 		// Let's try with set 1
@@ -198,7 +215,7 @@ public class EngineTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 		reader.setTimeOutSeconds(0);
 
 		// Let's try with set 1
@@ -215,7 +232,7 @@ public class EngineTest {
 
 		assertTrue(rootMegadiff.exists());
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 		reader.setTimeOutSeconds(10);
 
 		// Let's try with set 1
@@ -235,7 +252,7 @@ public class EngineTest {
 		File t = new File(rootMegadiff.getAbsoluteFile()
 				+ "/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
 
-		TuningEngine reader = new TuningEngine();
+		ExhaustiveEngine reader = new ExhaustiveEngine();
 
 		CaseResult caseResult = reader.analyzeCase(treeBuilder, "1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL, new HashMap<String, Pair<Map, Map>>(), reader.getMatchers());
