@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
+import fr.gumtree.autotuning.experiment_runner.MegadiffRunner;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import picocli.CommandLine;
@@ -130,7 +131,8 @@ public class Main implements Callable<Integer> {
 		ExhaustiveEngine engine = new ExhaustiveEngine();
 		engine.setTimeOutSeconds(timeout);
 		engine.setNrThreads(nrthreads);
-		engine.setOverwriteResults(overwriteresults);
+		MegadiffRunner megadiff = new MegadiffRunner(engine);
+		// engine.setOverwriteResults(overwriteresults);
 
 		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
 
@@ -145,8 +147,8 @@ public class Main implements Callable<Integer> {
 		}
 
 		// We store the results of the execution
-		this.resultsExecution = engine.navigateMegaDiff(treebuilder, out, pathMegadiff, subsets, begin, stop, execution,
-				this.matchers);
+		this.resultsExecution = megadiff.navigateMegaDiff(treebuilder, out, pathMegadiff, subsets, begin, stop,
+				execution, this.matchers);
 
 		System.out.println("-END-");
 		return null;
