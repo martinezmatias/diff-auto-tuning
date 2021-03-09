@@ -12,6 +12,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 /**

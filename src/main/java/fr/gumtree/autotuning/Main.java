@@ -9,6 +9,7 @@ import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.experiment_runner.MegadiffRunner;
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import picocli.CommandLine;

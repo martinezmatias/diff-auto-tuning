@@ -6,7 +6,6 @@ import java.nio.file.Files;
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.tree.Tree;
 
-import fr.gumtree.autotuning.ITreeBuilder;
 import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 
 public class JDTTreeBuilder implements ITreeBuilder {

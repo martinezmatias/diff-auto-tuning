@@ -19,6 +19,7 @@ import com.github.gumtreediff.tree.Tree;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.server.ServerLauncher;
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 

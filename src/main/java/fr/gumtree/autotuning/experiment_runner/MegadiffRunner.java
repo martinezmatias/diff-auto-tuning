@@ -16,8 +16,8 @@ import com.github.gumtreediff.utils.Pair;
 
 import fr.gumtree.autotuning.ExhaustiveEngine;
 import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
-import fr.gumtree.autotuning.ITreeBuilder;
 import fr.gumtree.autotuning.entity.CaseResult;
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 
 /**
  * 
