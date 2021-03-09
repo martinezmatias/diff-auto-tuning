@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.searchengines;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -12,8 +12,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
 

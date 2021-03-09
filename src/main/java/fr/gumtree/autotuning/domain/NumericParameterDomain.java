@@ -1,7 +1,5 @@
 package fr.gumtree.autotuning.domain;
 
-import fr.gumtree.autotuning.ParameterDomain;
-
 /**
  * 
  * @author Matias Martinez

@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.gumtree;
 
 import java.io.File;
 import java.io.FileWriter;
@@ -31,6 +31,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import fr.gumtree.autotuning.Constants;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 

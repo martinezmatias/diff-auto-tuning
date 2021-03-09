@@ -23,6 +23,8 @@ import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 
+import fr.gumtree.autotuning.outils.ResultVisualizer;
+
 public class VisualDiffTest {
 
 	final File rootMegadiff = new File("./examples/");

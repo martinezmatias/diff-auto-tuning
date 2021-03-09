@@ -8,6 +8,9 @@ import java.util.List;
 
 import org.junit.Test;
 
+import fr.gumtree.autotuning.domain.ParameterDomain;
+import fr.gumtree.autotuning.outils.LoadSpecification;
+
 public class LoadSpecificationTest {
 
 	@Test
@@ -18,7 +21,7 @@ public class LoadSpecificationTest {
 		List<ParameterDomain> dd = ls.retrieveParameters(spec1);
 		assertEquals(5, dd.size());
 
-		ParameterDomain p1 = dd.stream().filter(e -> e.id.equals("parD")).findFirst().get();
+		ParameterDomain p1 = dd.stream().filter(e -> e.getId().equals("parD")).findFirst().get();
 		assertNotNull(p1);
 
 		assertEquals(5, p1.computeInterval().length);
@@ -30,7 +33,7 @@ public class LoadSpecificationTest {
 		assertEquals(0.3, p1.getDefaultValue());
 
 		// Values
-		ParameterDomain p2 = dd.stream().filter(e -> e.id.equals("parD2")).findFirst().get();
+		ParameterDomain p2 = dd.stream().filter(e -> e.getId().equals("parD2")).findFirst().get();
 		assertNotNull(p2);
 
 		assertEquals(3, p2.computeInterval().length);
@@ -42,7 +45,7 @@ public class LoadSpecificationTest {
 		assertEquals(0.5, p2.getDefaultValue());
 
 		//
-		ParameterDomain pi1 = dd.stream().filter(e -> e.id.equals("parI")).findFirst().get();
+		ParameterDomain pi1 = dd.stream().filter(e -> e.getId().equals("parI")).findFirst().get();
 		assertNotNull(pi1);
 
 		assertEquals(10, pi1.computeInterval().length);
@@ -54,7 +57,7 @@ public class LoadSpecificationTest {
 		assertEquals(5, pi1.getDefaultValue());
 
 		//
-		ParameterDomain piv = dd.stream().filter(e -> e.id.equals("parIv")).findFirst().get();
+		ParameterDomain piv = dd.stream().filter(e -> e.getId().equals("parIv")).findFirst().get();
 		assertNotNull(piv);
 
 		assertEquals(3, piv.computeInterval().length);
@@ -66,7 +69,7 @@ public class LoadSpecificationTest {
 		assertEquals(8, piv.getDefaultValue());
 
 		//
-		ParameterDomain ps = dd.stream().filter(e -> e.id.equals("parS1")).findFirst().get();
+		ParameterDomain ps = dd.stream().filter(e -> e.getId().equals("parS1")).findFirst().get();
 		assertNotNull(ps);
 
 		assertEquals(3, ps.computeInterval().length);

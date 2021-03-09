@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning.experiment_runner;
+package fr.gumtree.autotuning.experimentrunner;
 
 import java.io.File;
 import java.io.FileNotFoundException;
@@ -14,9 +14,9 @@ import java.util.Map;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
 
-import fr.gumtree.autotuning.ExhaustiveEngine;
-import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 
 /**

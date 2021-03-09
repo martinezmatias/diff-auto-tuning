@@ -20,6 +20,7 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.tree.Tree;
 
+import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 public class ComputeDiffTest {

@@ -12,8 +12,8 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
-import fr.gumtree.autotuning.GTProxy;
-import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
+import fr.gumtree.autotuning.gumtree.GTProxy;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.ASTMODE;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;

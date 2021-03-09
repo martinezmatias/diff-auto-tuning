@@ -14,6 +14,9 @@ import com.github.gumtreediff.matchers.GumtreeProperties;
 import fr.gumtree.autotuning.domain.CategoricalParameterDomain;
 import fr.gumtree.autotuning.domain.DoubleParameterDomain;
 import fr.gumtree.autotuning.domain.IntParameterDomain;
+import fr.gumtree.autotuning.domain.ParameterDomain;
+import fr.gumtree.autotuning.gumtree.ParametersResolvers;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 
 /**
  * 
@@ -88,9 +91,9 @@ public class ConfigurationsTest {
 		ParameterDomain<String> option = (ParameterDomain<String>) ParametersResolvers.parametersDomain
 				.get(ConfigurationOptions.st_priocalc);
 
-		assertEquals(2, option.interval.length);
-		assertEquals("size", option.interval[0]);
-		assertEquals("height", option.interval[1]);
+		assertEquals(2, option.getInterval().length);
+		assertEquals("size", option.getInterval()[0]);
+		assertEquals("height", option.getInterval()[1]);
 		String[] result = option.computeInterval();
 
 		assertEquals(2, result.length);
@@ -103,10 +106,10 @@ public class ConfigurationsTest {
 		ParameterDomain<String> categoricalDomain = new CategoricalParameterDomain(
 				ConfigurationOptions.cd_labsim.toString(), String.class, "one", new String[] { "one", "two", "many" });
 
-		assertEquals(3, categoricalDomain.interval.length);
-		assertEquals("one", categoricalDomain.interval[0]);
-		assertEquals("two", categoricalDomain.interval[1]);
-		assertEquals("many", categoricalDomain.interval[2]);
+		assertEquals(3, categoricalDomain.getInterval().length);
+		assertEquals("one", categoricalDomain.getInterval()[0]);
+		assertEquals("two", categoricalDomain.getInterval()[1]);
+		assertEquals("many", categoricalDomain.getInterval()[2]);
 		String[] result = categoricalDomain.computeInterval();
 
 		assertEquals(3, result.length);

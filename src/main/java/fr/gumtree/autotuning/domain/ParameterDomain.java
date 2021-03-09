@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.domain;
 
 /**
  * 
@@ -53,6 +53,14 @@ public class ParameterDomain<T> {
 
 	public void setDefaultValue(T defaultValue) {
 		this.defaultValue = defaultValue;
+	}
+
+	public T[] getInterval() {
+		return interval;
+	}
+
+	public void setInterval(T[] interval) {
+		this.interval = interval;
 	}
 
 }

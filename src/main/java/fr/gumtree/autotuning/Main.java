@@ -5,10 +5,11 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.Callable;
 
-import fr.gumtree.autotuning.ExhaustiveEngine.ASTMODE;
-import fr.gumtree.autotuning.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.entity.CaseResult;
-import fr.gumtree.autotuning.experiment_runner.MegadiffRunner;
+import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.ASTMODE;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;

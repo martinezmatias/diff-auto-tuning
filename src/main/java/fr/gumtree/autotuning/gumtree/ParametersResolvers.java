@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.gumtree;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -8,6 +8,7 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
 import fr.gumtree.autotuning.domain.CategoricalParameterDomain;
 import fr.gumtree.autotuning.domain.DoubleParameterDomain;
 import fr.gumtree.autotuning.domain.IntParameterDomain;
+import fr.gumtree.autotuning.domain.ParameterDomain;
 
 public class ParametersResolvers {
 

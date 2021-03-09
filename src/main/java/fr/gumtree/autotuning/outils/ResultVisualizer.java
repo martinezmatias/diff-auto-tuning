@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.outils;
 
 import java.io.File;
 import java.io.FileWriter;

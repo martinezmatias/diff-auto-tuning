@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.outils;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -15,6 +15,7 @@ import org.w3c.dom.NodeList;
 import fr.gumtree.autotuning.domain.CategoricalParameterDomain;
 import fr.gumtree.autotuning.domain.DoubleParameterDomain;
 import fr.gumtree.autotuning.domain.IntParameterDomain;
+import fr.gumtree.autotuning.domain.ParameterDomain;
 
 /**
  * 
