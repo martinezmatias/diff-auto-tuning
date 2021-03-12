@@ -31,8 +31,8 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
-import fr.gumtree.autotuning.Constants;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 public class GTProxy {

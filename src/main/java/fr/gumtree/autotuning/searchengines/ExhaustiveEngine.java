@@ -31,13 +31,13 @@ import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
-import fr.gumtree.autotuning.Constants;
 import fr.gumtree.autotuning.domain.ParameterDomain;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
+import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 

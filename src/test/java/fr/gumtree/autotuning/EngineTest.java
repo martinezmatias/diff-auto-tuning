@@ -21,6 +21,7 @@ import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
+import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;

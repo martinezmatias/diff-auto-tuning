@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.outils;
 
 public class Constants {
 	// TODO: CHange to enum
