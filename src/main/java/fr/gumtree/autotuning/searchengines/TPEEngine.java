@@ -14,6 +14,7 @@ import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
 
@@ -43,10 +44,11 @@ public class TPEEngine implements SearchMethod {
 	}
 
 	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		return computeBestLocal(left, right, ASTMODE.GTSPOON);
+		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionConfiguration());
 	}
 
-	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode) throws Exception {
+	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
+			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();
@@ -70,10 +72,11 @@ public class TPEEngine implements SearchMethod {
 	}
 
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
-		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON);
+		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionConfiguration());
 	}
 
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode) throws Exception {
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
+			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();

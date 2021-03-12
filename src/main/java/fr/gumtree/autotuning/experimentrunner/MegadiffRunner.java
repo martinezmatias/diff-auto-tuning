@@ -14,15 +14,22 @@ import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
+import com.github.gumtreediff.actions.EditScript;
+import com.github.gumtreediff.actions.model.Action;
+import com.github.gumtreediff.matchers.ConfigurationOptions;
+import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
+import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
+import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
+import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
  * 
@@ -90,7 +97,7 @@ public class MegadiffRunner {
 	 */
 	public List<CaseResult> navigateMegaDiff(ITreeBuilder treeBuilder, String out, File path, int[] subsets, int begin,
 			int stop, PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
-		tuningEngine.initCacheCombinationProperties();
+		// tuningEngine.initCacheCombinationProperties();
 
 		System.out.println("Execution mode " + parallel);
 
@@ -172,7 +179,7 @@ public class MegadiffRunner {
 					// Saving in files
 					outResults.getParentFile().mkdirs();
 
-					tuningEngine.executionResultToCSV(outResults, fileResult);
+					this.executionResultToCSV(outResults, fileResult);
 
 					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
 							+ "_id_" + diffId + "_" + treeBuilder.modelType().name() + ".csv");
@@ -215,7 +222,7 @@ public class MegadiffRunner {
 
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
-		CaseResult fileResult = tuningEngine.runSingleOnPairOfFiles(treeBuilder, out, subset, parallel, previousVersion,
+		CaseResult fileResult = this.runSingleOnPairOfFiles(treeBuilder, out, subset, parallel, previousVersion,
 				postVersion, diffId);
 
 		// add the data specific to megadiff.
@@ -312,4 +319,199 @@ public class MegadiffRunner {
 
 	}
 
+	public CaseResult runSingleOnPairOfFiles(ITreeBuilder treeBuilder, String out, int subset,
+			PARALLEL_EXECUTION parallel, File previousVersion, File postVersion, String diffId) throws IOException {
+		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
+
+		long initTime = (new Date()).getTime();
+
+		CaseResult fileResult = this.tuningEngine.analyzeCase(treeBuilder, diffId, previousVersion, postVersion,
+				parallel, treeProperties, this.tuningEngine.allMatchers);
+
+		fileResult.setFileName(postVersion.getName());
+
+		File outResults = new File(out + diffId + ".csv");
+
+		executionResultToCSV(outResults, fileResult);
+
+		File outdir = new File(out + File.separator + diffId + File.separator + "scripts");
+		outdir.mkdirs();
+
+		executionResultToUnifiedDiff(outdir, fileResult);
+
+		long endTime = (new Date()).getTime();
+
+		System.out.println("Time " + (endTime - initTime) / 1000);
+
+		// File treeFile = new File(out + File.separator + subset + File.separator +
+		// "metaInfo_nr_" + nrCommit + "_id_"
+		// + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
+		// metadataToCSV(treeFile, treeProperties, fileResult);
+		return fileResult;
+	}
+
+	/**
+	 * Store the data in a csv file
+	 * 
+	 * @param out
+	 * @param fileresult
+	 * @param astmodel
+	 * @throws IOException
+	 */
+	public void executionResultToCSV(File out, CaseResult fileresult) throws IOException {
+
+		String sep = ",";
+		String endline = "\n";
+		String header = "";
+
+		Collection<MatcherResult> matchers = fileresult.getResultByMatcher().values();
+
+		if (matchers == null) {
+			System.err.println("Problems when saving results: No matchers for identifier " + out.getName());
+			return;
+		}
+
+		String row = "";
+		boolean first = true;
+		FileWriter fw = new FileWriter(out);
+		for (MatcherResult map : matchers) {
+
+			if (map == null || map.getMatcher() == null) {
+				System.out.println("No matcher in results ");
+				continue;
+			}
+
+			String xmatcher = map.getMatcherName().toString();
+
+			List<SingleDiffResult> configs = (List<SingleDiffResult>) map.getAlldiffresults();
+			for (Map<String, Object> config : configs) {
+				// re-init the row
+
+				if (config == null)
+					continue;
+
+				GumtreeProperties gtp = (config.containsKey(Constants.CONFIG))
+						? (GumtreeProperties) config.get(Constants.CONFIG)
+						: new GumtreeProperties();
+				if (config.get(Constants.TIMEOUT) != null) {
+
+					row = xmatcher + sep;
+
+					row += "" + sep;
+
+					row += "" + sep;
+
+					//
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					row += "" + sep;
+					//
+					row += "" + sep;
+
+					row += "" + sep;
+
+					// TIMEout
+					row += config.get(Constants.TIMEOUT) + sep;
+
+				} else {
+
+					row = xmatcher + sep;
+
+					row += config.get(Constants.NRACTIONS) + sep;
+
+					row += config.get(Constants.NRROOTS) + sep;
+
+					//
+					row += config.get(Constants.NR_INSERT) + sep;
+					row += config.get(Constants.NR_DELETE) + sep;
+					row += config.get(Constants.NR_UPDATE) + sep;
+					row += config.get(Constants.NR_MOVE) + sep;
+					row += config.get(Constants.NR_TREEINSERT) + sep;
+					row += config.get(Constants.NR_TREEDELETE) + sep;
+
+					//
+					row += config.get(Constants.TIME) + sep;
+
+					row += 0 + sep;// gtp.getProperties().keySet().size()
+					// TIMEout
+					row += "0" + sep;
+				}
+				if (first) {
+					header += Constants.MATCHER + sep;
+					header += Constants.NRACTIONS + sep;
+					header += Constants.NRROOTS + sep;
+
+					header += Constants.NR_INSERT + sep;
+					header += Constants.NR_DELETE + sep;
+					header += Constants.NR_UPDATE + sep;
+					header += Constants.NR_MOVE + sep;
+					header += Constants.NR_TREEINSERT + sep;
+					header += Constants.NR_TREEDELETE + sep;
+
+					header += Constants.TIME + sep;
+					header += "NROPTIONS" + sep;
+					header += Constants.TIMEOUT + sep;
+
+				}
+
+				for (ConfigurationOptions confOption : ConfigurationOptions.values()) {
+					if (first) {
+						header += confOption.name() + sep;
+
+					}
+					row += ((gtp.get(confOption) != null) ? gtp.get(confOption) : "") + sep;
+
+				}
+
+				if (first) {
+					header += endline;
+					first = false;
+					fw.write(header);
+				}
+
+				row += endline;
+				fw.write(row);
+				fw.flush();
+			}
+
+		}
+
+		fw.close();
+		System.out.println("Saved file " + out.getAbsolutePath());
+
+	}
+
+	private void executionResultToUnifiedDiff(File outResults, CaseResult fileResult) {
+		TreeDiffFormatBuilder builder = new TreeDiffFormatBuilder(false, false);
+
+		for (MatcherResult mr : fileResult.getResultByMatcher().values()) {
+
+			for (SingleDiffResult sd : mr.getAlldiffresults()) {
+
+				EditScript ed = new EditScript();
+
+				List<Action> actions = sd.getDiff().editScript.asList();
+				if (actions == null) {
+					System.out.println("empty actions");
+					continue;
+				}
+
+				for (Action ac : actions) {
+					ed.add(ac);
+				}
+
+				JsonObject jso = new JsonObject();
+				jso.addProperty("matcher", mr.getMatcherName());
+
+				GumtreeProperties gttp = (GumtreeProperties) sd.get(Constants.CONFIG);
+
+				// save(builder, outResults, jso, sd.getDiff(), gttp, mr.getMatcherName());
+			}
+
+		}
+
+	}
 }

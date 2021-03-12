@@ -4,6 +4,7 @@ import java.io.File;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 
 public interface SearchMethod {
 
@@ -26,21 +27,23 @@ public interface SearchMethod {
 	 * @return
 	 * @throws Exception
 	 */
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode) throws Exception;
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
+			ExecutionConfiguration configuration) throws Exception;
 
 	/**
-	 * Compute the best from a pair of files. It does local searhc
+	 * Compute the best from a pair of files. It does local search
 	 * 
 	 * @throws Exception
 	 */
 	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception;
 
 	/**
-	 * Compute the best from a pair of files. It does local searhc
+	 * Compute the best from a pair of files. It does local search
 	 * 
 	 * @param dataFilePairs
 	 * @return
 	 * @throws Exception
 	 */
-	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode) throws Exception;
+	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
+			ExecutionConfiguration configuration) throws Exception;
 }

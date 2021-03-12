@@ -1,10 +1,7 @@
 package fr.gumtree.autotuning.searchengines;
 
 import java.io.File;
-import java.io.FileWriter;
-import java.io.IOException;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -19,8 +16,6 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
-import com.github.gumtreediff.actions.EditScript;
-import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
@@ -36,11 +31,11 @@ import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
-import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
  * 
@@ -93,68 +88,6 @@ public class ExhaustiveEngine implements SearchMethod {
 			this.cacheCombinations.put(matcher.getClass().getCanonicalName(), allCombinations);
 
 		}
-	}
-
-	public CaseResult runSingleOnPairOfFiles(ITreeBuilder treeBuilder, String out, int subset,
-			PARALLEL_EXECUTION parallel, File previousVersion, File postVersion, String diffId) throws IOException {
-		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
-
-		long initTime = (new Date()).getTime();
-
-		CaseResult fileResult = analyzeCase(treeBuilder, diffId, previousVersion, postVersion, parallel, treeProperties,
-				allMatchers);
-
-		fileResult.setFileName(postVersion.getName());
-
-		File outResults = new File(out + diffId + ".csv");
-
-		executionResultToCSV(outResults, fileResult);
-
-		File outdir = new File(out + File.separator + diffId + File.separator + "scripts");
-		outdir.mkdirs();
-
-		executionResultToUnifiedDiff(outdir, fileResult);
-
-		long endTime = (new Date()).getTime();
-
-		System.out.println("Time " + (endTime - initTime) / 1000);
-
-		// File treeFile = new File(out + File.separator + subset + File.separator +
-		// "metaInfo_nr_" + nrCommit + "_id_"
-		// + diffId + "_" + this.treeBuilder.modelType().name() + ".csv");
-		// metadataToCSV(treeFile, treeProperties, fileResult);
-		return fileResult;
-	}
-
-	private void executionResultToUnifiedDiff(File outResults, CaseResult fileResult) {
-		TreeDiffFormatBuilder builder = new TreeDiffFormatBuilder(false, false);
-
-		for (MatcherResult mr : fileResult.getResultByMatcher().values()) {
-
-			for (SingleDiffResult sd : mr.getAlldiffresults()) {
-
-				EditScript ed = new EditScript();
-
-				List<Action> actions = sd.getDiff().editScript.asList();
-				if (actions == null) {
-					System.out.println("empty actions");
-					continue;
-				}
-
-				for (Action ac : actions) {
-					ed.add(ac);
-				}
-
-				JsonObject jso = new JsonObject();
-				jso.addProperty("matcher", mr.getMatcherName());
-
-				GumtreeProperties gttp = (GumtreeProperties) sd.get(Constants.CONFIG);
-
-				// save(builder, outResults, jso, sd.getDiff(), gttp, mr.getMatcherName());
-			}
-
-		}
-
 	}
 
 	/**
@@ -218,7 +151,8 @@ public class ExhaustiveEngine implements SearchMethod {
 	 * @param matchers
 	 * @return
 	 */
-	public CaseResult analyzeDiffByPropertyParallel(Tree tl, Tree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
+	private CaseResult analyzeDiffByPropertyParallel(Tree tl, Tree tr, PARALLEL_EXECUTION parallel,
+			Matcher[] matchers) {
 
 		CaseResult resultsForCase = new CaseResult();
 
@@ -237,7 +171,7 @@ public class ExhaustiveEngine implements SearchMethod {
 		return resultsForCase;
 	}
 
-	public CaseResult analyzeDiffByMatcherThread(Tree tl, Tree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
+	private CaseResult analyzeDiffByMatcherThread(Tree tl, Tree tr, PARALLEL_EXECUTION parallel, Matcher[] matchers) {
 		// List<MatcherResult> matcherResults = new ArrayList<>();
 
 		CaseResult fileResult = new CaseResult();
@@ -289,7 +223,7 @@ public class ExhaustiveEngine implements SearchMethod {
 		TIMEOUT, EXCEPTION
 	}
 
-	public MatcherResult returnEmptyResult(Matcher[] matchers, List<Future<MatcherResult>> result,
+	protected MatcherResult returnEmptyResult(Matcher[] matchers, List<Future<MatcherResult>> result,
 			Future<MatcherResult> e, ERROR_TYPE errortype) {
 		MatcherResult resultFromCancelled = new MatcherResult();
 
@@ -329,7 +263,8 @@ public class ExhaustiveEngine implements SearchMethod {
 	 * @param parallel
 	 * @return
 	 */
-	public MatcherResult runSingleMatcherMultipleConfigurations(Tree tl, Tree tr, Matcher matcher, boolean parallel) {
+	protected MatcherResult runSingleMatcherMultipleConfigurations(Tree tl, Tree tr, Matcher matcher,
+			boolean parallel) {
 		long initMatcher = (new Date()).getTime();
 		List<GumtreeProperties> combinations = null;
 
@@ -391,13 +326,13 @@ public class ExhaustiveEngine implements SearchMethod {
 
 	public List<GumtreeProperties> getPropertiesCombinations(Matcher matcher) {
 
-		if (this.cacheCombinations.isEmpty()) {
+		if (this.cacheCombinations == null || this.cacheCombinations.isEmpty()) {
 			this.initCacheCombinationProperties();
 		}
 		return this.cacheCombinations.get(matcher.getClass().getCanonicalName());
 	}
 
-	public List<GumtreeProperties> computesCombinations(Matcher matcher) {
+	protected List<GumtreeProperties> computesCombinations(Matcher matcher) {
 		List<GumtreeProperties> combinations;
 		ConfigurableMatcher configurableMatcher = (ConfigurableMatcher) matcher;
 
@@ -480,8 +415,8 @@ public class ExhaustiveEngine implements SearchMethod {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<SingleDiffResult> runInParallelMultipleConfigurations(int nrThreads, Tree tl, Tree tr, Matcher matcher,
-			List<GumtreeProperties> combinations, long timeoutSeconds) throws Exception {
+	protected List<SingleDiffResult> runInParallelMultipleConfigurations(int nrThreads, Tree tl, Tree tr,
+			Matcher matcher, List<GumtreeProperties> combinations, long timeoutSeconds) throws Exception {
 
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
@@ -551,14 +486,6 @@ public class ExhaustiveEngine implements SearchMethod {
 		return ret;
 	}
 
-	protected String calculatePathName(File fileModif, File parentFile) {
-		return
-		// The folder with the file name
-		fileModif.getAbsolutePath() + File.separator + (parentFile.getName() + "_")
-		// File name
-				+ fileModif.getName();
-	}
-
 	public Matcher[] getMatchers() {
 		return allMatchers;
 	}
@@ -568,140 +495,12 @@ public class ExhaustiveEngine implements SearchMethod {
 	}
 
 	/**
-	 * Store the data in a csv file
+	 * TODO: to remove??
 	 * 
-	 * @param out
-	 * @param fileresult
-	 * @param astmodel
-	 * @throws IOException
+	 * @param tl
+	 * @return
 	 */
-	public void executionResultToCSV(File out, CaseResult fileresult) throws IOException {
-
-		String sep = ",";
-		String endline = "\n";
-		String header = "";
-
-		Collection<MatcherResult> matchers = fileresult.getResultByMatcher().values();
-
-		if (matchers == null) {
-			System.err.println("Problems when saving results: No matchers for identifier " + out.getName());
-			return;
-		}
-
-		String row = "";
-		boolean first = true;
-		FileWriter fw = new FileWriter(out);
-		for (MatcherResult map : matchers) {
-
-			if (map == null || map.getMatcher() == null) {
-				System.out.println("No matcher in results ");
-				continue;
-			}
-
-			String xmatcher = map.getMatcherName().toString();
-
-			List<SingleDiffResult> configs = (List<SingleDiffResult>) map.getAlldiffresults();
-			for (Map<String, Object> config : configs) {
-				// re-init the row
-
-				if (config == null)
-					continue;
-
-				GumtreeProperties gtp = (config.containsKey(Constants.CONFIG))
-						? (GumtreeProperties) config.get(Constants.CONFIG)
-						: new GumtreeProperties();
-				if (config.get(Constants.TIMEOUT) != null) {
-
-					row = xmatcher + sep;
-
-					row += "" + sep;
-
-					row += "" + sep;
-
-					//
-					row += "" + sep;
-					row += "" + sep;
-					row += "" + sep;
-					row += "" + sep;
-					row += "" + sep;
-					row += "" + sep;
-					//
-					row += "" + sep;
-
-					row += "" + sep;
-
-					// TIMEout
-					row += config.get(Constants.TIMEOUT) + sep;
-
-				} else {
-
-					row = xmatcher + sep;
-
-					row += config.get(Constants.NRACTIONS) + sep;
-
-					row += config.get(Constants.NRROOTS) + sep;
-
-					//
-					row += config.get(Constants.NR_INSERT) + sep;
-					row += config.get(Constants.NR_DELETE) + sep;
-					row += config.get(Constants.NR_UPDATE) + sep;
-					row += config.get(Constants.NR_MOVE) + sep;
-					row += config.get(Constants.NR_TREEINSERT) + sep;
-					row += config.get(Constants.NR_TREEDELETE) + sep;
-
-					//
-					row += config.get(Constants.TIME) + sep;
-
-					row += 0 + sep;// gtp.getProperties().keySet().size()
-					// TIMEout
-					row += "0" + sep;
-				}
-				if (first) {
-					header += Constants.MATCHER + sep;
-					header += Constants.NRACTIONS + sep;
-					header += Constants.NRROOTS + sep;
-
-					header += Constants.NR_INSERT + sep;
-					header += Constants.NR_DELETE + sep;
-					header += Constants.NR_UPDATE + sep;
-					header += Constants.NR_MOVE + sep;
-					header += Constants.NR_TREEINSERT + sep;
-					header += Constants.NR_TREEDELETE + sep;
-
-					header += Constants.TIME + sep;
-					header += "NROPTIONS" + sep;
-					header += Constants.TIMEOUT + sep;
-
-				}
-
-				for (ConfigurationOptions confOption : ConfigurationOptions.values()) {
-					if (first) {
-						header += confOption.name() + sep;
-
-					}
-					row += ((gtp.get(confOption) != null) ? gtp.get(confOption) : "") + sep;
-
-				}
-
-				if (first) {
-					header += endline;
-					first = false;
-					fw.write(header);
-				}
-
-				row += endline;
-				fw.write(row);
-				fw.flush();
-			}
-
-		}
-
-		fw.close();
-		System.out.println("Saved file " + out.getAbsolutePath());
-
-	}
-
-	public JsonObject extractTreeFeatures(Tree tl) {
+	protected JsonObject extractTreeFeatures(Tree tl) {
 		JsonObject thFeatures = new JsonObject();
 		thFeatures.addProperty(Constants.SIZE, tl.getMetrics().size);
 		thFeatures.addProperty(Constants.HEIGHT, tl.getMetrics().height);
@@ -709,7 +508,7 @@ public class ExhaustiveEngine implements SearchMethod {
 		return thFeatures;
 	}
 
-	public Map<String, Object> extractTreeFeaturesMap(Tree tl) {
+	protected Map<String, Object> extractTreeFeaturesMap(Tree tl) {
 		Map<String, Object> fileresult = new HashMap<>();
 		fileresult.put(Constants.SIZE, tl.getMetrics().size);
 		fileresult.put(Constants.HEIGHT, tl.getMetrics().height);
@@ -740,7 +539,8 @@ public class ExhaustiveEngine implements SearchMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode) throws Exception {
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
+			ExecutionConfiguration configuration) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
@@ -752,7 +552,8 @@ public class ExhaustiveEngine implements SearchMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode) throws Exception {
+	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
+			ExecutionConfiguration configuration) throws Exception {
 		// TODO Auto-generated method stub
 		return null;
 	}
