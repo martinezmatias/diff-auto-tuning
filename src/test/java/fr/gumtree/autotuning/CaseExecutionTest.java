@@ -135,12 +135,14 @@ public class CaseExecutionTest {
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
 
+		MegadiffRunner runner = new MegadiffRunner(reader);
+
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
 		File ft = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
-		CaseResult result = reader.runSingleOnPairOfFiles(treeBuilder, "./out/", 1,
+		CaseResult result = runner.runSingleOnPairOfFiles(treeBuilder, "./out/", 1,
 				PARALLEL_EXECUTION.PROPERTY_LEVEL.NONE, fs, ft, "02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version");
 
 		assertNotNull(result);
