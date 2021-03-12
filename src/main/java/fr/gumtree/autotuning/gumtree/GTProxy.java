@@ -2,6 +2,8 @@ package fr.gumtree.autotuning.gumtree;
 
 import java.io.File;
 import java.io.FileWriter;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
@@ -145,28 +147,33 @@ public class GTProxy {
 	 */
 	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
 		long initSingleDiff = new Date().getTime();
-		SingleDiffResult resultDiff = new SingleDiffResult();
+		try {
+			SingleDiffResult resultDiff = new SingleDiffResult();
 
-		// Calling directly to GT.core
-		Diff diff = computeDiff(tl, tr, matcher, aGumtreeProperties);
-		List<Action> actionsAll = diff.editScript.asList();
+			// Calling directly to GT.core
+			Diff diff = computeDiff(tl, tr, matcher, aGumtreeProperties);
+			List<Action> actionsAll = diff.editScript.asList();
 
-		long endSingleDiff = new Date().getTime();
+			long endSingleDiff = new Date().getTime();
 
-		resultDiff.put(Constants.NRACTIONS, actionsAll.size());
-		resultDiff.put(Constants.NR_INSERT, actionsAll.stream().filter(e -> e instanceof Insert).count());
-		resultDiff.put(Constants.NR_DELETE, actionsAll.stream().filter(e -> e instanceof Delete).count());
-		resultDiff.put(Constants.NR_UPDATE, actionsAll.stream().filter(e -> e instanceof Update).count());
-		resultDiff.put(Constants.NR_MOVE, actionsAll.stream().filter(e -> e instanceof Move).count());
-		resultDiff.put(Constants.NR_TREEINSERT, actionsAll.stream().filter(e -> e instanceof TreeInsert).count());
-		resultDiff.put(Constants.NR_TREEDELETE, actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
-		resultDiff.put(Constants.TIME, (endSingleDiff - initSingleDiff));
+			resultDiff.put(Constants.NRACTIONS, actionsAll.size());
+			resultDiff.put(Constants.NR_INSERT, actionsAll.stream().filter(e -> e instanceof Insert).count());
+			resultDiff.put(Constants.NR_DELETE, actionsAll.stream().filter(e -> e instanceof Delete).count());
+			resultDiff.put(Constants.NR_UPDATE, actionsAll.stream().filter(e -> e instanceof Update).count());
+			resultDiff.put(Constants.NR_MOVE, actionsAll.stream().filter(e -> e instanceof Move).count());
+			resultDiff.put(Constants.NR_TREEINSERT, actionsAll.stream().filter(e -> e instanceof TreeInsert).count());
+			resultDiff.put(Constants.NR_TREEDELETE, actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
+			resultDiff.put(Constants.TIME, (endSingleDiff - initSingleDiff));
 
-		resultDiff.put(Constants.CONFIG, aGumtreeProperties);
+			resultDiff.put(Constants.CONFIG, aGumtreeProperties);
 
-		resultDiff.setDiff(diff);
+			resultDiff.setDiff(diff);
 
-		return resultDiff;
+			return resultDiff;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
 
 	}
 
@@ -205,23 +212,9 @@ public class GTProxy {
 
 	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
 			String maattcher, String key) {
-		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
 
-		String fileKey = "";
-		for (String pKey : propertiesMap.keySet()) {
+		String fileKey = plainProperties(jso, maattcher, gttp);
 
-			String value = propertiesMap.get(pKey).toString();
-			jso.addProperty(pKey, value);
-
-			String separator = "-";
-			if (!fileKey.isEmpty())
-				fileKey += separator;
-			else {
-				fileKey += maattcher + separator;
-			}
-			fileKey += pKey + separator + value;
-
-		}
 		System.out.println(fileKey);
 
 		JsonElement js = builder.build(null, null, diff, jso);
@@ -239,6 +232,32 @@ public class GTProxy {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+	}
+
+	public static String plainProperties(JsonObject jso, String maattcher, GumtreeProperties gttp) {
+		String fileKey = "";
+
+		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
+
+		List<String> sorted = new ArrayList<>(propertiesMap.keySet());
+
+		Collections.sort(sorted);
+
+		for (String pKey : sorted) {
+
+			String value = propertiesMap.get(pKey).toString();
+			jso.addProperty(pKey, value);
+
+			String separator = "-";
+			if (!fileKey.isEmpty())
+				fileKey += separator;
+			else {
+				fileKey += maattcher + separator;
+			}
+			fileKey += pKey + separator + value;
+
+		}
+		return fileKey;
 	}
 
 	public static Map<String, Object> toGumtreePropertyToMap(GumtreeProperties properties) {

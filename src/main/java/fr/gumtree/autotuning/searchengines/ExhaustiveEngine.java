@@ -36,6 +36,8 @@ import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
+import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
+import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
 /**
  * 
@@ -296,7 +298,8 @@ public class ExhaustiveEngine implements SearchMethod {
 
 				SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
-				alldiffresults.add(resDiff);
+				if (resDiff != null)
+					alldiffresults.add(resDiff);
 
 			}
 		} else {
@@ -534,28 +537,77 @@ public class ExhaustiveEngine implements SearchMethod {
 
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+
+		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionConfiguration());
 	}
 
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
 			ExecutionConfiguration configuration) throws Exception {
 		// TODO Auto-generated method stub
+
+		// analyzeCase
 		return null;
 	}
 
 	@Override
 	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionConfiguration());
+
 	}
 
 	@Override
 	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
 			ExecutionConfiguration configuration) throws Exception {
-		// TODO Auto-generated method stub
-		return null;
+
+		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
+
+		PARALLEL_EXECUTION parallel = PARALLEL_EXECUTION.MATCHER_LEVEL;
+
+		ITreeBuilder treebuilder = null;
+		if (ASTMODE.GTSPOON.equals(astmode)) {
+			treebuilder = new SpoonTreeBuilder();
+		} else if (ASTMODE.JDT.equals(astmode)) {
+			treebuilder = new JDTTreeBuilder();
+		} else {
+			System.err.println("Mode not configured " + astmode);
+		}
+
+		CaseResult caseResult = this.analyzeCase(treebuilder, left.getName(), left, right, parallel, treeProperties,
+				this.allMatchers);
+
+		int min = Integer.MAX_VALUE;
+		List<Pair<String, GumtreeProperties>> minDiff = new ArrayList<>();
+
+		for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
+
+			for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
+				int isize = (int) diffResult.get(Constants.NRACTIONS);
+				if (isize <= min) {
+
+					// We discard the others in case is strictly less
+					if (isize < min) {
+						minDiff.clear();
+					}
+					min = isize;
+
+					GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
+					minDiff.add(new Pair<>(mresult.getMatcherName(), gt));
+
+				}
+
+			}
+
+		}
+		ResponseBestParameter bestResult = new ResponseBestParameter();
+		bestResult.setMedian(min);
+
+		for (Pair<String, GumtreeProperties> pair : minDiff) {
+			String oneBest = GTProxy.plainProperties(new JsonObject(), pair.first, pair.second);
+			bestResult.getAllBest().add(oneBest);
+		}
+
+		return bestResult;
 	}
 
 }

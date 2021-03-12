@@ -1,5 +1,8 @@
 package fr.gumtree.autotuning.entity;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import com.google.gson.JsonArray;
 
 /**
@@ -9,7 +12,8 @@ import com.google.gson.JsonArray;
  */
 public class ResponseBestParameter {
 
-	String best;
+	private List<String> best = new ArrayList<String>();
+
 	int numberOfEvaluatedPairs;
 	double median;
 	JsonArray infoEvaluations;
@@ -21,11 +25,19 @@ public class ResponseBestParameter {
 	}
 
 	public String getBest() {
-		return best;
+		if (best.size() > 0)
+			return best.get(0);
+		return null;
+	}
+
+	public List<String> getAllBest() {
+
+		return this.best;
 	}
 
 	public void setBest(String best) {
-		this.best = best;
+		this.best = new ArrayList<String>();
+		this.best.add(best);
 	}
 
 	public int getNumberOfEvaluatedPairs() {
@@ -50,5 +62,9 @@ public class ResponseBestParameter {
 
 	public void setInfoEvaluations(JsonArray infoEvaluations) {
 		this.infoEvaluations = infoEvaluations;
+	}
+
+	public void setBest(List<String> best) {
+		this.best = best;
 	}
 }
