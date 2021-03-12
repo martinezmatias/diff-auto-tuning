@@ -4,7 +4,7 @@ import java.io.File;
 
 import com.github.gumtreediff.tree.Tree;
 
-import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
 import gumtree.spoon.builder.SpoonGumTreeBuilder;
 import spoon.SpoonModelBuilder;
 import spoon.compiler.SpoonResource;

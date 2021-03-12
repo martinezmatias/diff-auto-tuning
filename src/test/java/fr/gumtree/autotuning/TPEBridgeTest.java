@@ -33,7 +33,7 @@ public class TPEBridgeTest {
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBest(fs, ft);
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft);
 		assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 				bestConfig.getBest());
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
@@ -49,7 +49,7 @@ public class TPEBridgeTest {
 				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
 
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBest(fs, ft);
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft);
 
 		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
 
@@ -93,7 +93,7 @@ public class TPEBridgeTest {
 
 		File fs = new File("./examples/input_multiple.txt");
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBest(fs);
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs);
 		System.out.println(bestConfig);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
@@ -105,7 +105,7 @@ public class TPEBridgeTest {
 
 		File fs = new File("./examples/input_multiple2.txt");
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBest(fs);
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs);
 
 		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
 

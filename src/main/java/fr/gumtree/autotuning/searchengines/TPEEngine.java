@@ -13,7 +13,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
-import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
 
@@ -22,7 +22,7 @@ import fr.gumtree.autotuning.server.ServerLauncher;
  * @author Matias Martinez
  *
  */
-public class TPEEngine {
+public class TPEEngine implements SearchMethod {
 
 	private static final String HEADER_RESPONSE_PYTHON = "Best config: ";
 
@@ -42,11 +42,11 @@ public class TPEEngine {
 	public TPEEngine() {
 	}
 
-	public ResponseBestParameter computeBest(File left, File right) throws Exception {
-		return computeBest(left, right, ASTMODE.GTSPOON);
+	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
+		return computeBestLocal(left, right, ASTMODE.GTSPOON);
 	}
 
-	public ResponseBestParameter computeBest(File left, File right, ASTMODE astmode) throws Exception {
+	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode) throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();
@@ -69,11 +69,11 @@ public class TPEEngine {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter computeBest(File dataFilePairs) throws Exception {
-		return computeBest(dataFilePairs, ASTMODE.GTSPOON);
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
+		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON);
 	}
 
-	public ResponseBestParameter computeBest(File dataFilePairs, ASTMODE astmode) throws Exception {
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode) throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new ServerLauncher();

@@ -2,19 +2,24 @@ package fr.gumtree.autotuning.experimentrunner;
 
 import java.io.File;
 import java.io.FileNotFoundException;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.utils.Pair;
 
 import fr.gumtree.autotuning.entity.CaseResult;
+import fr.gumtree.autotuning.entity.MatcherResult;
+import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -171,7 +176,7 @@ public class MegadiffRunner {
 
 					File treeFile = new File(out + File.separator + subset + File.separator + "metaInfo_nr_" + nrCommit
 							+ "_id_" + diffId + "_" + treeBuilder.modelType().name() + ".csv");
-					tuningEngine.metadataToCSV(treeFile, treeProperties, fileResult);
+					this.metadataToCSV(treeFile, treeProperties, fileResult);
 
 					// Store the result:
 					allCasesResults.add(fileResult);
@@ -247,4 +252,64 @@ public class MegadiffRunner {
 	public void setOverwriteresults(boolean overwriteresults) {
 		this.overwriteresults = overwriteresults;
 	}
+
+	public void metadataToCSV(File nameFile, Map<String, Pair<Map, Map>> treeProperties, CaseResult fileResult)
+			throws IOException {
+
+		String sep = ",";
+		String endline = "\n";
+		String header = "DIFFID" + sep + "L_" + Constants.SIZE + sep + "L_" + Constants.HEIGHT + sep + "L_"
+				+ Constants.STRUCTHASH + sep + "R_" + Constants.SIZE + sep + "R_" + Constants.HEIGHT + sep + "R_"
+				+ Constants.STRUCTHASH + sep + Constants.TIME_TREES_PARSING + sep + Constants.TIME_ALL_MATCHER_DIFF;
+
+		for (Matcher matcher : this.tuningEngine.allMatchers) {
+			header += (sep + matcher.getClass().getSimpleName());
+		}
+
+		header += endline;
+
+		String row = "";
+		Collection<MatcherResult> matchersInfo = fileResult.getResultByMatcher().values();
+
+		if (matchersInfo == null) {
+			System.err.println("Problems when saving results: No matchers for identifier " + nameFile.getName());
+			return;
+		}
+
+		for (String id : treeProperties.keySet()) {
+
+			Pair<Map, Map> t = treeProperties.get(id);
+			row += id + sep;
+			row += t.first.get(Constants.SIZE) + sep;
+			row += t.first.get(Constants.HEIGHT) + sep;
+			row += t.first.get(Constants.STRUCTHASH) + sep;
+			row += t.second.get(Constants.SIZE) + sep;
+			row += t.second.get(Constants.HEIGHT) + sep;
+			row += t.second.get(Constants.STRUCTHASH) + sep;
+
+			// Times:
+
+			row += fileResult.getTimeParsing() + sep;
+			row += fileResult.getTimeMatching() + sep;
+
+			for (Matcher matcher : this.tuningEngine.allMatchers) {
+				Optional<MatcherResult> findFirst = matchersInfo.stream()
+						.filter(e -> e.getMatcherName().equals(matcher.getClass().getSimpleName())).findFirst();
+				if (findFirst.isPresent()) {
+					MatcherResult pM = findFirst.get();
+
+					row += pM.getTimeAllConfigs() + sep;
+				} else {
+					row += "" + sep;
+				}
+			}
+			row += endline;
+		}
+
+		FileWriter fw = new FileWriter(nameFile);
+		fw.write(header + row);
+		fw.close();
+
+	}
+
 }

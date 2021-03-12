@@ -9,7 +9,6 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -34,7 +33,9 @@ import com.google.gson.JsonObject;
 import fr.gumtree.autotuning.domain.ParameterDomain;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
+import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
@@ -46,21 +47,15 @@ import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
  * @author Matias Martinez
  *
  */
-public class ExhaustiveEngine {
+public class ExhaustiveEngine implements SearchMethod {
 
 	GTProxy gumtreeproxy = new GTProxy();
-
-//	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
 
 	long timeOutSeconds = 60 * 60; // 60 min
 
 	public enum PARALLEL_EXECUTION {
 		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
 	}
-
-	public enum ASTMODE {
-		GTSPOON, JDT
-	};
 
 	// TODO: we cannot use the same generator when we execute on parallel.
 	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
@@ -722,65 +717,6 @@ public class ExhaustiveEngine {
 		return fileresult;
 	}
 
-	public void metadataToCSV(File nameFile, Map<String, Pair<Map, Map>> treeProperties, CaseResult fileResult)
-			throws IOException {
-
-		String sep = ",";
-		String endline = "\n";
-		String header = "DIFFID" + sep + "L_" + Constants.SIZE + sep + "L_" + Constants.HEIGHT + sep + "L_"
-				+ Constants.STRUCTHASH + sep + "R_" + Constants.SIZE + sep + "R_" + Constants.HEIGHT + sep + "R_"
-				+ Constants.STRUCTHASH + sep + Constants.TIME_TREES_PARSING + sep + Constants.TIME_ALL_MATCHER_DIFF;
-
-		for (Matcher matcher : allMatchers) {
-			header += (sep + matcher.getClass().getSimpleName());
-		}
-
-		header += endline;
-
-		String row = "";
-		Collection<MatcherResult> matchersInfo = fileResult.getResultByMatcher().values();
-
-		if (matchersInfo == null) {
-			System.err.println("Problems when saving results: No matchers for identifier " + nameFile.getName());
-			return;
-		}
-
-		for (String id : treeProperties.keySet()) {
-
-			Pair<Map, Map> t = treeProperties.get(id);
-			row += id + sep;
-			row += t.first.get(Constants.SIZE) + sep;
-			row += t.first.get(Constants.HEIGHT) + sep;
-			row += t.first.get(Constants.STRUCTHASH) + sep;
-			row += t.second.get(Constants.SIZE) + sep;
-			row += t.second.get(Constants.HEIGHT) + sep;
-			row += t.second.get(Constants.STRUCTHASH) + sep;
-
-			// Times:
-
-			row += fileResult.getTimeParsing() + sep;
-			row += fileResult.getTimeMatching() + sep;
-
-			for (Matcher matcher : allMatchers) {
-				Optional<MatcherResult> findFirst = matchersInfo.stream()
-						.filter(e -> e.getMatcherName().equals(matcher.getClass().getSimpleName())).findFirst();
-				if (findFirst.isPresent()) {
-					MatcherResult pM = findFirst.get();
-
-					row += pM.getTimeAllConfigs() + sep;
-				} else {
-					row += "" + sep;
-				}
-			}
-			row += endline;
-		}
-
-		FileWriter fw = new FileWriter(nameFile);
-		fw.write(header + row);
-		fw.close();
-
-	}
-
 	public long getTimeOutSeconds() {
 		return timeOutSeconds;
 	}
@@ -795,6 +731,30 @@ public class ExhaustiveEngine {
 
 	public void setNrThreads(int nrThreads) {
 		this.nrThreads = nrThreads;
+	}
+
+	@Override
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
+	}
+
+	@Override
+	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode) throws Exception {
+		// TODO Auto-generated method stub
+		return null;
 	}
 
 }
