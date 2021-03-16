@@ -12,6 +12,7 @@ import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.SimplifiedChawatheScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
 import com.github.gumtreediff.matchers.CompositeMatchers;
+import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.heuristic.gt.GreedyBottomUpMatcher;
 import com.github.gumtreediff.matchers.heuristic.gt.GreedySubtreeMatcher;
@@ -162,6 +163,36 @@ public class BuilderTest {
 		tr = builder.build(new File(fr));
 
 		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
+		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
+
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
+
+		System.out.println(actionsAll);
+		assertEquals(4, actionsAll.size());
+
+	}
+
+	@Test
+	public void testChangesSpoon_3_04f0e8_CompleteMatcher() throws Exception {
+
+		assertTrue(rootMegadiff.exists());
+
+		GTProxy engine = new GTProxy();
+
+		String fl = rootMegadiff.getAbsolutePath()
+				+ "/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java";
+		String fr = rootMegadiff.getAbsolutePath()
+				+ "/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java";
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+
+		tl = builder.build(new File(fl));
+		tr = builder.build(new File(fr));
+
+		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript

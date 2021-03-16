@@ -20,6 +20,7 @@ import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.tree.Tree;
 
+import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
@@ -494,6 +495,126 @@ public class ComputeDiffTest {
 		System.out.println(actionsAll);
 
 		System.out.println("After configuring");
+
+	}
+
+	@Test
+	public void testComplete_Matcher_1_203910661b7277() throws Exception {
+		GTProxy engine = new GTProxy();
+
+		// --0/0
+		// nr actions: 1
+		// time: 1291
+		// config: {st_priocalc=height, bu_minsim=0.5, st_minprio=2, bu_minsize=2000}
+
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
+
+		GumtreeProperties properies = new GumtreeProperties();
+
+		// {st_priocalc=height, bu_minsim=0.5, st_minprio=2, bu_minsize=2000}
+		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
+		properies.put(ConfigurationOptions.bu_minsim, 0.5);
+		properies.put(ConfigurationOptions.st_minprio, 2);
+		properies.put(ConfigurationOptions.bu_minsize, 2000);
+
+		SingleDiffResult result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertEquals(1, result.get("NRACTIONS"));
+
+		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
+		properies.put(ConfigurationOptions.bu_minsim, 0.1);
+		properies.put(ConfigurationOptions.st_minprio, 3);
+		properies.put(ConfigurationOptions.bu_minsize, 100);
+
+		result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertTrue((int) result.get("NRACTIONS") > 300);
+
+		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
+		properies.put(ConfigurationOptions.bu_minsim, 0.8);
+		properies.put(ConfigurationOptions.st_minprio, 4);
+		properies.put(ConfigurationOptions.bu_minsize, 100);
+
+		result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertTrue((int) result.get("NRACTIONS") > 600);
+
+		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
+		properies.put(ConfigurationOptions.bu_minsim, 0.9);
+		properies.put(ConfigurationOptions.st_minprio, 2);
+		properies.put(ConfigurationOptions.bu_minsize, 600);
+
+		result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertTrue((int) result.get("NRACTIONS") > 20);
+
+		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
+		properies.put(ConfigurationOptions.bu_minsim, 0.1);
+		properies.put(ConfigurationOptions.st_minprio, 1);
+		properies.put(ConfigurationOptions.bu_minsize, 100);
+
+		result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		// assertTrue((int) result.get("NRACTIONS") > 70);
+
+		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
+		properies.put(ConfigurationOptions.bu_minsim, 1);
+		properies.put(ConfigurationOptions.st_minprio, 1);
+		properies.put(ConfigurationOptions.bu_minsize, 1800);
+
+		result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertTrue((int) result.get("NRACTIONS") == 1);
+
+	}
+
+	@Test
+	public void testComplete_Matcher_Int2ObjectOpenHashMap() throws Exception {
+		GTProxy engine = new GTProxy();
+
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+
+		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+
+		GumtreeProperties properies = new GumtreeProperties();
+
+		// CompleteGumtreeMatcher_{st_priocalc=height, bu_minsim=0.2, st_minprio=3,
+		// bu_minsize=1000}
+		properies.put(ConfigurationOptions.st_priocalc, "height");
+		properies.put(ConfigurationOptions.bu_minsim, 0.2);
+		properies.put(ConfigurationOptions.st_minprio, 3);
+		properies.put(ConfigurationOptions.bu_minsize, 1000);
+
+		SingleDiffResult result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertEquals(1, result.get("NRACTIONS"));
 
 	}
 

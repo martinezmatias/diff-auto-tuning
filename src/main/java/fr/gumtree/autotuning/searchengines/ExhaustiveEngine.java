@@ -1,6 +1,8 @@
 package fr.gumtree.autotuning.searchengines;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileReader;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -15,7 +17,8 @@ import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import com.github.gumtreediff.actions.ChawatheScriptGenerator;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurableMatcher;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
@@ -46,8 +49,6 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  */
 public class ExhaustiveEngine implements SearchMethod {
 
-	GTProxy gumtreeproxy = new GTProxy();
-
 	long timeOutSeconds = 60 * 60; // 60 min
 
 	public enum PARALLEL_EXECUTION {
@@ -55,7 +56,7 @@ public class ExhaustiveEngine implements SearchMethod {
 	}
 
 	// TODO: we cannot use the same generator when we execute on parallel.
-	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
+//	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
 
 	public Matcher[] allMatchers = new Matcher[] {
 			//
@@ -65,7 +66,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			//
 			new CompositeMatchers.CompleteGumtreeMatcher(),
 			//
-			new CompositeMatchers.ChangeDistiller(),
+			// new CompositeMatchers.ChangeDistiller(),
 			//
 			new CompositeMatchers.XyMatcher(),
 
@@ -110,6 +111,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			long init = (new Date()).getTime();
 
 			long endTree = (new Date()).getTime();
+			// TODO: remove from here
 			treeProperties.put(diffId, new Pair<Map, Map>(extractTreeFeaturesMap(tl), extractTreeFeaturesMap(tr)));
 
 			long endFeatures = (new Date()).getTime();
@@ -294,13 +296,17 @@ public class ExhaustiveEngine implements SearchMethod {
 		}
 
 		if (!parallel) {
+			int i = 0;
 			for (GumtreeProperties aGumtreeProperties : combinations) {
 
+				// System.out.println(aGumtreeProperties);
+				GTProxy gumtreeproxy = new GTProxy();
 				SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
-				if (resDiff != null)
+				if (resDiff != null) {
+					i = printResult(matcherName, combinations.size(), i, resDiff);
 					alldiffresults.add(resDiff);
-
+				}
 			}
 		} else {
 			// parallel
@@ -325,6 +331,17 @@ public class ExhaustiveEngine implements SearchMethod {
 				+ " milliseconds, Nr_config: " + combinations.size());
 		return result;
 
+	}
+
+	public int printResult(String matcherName, int size, int i, SingleDiffResult resDiff) {
+		System.out.println("--" + (i++) + "/" + size);
+		// System.out.println("nr actions: " + resDiff.getDiff().editScript.size());
+		System.out.println("nr actions: " + resDiff.get(Constants.NRACTIONS));
+		System.out.println("time: " + resDiff.get(Constants.TIME));
+		System.out.println("config: " + matcherName + " " + resDiff.get(Constants.CONFIG));
+
+		System.out.println("---");
+		return i;
 	}
 
 	public List<GumtreeProperties> getPropertiesCombinations(Matcher matcher) {
@@ -394,14 +411,18 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		@Override
 		public SingleDiffResult call() throws Exception {
-
-			return gumtreeproxy.runDiff(tl, tr,
+			GTProxy gumtreeproxy = new GTProxy();
+			SingleDiffResult result = gumtreeproxy.runDiff(tl, tr,
 					// TODO: Workaround: we cannot used the same instance of a matcher to match in
 					// parallel two diffs
 					matcher.getClass().newInstance()
 					// matcher
 					// matcher
 					, aGumtreeProperties);
+
+			printResult(matcher.getClass().getSimpleName(), 0, 0, result);
+
+			return result;
 		}
 
 	}
@@ -544,9 +565,91 @@ public class ExhaustiveEngine implements SearchMethod {
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
 			ExecutionConfiguration configuration) throws Exception {
-		// TODO Auto-generated method stub
+		PARALLEL_EXECUTION parallel = PARALLEL_EXECUTION.PROPERTY_LEVEL;
+		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
 
-		// analyzeCase
+		// We select the parser
+		ITreeBuilder treebuilder = null;
+		if (ASTMODE.GTSPOON.equals(astmode)) {
+			treebuilder = new SpoonTreeBuilder();
+		} else if (ASTMODE.JDT.equals(astmode)) {
+			treebuilder = new JDTTreeBuilder();
+		} else {
+			System.err.println("Mode not configured " + astmode);
+		}
+
+		BufferedReader reader;
+		MapList<String, Integer> results = new MapList<>();
+
+		try {
+			// We read the file with the all pairs
+			reader = new BufferedReader(new FileReader(dataFilePairs));
+			String line = reader.readLine();
+
+			while (line != null) {
+				System.out.println(line);
+
+				System.out.println("Line " + line);
+
+				String[] sp = line.split(" ");
+
+				// Compute all diffs
+				CaseResult caseResult = this.analyzeCase(treebuilder, sp[0], new File(sp[0]), new File(sp[1]), parallel,
+						treeCharacteristics, this.allMatchers);
+
+				// Navegate over the cases.
+				for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
+
+					for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
+						int isize = (int) diffResult.get(Constants.NRACTIONS);
+						GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
+
+						// maybe to replace by a toString
+						String oneBest = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(), gt);
+						results.add(oneBest, isize);
+
+					}
+
+				}
+
+				// Next line
+				line = reader.readLine();
+
+			}
+			reader.close();
+
+			// Now to summarize
+			ResponseBestParameter bestResult = new ResponseBestParameter();
+
+			// let's compute the median of each conf
+			Map<String, Double> medianByConfiguration = new HashMap<>();
+
+			for (String aConfigresult : results.keySet()) {
+
+				DescriptiveStatistics stats = new DescriptiveStatistics();
+
+				List<Integer> allSizesOfConfigs = results.get(aConfigresult);
+				for (Integer aSize : allSizesOfConfigs) {
+					stats.addValue(aSize);
+				}
+				double median = stats.getPercentile(50);
+				medianByConfiguration.put(aConfigresult, median);
+
+			}
+			// Choose the config with best median
+
+			List<String> best = medianByConfiguration.keySet().stream()
+					.sorted((e1, e2) -> medianByConfiguration.get(e1).compareTo(medianByConfiguration.get(e2)))
+					.collect(Collectors.toList());
+
+			bestResult.setMedian(medianByConfiguration.get(best.get(0)));
+			bestResult.setBest(best.get(0));
+
+		} catch (Exception e) {
+
+			e.printStackTrace();
+		}
+
 		return null;
 	}
 
@@ -582,6 +685,11 @@ public class ExhaustiveEngine implements SearchMethod {
 		for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
 
 			for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
+
+				if (diffResult == null || diffResult.get(Constants.NRACTIONS) == null) {
+					continue;
+				}
+
 				int isize = (int) diffResult.get(Constants.NRACTIONS);
 				if (isize <= min) {
 

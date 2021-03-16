@@ -34,7 +34,7 @@ public class NodeCreator extends CtInheritanceScanner {
 
 		}
 		// We add the type of modifiable element
-		String type = MODIFIERS + getClassName(m.getClass().getSimpleName());
+		String type = MODIFIERS + getClassName(m.getClass().getSimpleName()) + "_" + m.getShortRepresentation();
 		Tree modifiers = builder.createNode(type, "");
 
 		// We create a virtual node
