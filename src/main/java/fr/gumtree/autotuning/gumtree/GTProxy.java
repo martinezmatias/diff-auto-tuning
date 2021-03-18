@@ -37,7 +37,7 @@ import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
-public class GTProxy {
+public class GTProxy implements DiffProxy {
 
 //	protected ExhaustiveEngine engine = new ExhaustiveEngine();
 
@@ -200,6 +200,7 @@ public class GTProxy {
 			Diff diff = new Diff(null, null, mappings, actions);
 
 			return diff;
+			// return null;
 		} catch (Exception e) {
 			System.err.println(
 					"Problems computing diff " + matcher.getClass().getSimpleName() + "_" + properies.toString());

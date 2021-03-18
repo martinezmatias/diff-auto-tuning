@@ -5,13 +5,16 @@ import static org.junit.Assert.assertTrue;
 
 import java.io.File;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.Test;
 
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
+import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.entity.SingleDiffResult;
@@ -74,7 +77,7 @@ public class ModalitylExecutionTest {
 	}
 
 	@Test
-	public void testManyConfigs() throws Exception {
+	public void testManyConfigs_CompleteGumtreeMatcher1() throws Exception {
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
 		File fs = new File(
@@ -100,7 +103,7 @@ public class ModalitylExecutionTest {
 			properies.put(ConfigurationOptions.st_priocalc, "height");
 			properies.put(ConfigurationOptions.bu_minsim, 0.9);
 			properies.put(ConfigurationOptions.st_minprio, 2);
-			properies.put(ConfigurationOptions.bu_minsize, 1200);
+			properies.put(ConfigurationOptions.bu_minsize, i);
 			combinations.add(properies);
 		}
 
@@ -131,6 +134,294 @@ public class ModalitylExecutionTest {
 			assertTrue(serial > 900 && serial < 2500);
 
 		}
+	}
+
+	@Test
+	public void testManyConfigsSimple() throws Exception {
+
+		ExhaustiveEngine engine = new ExhaustiveEngine();
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+
+		CompositeMatchers.SimpleGumtree matcher = new CompositeMatchers.SimpleGumtree();
+
+		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
+
+		for (int i = 1000; i < 2000; i = i + 100) {
+			GumtreeProperties properies = new GumtreeProperties();
+			for (int mi = 1; mi <= 5; mi = mi + 1) {
+				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
+				// bu_minsize=1200}
+				properies.put(ConfigurationOptions.st_priocalc, "height");
+				properies.put(ConfigurationOptions.bu_minsim, 0.9);
+				properies.put(ConfigurationOptions.st_minprio, mi);
+				properies.put(ConfigurationOptions.bu_minsize, i);
+				combinations.add(properies);
+			}
+		}
+
+		ExecutionConfiguration config = new ExecutionConfiguration();
+
+		System.out.println("Serial");
+		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+
+		// assertEquals(10, resultS.size());
+
+		DescriptiveStatistics statsS = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultS) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			assertTrue(serial > 0 && serial < 50);
+			statsS.addValue(serial);
+
+		}
+
+		System.out.println("Paralell");
+
+		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+
+		// assertEquals(10, resultParalel.size());
+		DescriptiveStatistics statsP = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultParalel) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			assertTrue(serial > 1 && serial < 200);
+			statsP.addValue(serial);
+
+		}
+		System.out.println("Stat Serial");
+		System.out.println(statsS);
+
+		System.out.println("Stat Paralell");
+		System.out.println(statsP);
+	}
+
+	@Test
+	public void testManyConfigsClassic() throws Exception {
+
+		ExhaustiveEngine engine = new ExhaustiveEngine();
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
+
+		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
+
+		for (int i = 1000; i < 2000; i = i + 100) {
+			GumtreeProperties properies = new GumtreeProperties();
+			for (int mi = 1; mi <= 5; mi = mi + 1) {
+				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
+				// bu_minsize=1200}
+				properies.put(ConfigurationOptions.st_priocalc, "height");
+				properies.put(ConfigurationOptions.bu_minsim, 0.9);
+				properies.put(ConfigurationOptions.st_minprio, mi);
+				properies.put(ConfigurationOptions.bu_minsize, i);
+				combinations.add(properies);
+			}
+		}
+
+		ExecutionConfiguration config = new ExecutionConfiguration();
+
+		System.out.println("Serial");
+		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+
+		// assertEquals(10, resultS.size());
+
+		DescriptiveStatistics statsS = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultS) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			// assertTrue(serial > 0 && serial < 50);
+			statsS.addValue(serial);
+
+		}
+
+		System.out.println("Paralell");
+
+		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+
+		// assertEquals(10, resultParalel.size());
+		DescriptiveStatistics statsP = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultParalel) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			// assertTrue(serial > 1 && serial < 200);
+			statsP.addValue(serial);
+
+		}
+		System.out.println("Stat Serial");
+		System.out.println(statsS);
+
+		System.out.println("Stat Paralell");
+		System.out.println(statsP);
+	}
+
+	@Test
+	public void testManyConfigsComplete() throws Exception {
+
+		ExhaustiveEngine engine = new ExhaustiveEngine();
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+
+		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+
+		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
+
+		for (int i = 1000; i < 2000; i = i + 100) {
+			GumtreeProperties properies = new GumtreeProperties();
+			for (int mi = 1; mi <= 5; mi = mi + 1) {
+				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
+				// bu_minsize=1200}
+				properies.put(ConfigurationOptions.st_priocalc, "height");
+				properies.put(ConfigurationOptions.bu_minsim, 0.9);
+				properies.put(ConfigurationOptions.st_minprio, mi);
+				properies.put(ConfigurationOptions.bu_minsize, i);
+				combinations.add(properies);
+			}
+		}
+
+		ExecutionConfiguration config = new ExecutionConfiguration();
+
+		System.out.println("Serial");
+		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+
+		// assertEquals(10, resultS.size());
+
+		DescriptiveStatistics statsS = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultS) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			// assertTrue(serial > 0 && serial < 50);
+			statsS.addValue(serial);
+
+		}
+
+		System.out.println("Paralell");
+
+		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+
+		// assertEquals(10, resultParalel.size());
+		DescriptiveStatistics statsP = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultParalel) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			// assertTrue(serial > 1 && serial < 200);
+			statsP.addValue(serial);
+
+		}
+		System.out.println("Stat Serial");
+		System.out.println(statsS);
+
+		System.out.println("Stat Paralell");
+		System.out.println(statsP);
+	}
+
+	@Test
+	public void testManyConfigsComposite() throws Exception {
+
+		ExhaustiveEngine engine = new ExhaustiveEngine();
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+
+		Matcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+
+		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
+
+		for (int i = 1000; i < 2000; i = i + 100) {
+			GumtreeProperties properies = new GumtreeProperties();
+			for (int mi = 1; mi <= 5; mi = mi + 1) {
+				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
+				// bu_minsize=1200}
+				properies.put(ConfigurationOptions.st_priocalc, "height");
+				properies.put(ConfigurationOptions.bu_minsim, 0.9);
+				properies.put(ConfigurationOptions.st_minprio, mi);
+				properies.put(ConfigurationOptions.bu_minsize, i);
+				combinations.add(properies);
+			}
+		}
+
+		System.out.println("Serial");
+		long nns = (new Date()).getTime();
+		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		double timeserial = ((double) (new Date()).getTime() - nns) / 60;
+		// assertEquals(10, resultS.size());
+
+		DescriptiveStatistics statsS = new DescriptiveStatistics();
+		for (SingleDiffResult singleDiffResult : resultS) {
+			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+			System.out.println(serial);
+			// assertTrue(serial > 0 && serial < 50);
+			statsS.addValue(serial);
+
+		}
+
+		System.out.println("Paralell");
+
+		ExecutionConfiguration config = new ExecutionConfiguration();
+		List<Double> means = new ArrayList<>();
+		List<Double> times = new ArrayList<>();
+		for (int i = 1; i <= 10; i++) {
+
+			config.setNumberOfThreads(i);
+			long nn = (new Date()).getTime();
+			List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher,
+					combinations, config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+			times.add(((double) (new Date()).getTime() - nn) / 60);
+			// assertEquals(10, resultParalel.size());
+			DescriptiveStatistics statsP = new DescriptiveStatistics();
+			for (SingleDiffResult singleDiffResult : resultParalel) {
+				Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
+				System.out.println(serial);
+				// assertTrue(serial > 1 && serial < 200);
+				statsP.addValue(serial);
+
+			}
+			means.add(statsP.getMean());
+
+		}
+		System.out.println(means);
+		System.out.println(times);
+		System.out.println(timeserial);
+		// System.out.println("Stat Serial");
+		// System.out.println(statsS);
+
+		// System.out.println("Stat Paralell");
+		// System.out.println(statsP);
 	}
 
 }

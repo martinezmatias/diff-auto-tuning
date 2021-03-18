@@ -34,6 +34,7 @@ import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.DiffProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
@@ -53,8 +54,13 @@ public class ExhaustiveEngine implements SearchMethod {
 		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
 	}
 
+	DiffProxy gumtreeproxy = null;
 	// TODO: we cannot use the same generator when we execute on parallel.
 //	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
+
+	public ExhaustiveEngine(DiffProxy gumtreeproxy) {
+		this.gumtreeproxy = gumtreeproxy;
+	}
 
 	public Matcher[] allMatchers = new Matcher[] {
 			//
@@ -76,6 +82,7 @@ public class ExhaustiveEngine implements SearchMethod {
 		super();
 		// Not necessary here
 		// initCacheCombinationProperties();
+		this.gumtreeproxy = new GTProxy();
 	}
 
 	public void initCacheCombinationProperties() {
@@ -241,8 +248,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		int i = 0;
 		for (GumtreeProperties aGumtreeProperties : combinations) {
-
-			GTProxy gumtreeproxy = new GTProxy();
+			// GTProxy gumtreeproxy = new GTProxy();
 			SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
 			if (resDiff != null) {
@@ -402,13 +408,16 @@ public class ExhaustiveEngine implements SearchMethod {
 	}
 
 	public int printResult(String matcherName, int size, int i, SingleDiffResult resDiff) {
-		System.out.println("--" + (i++) + "/" + size);
-		// System.out.println("nr actions: " + resDiff.getDiff().editScript.size());
-		System.out.println("nr actions: " + resDiff.get(Constants.NRACTIONS));
-		System.out.println("time: " + resDiff.get(Constants.TIME));
-		System.out.println("config: " + matcherName + " " + resDiff.get(Constants.CONFIG));
 
-		System.out.println("---");
+		if (resDiff != null) {
+			System.out.println("--" + (i++) + "/" + size);
+			// System.out.println("nr actions: " + resDiff.getDiff().editScript.size());
+			System.out.println("nr actions: " + resDiff.get(Constants.NRACTIONS));
+			System.out.println("time: " + resDiff.get(Constants.TIME));
+			System.out.println("config: " + matcherName + " " + resDiff.get(Constants.CONFIG));
+
+			System.out.println("---");
+		}
 		return i;
 	}
 
@@ -481,7 +490,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		@Override
 		public SingleDiffResult call() throws Exception {
-			GTProxy gumtreeproxy = new GTProxy();
+			// GTProxy gumtreeproxy = new GTProxy();
 			SingleDiffResult result = gumtreeproxy.runDiff(tl, tr,
 					// TODO: Workaround: we cannot used the same instance of a matcher to match in
 					// parallel two diffs
