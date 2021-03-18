@@ -17,6 +17,7 @@ import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
@@ -37,14 +38,15 @@ public class CaseExecutionTest {
 
 		String commitId = "831e3b0420e70f7c2695cb248dd8b488b1fd84b7";
 
-		boolean parallel = false;
-
 		int megadiff_id = 1;
 
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
+		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
+
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.PROPERTY_LEVEL);
+				configuration);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -64,12 +66,14 @@ public class CaseExecutionTest {
 
 		String commitId = "02f3fd442349d4e7fdfc9c31a82bb1638db8495e";
 
-		boolean parallel = false;
-
 		int megadiff_id = 1;
 
+		ExecutionConfiguration configuration = new ExecutionConfiguration();
+
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
+
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.NONE);
+				configuration);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -91,8 +95,12 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
+		ExecutionConfiguration configuration = new ExecutionConfiguration();
+
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
+
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.NONE);
+				configuration);
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -142,8 +150,12 @@ public class CaseExecutionTest {
 		File ft = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
-		CaseResult result = runner.runSingleOnPairOfFiles(treeBuilder, "./out/", 1,
-				PARALLEL_EXECUTION.PROPERTY_LEVEL.NONE, fs, ft, "02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version");
+		ExecutionConfiguration configuration = new ExecutionConfiguration();
+
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
+
+		CaseResult result = runner.runSingleOnPairOfFiles(treeBuilder, "./out/", 1, configuration, fs, ft,
+				"02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version");
 
 		assertNotNull(result);
 		System.out.println(result);
@@ -181,8 +193,12 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
+		ExecutionConfiguration configuration = new ExecutionConfiguration();
+
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
+
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
-				PARALLEL_EXECUTION.NONE);
+				configuration);
 
 		assertNotNull(result);
 		System.out.println(result);

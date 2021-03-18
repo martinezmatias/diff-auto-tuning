@@ -152,17 +152,21 @@ public class GTProxy {
 
 			// Calling directly to GT.core
 			Diff diff = computeDiff(tl, tr, matcher, aGumtreeProperties);
-			List<Action> actionsAll = diff.editScript.asList();
-
 			long endSingleDiff = new Date().getTime();
 
-			resultDiff.put(Constants.NRACTIONS, actionsAll.size());
-			resultDiff.put(Constants.NR_INSERT, actionsAll.stream().filter(e -> e instanceof Insert).count());
-			resultDiff.put(Constants.NR_DELETE, actionsAll.stream().filter(e -> e instanceof Delete).count());
-			resultDiff.put(Constants.NR_UPDATE, actionsAll.stream().filter(e -> e instanceof Update).count());
-			resultDiff.put(Constants.NR_MOVE, actionsAll.stream().filter(e -> e instanceof Move).count());
-			resultDiff.put(Constants.NR_TREEINSERT, actionsAll.stream().filter(e -> e instanceof TreeInsert).count());
-			resultDiff.put(Constants.NR_TREEDELETE, actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
+			if (diff != null) {
+				List<Action> actionsAll = diff.editScript.asList();
+
+				resultDiff.put(Constants.NRACTIONS, actionsAll.size());
+				resultDiff.put(Constants.NR_INSERT, actionsAll.stream().filter(e -> e instanceof Insert).count());
+				resultDiff.put(Constants.NR_DELETE, actionsAll.stream().filter(e -> e instanceof Delete).count());
+				resultDiff.put(Constants.NR_UPDATE, actionsAll.stream().filter(e -> e instanceof Update).count());
+				resultDiff.put(Constants.NR_MOVE, actionsAll.stream().filter(e -> e instanceof Move).count());
+				resultDiff.put(Constants.NR_TREEINSERT,
+						actionsAll.stream().filter(e -> e instanceof TreeInsert).count());
+				resultDiff.put(Constants.NR_TREEDELETE,
+						actionsAll.stream().filter(e -> e instanceof TreeDelete).count());
+			}
 			resultDiff.put(Constants.TIME, (endSingleDiff - initSingleDiff));
 
 			resultDiff.put(Constants.CONFIG, aGumtreeProperties);

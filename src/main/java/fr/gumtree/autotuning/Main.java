@@ -8,6 +8,7 @@ import java.util.concurrent.Callable;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -131,12 +132,16 @@ public class Main implements Callable<Integer> {
 		System.out.println("Command:  " + toString());
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
-		engine.setTimeOutSeconds(timeout);
-		engine.setNrThreads(nrthreads);
+
 		MegadiffRunner megadiff = new MegadiffRunner(engine);
 		// engine.setOverwriteResults(overwriteresults);
 
 		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
+
+		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		configuration.setNumberOfThreads(nrthreads);
+		configuration.setTimeOut(timeout);
+		configuration.setParalelisationMode(execution);
 
 		ASTMODE model = ASTMODE.valueOf(this.astmodel);
 		ITreeBuilder treebuilder = null;
@@ -150,7 +155,7 @@ public class Main implements Callable<Integer> {
 
 		// We store the results of the execution
 		this.resultsExecution = megadiff.navigateMegaDiff(treebuilder, out, pathMegadiff, subsets, begin, stop,
-				execution, this.matchers);
+				configuration, this.matchers);
 
 		System.out.println("-END-");
 		return null;

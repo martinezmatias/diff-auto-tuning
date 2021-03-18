@@ -25,9 +25,9 @@ import com.google.gson.JsonObject;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
-import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
@@ -53,16 +53,17 @@ public class MegadiffRunner {
 	}
 
 	public List<CaseResult> navigateMegaDiffAllMatchers(ITreeBuilder treeBuilder, String out, File path, int[] subsets,
-			int begin, int stop, PARALLEL_EXECUTION parallel) throws IOException {
-		return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, parallel, tuningEngine.allMatchers);
+			int begin, int stop, ExecutionConfiguration configuration) throws IOException {
+		return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, configuration,
+				tuningEngine.allMatchers);
 	}
 
 	public List<CaseResult> navigateMegaDiff(ITreeBuilder treeBuilder, String out, File path, int[] subsets, int begin,
-			int stop, PARALLEL_EXECUTION parallel, String[] matchersString) throws Exception {
+			int stop, ExecutionConfiguration configuration, String[] matchersString) throws Exception {
 
 		if (matchersString == null || matchersString.length == 0) {
 			System.out.println("Using default matchers " + Arrays.toString(tuningEngine.allMatchers));
-			return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, parallel,
+			return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, configuration,
 					tuningEngine.allMatchers);
 		} else {
 			System.out.println("Using existing matchers " + Arrays.toString(matchersString));
@@ -82,7 +83,7 @@ public class MegadiffRunner {
 			Matcher[] newMatchers = new Matcher[selectedMatchers.size()];
 			selectedMatchers.toArray(newMatchers);
 
-			return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, parallel, newMatchers);
+			return this.navigateMegaDiff(treeBuilder, out, path, subsets, begin, stop, configuration, newMatchers);
 		}
 	}
 
@@ -96,10 +97,10 @@ public class MegadiffRunner {
 	 * @throws IOException
 	 */
 	public List<CaseResult> navigateMegaDiff(ITreeBuilder treeBuilder, String out, File path, int[] subsets, int begin,
-			int stop, PARALLEL_EXECUTION parallel, Matcher[] matchers) throws IOException {
+			int stop, ExecutionConfiguration configuration, Matcher[] matchers) throws IOException {
 		// tuningEngine.initCacheCombinationProperties();
 
-		System.out.println("Execution mode " + parallel);
+		// System.out.println("Execution mode " + parallel);
 
 		List<CaseResult> allCasesResults = new ArrayList<>();
 
@@ -166,7 +167,7 @@ public class MegadiffRunner {
 
 					System.out.println("\n---diff " + nrCommit + "/" + commits.size() + " id " + diffId);
 					CaseResult fileResult = tuningEngine.analyzeCase(treeBuilder, diffId, previousVersion, postVersion,
-							parallel, treeProperties, matchers);
+							configuration, treeProperties, matchers);
 
 					// This time includes the creation of tree
 					long timediff = (new Date()).getTime() - initdiff;
@@ -201,7 +202,7 @@ public class MegadiffRunner {
 	}
 
 	public CaseResult runSingleDiffMegaDiff(ITreeBuilder treeBuilder, String out, File path, int subset,
-			String commitId, PARALLEL_EXECUTION parallel) throws IOException {
+			String commitId, ExecutionConfiguration configuration) throws IOException {
 
 		File pathSubset = new File(path.getAbsoluteFile() + File.separator + subset + File.separator);
 
@@ -222,7 +223,7 @@ public class MegadiffRunner {
 
 		String diffId = commit.getName() + "_" + fileModif.getName();
 
-		CaseResult fileResult = this.runSingleOnPairOfFiles(treeBuilder, out, subset, parallel, previousVersion,
+		CaseResult fileResult = this.runSingleOnPairOfFiles(treeBuilder, out, subset, configuration, previousVersion,
 				postVersion, diffId);
 
 		// add the data specific to megadiff.
@@ -320,13 +321,14 @@ public class MegadiffRunner {
 	}
 
 	public CaseResult runSingleOnPairOfFiles(ITreeBuilder treeBuilder, String out, int subset,
-			PARALLEL_EXECUTION parallel, File previousVersion, File postVersion, String diffId) throws IOException {
+			ExecutionConfiguration configuration, File previousVersion, File postVersion, String diffId)
+			throws IOException {
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<>();
 
 		long initTime = (new Date()).getTime();
 
 		CaseResult fileResult = this.tuningEngine.analyzeCase(treeBuilder, diffId, previousVersion, postVersion,
-				parallel, treeProperties, this.tuningEngine.allMatchers);
+				configuration, treeProperties, this.tuningEngine.allMatchers);
 
 		fileResult.setFileName(postVersion.getName());
 
