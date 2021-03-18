@@ -212,28 +212,16 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		MatcherResult result = new MatcherResult();
 
-		String matcherName = matcher.getClass().getSimpleName();
+		String matcherName = getNameOfMatcher(matcher);
 
 		result.setMatcherName(matcherName);
 		result.setMatcher(matcher);
 
-		List<SingleDiffResult> alldiffresults = new ArrayList<>();
-
-		result.setAlldiffresults(alldiffresults);
-
 		combinations = getConfigurations(matcher);
 
-		int i = 0;
-		for (GumtreeProperties aGumtreeProperties : combinations) {
+		List<SingleDiffResult> alldiffresults = runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
 
-			GTProxy gumtreeproxy = new GTProxy();
-			SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
-
-			if (resDiff != null) {
-				i = printResult(matcherName, combinations.size(), i, resDiff);
-				alldiffresults.add(resDiff);
-			}
-		}
+		result.setAlldiffresults(alldiffresults);
 
 		long timeAllConfigs = ((new Date()).getTime() - initMatcher);
 		result.setTimeAllConfigs(timeAllConfigs);
@@ -243,9 +231,30 @@ public class ExhaustiveEngine implements SearchMethod {
 
 	}
 
+	private String getNameOfMatcher(Matcher matcher) {
+		return matcher.getClass().getSimpleName();
+	}
+
+	public List<SingleDiffResult> runInSerialMultipleConfiguration(Tree tl, Tree tr, Matcher matcher,
+			List<GumtreeProperties> combinations) {
+		List<SingleDiffResult> alldiffresults = new ArrayList<>();
+
+		int i = 0;
+		for (GumtreeProperties aGumtreeProperties : combinations) {
+
+			GTProxy gumtreeproxy = new GTProxy();
+			SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
+
+			if (resDiff != null) {
+				i = printResult(getNameOfMatcher(matcher), combinations.size(), i, resDiff);
+				alldiffresults.add(resDiff);
+			}
+		}
+		return alldiffresults;
+	}
+
 	private CaseResult analyzeDiffByMatcherThread(Tree tl, Tree tr, ExecutionConfiguration configuration,
 			Matcher[] matchers) {
-		// List<MatcherResult> matcherResults = new ArrayList<>();
 
 		CaseResult fileResult = new CaseResult();
 
@@ -357,8 +366,8 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		// parallel
 		try {
-			List<SingleDiffResult> results = runInParallelMultipleConfigurations(configuration.getNumberOfThreads(), tl,
-					tr, matcher, combinations, configuration.getTimeOut(), configuration.getTimeUnit());
+			List<SingleDiffResult> results = runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+					configuration.getTimeOut(), configuration.getTimeUnit(), configuration.getNumberOfThreads());
 			for (SingleDiffResult iResult : results) {
 
 				alldiffresults.add(iResult);
@@ -491,25 +500,24 @@ public class ExhaustiveEngine implements SearchMethod {
 	/**
 	 * Executes a list of configuration from a Matcher in parallel.
 	 * 
-	 * @param nrThreads
 	 * @param tl
 	 * @param tr
 	 * @param matcher
 	 * @param combinations
 	 * @param timeoutSeconds
+	 * @param nrThreads
+	 * 
 	 * @return
 	 * @throws Exception
 	 */
-	protected List<SingleDiffResult> runInParallelMultipleConfigurations(int nrThreads, Tree tl, Tree tr,
-			Matcher matcher, List<GumtreeProperties> combinations, long timeoutSeconds, TimeUnit unit)
-			throws Exception {
+	public List<SingleDiffResult> runInParallelMultipleConfigurations(Tree tl, Tree tr, Matcher matcher,
+			List<GumtreeProperties> combinations, long timeoutSeconds, TimeUnit unit, int nrThreads) throws Exception {
 
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
 		List<DiffCallable> callables = new ArrayList<>();
 
 		for (GumtreeProperties aGumtreeProperties : combinations) {
-			// TODO: try with deepcopu
 			callables.add(new DiffCallable(tl, tr, matcher, aGumtreeProperties));
 		}
 
