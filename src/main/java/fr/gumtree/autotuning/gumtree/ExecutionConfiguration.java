@@ -14,8 +14,14 @@ import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 public class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	private PARALLEL_EXECUTION paralelisationMode = PARALLEL_EXECUTION.NONE;
-	private int numberOfThreads = 10;
+	private int numberOfThreads = 16;
 	private long timeOut = 60 * 60; // 60 min
+
+	public enum METRIC {
+		MEDIAN, MEAN
+	}
+
+	private METRIC metric = METRIC.MEDIAN;
 
 	TimeUnit timeUnit = TimeUnit.SECONDS;
 
@@ -49,5 +55,13 @@ public class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setTimeUnit(TimeUnit timeUnit) {
 		this.timeUnit = timeUnit;
+	}
+
+	public METRIC getMetric() {
+		return metric;
+	}
+
+	public void setMetric(METRIC metric) {
+		this.metric = metric;
 	}
 }
