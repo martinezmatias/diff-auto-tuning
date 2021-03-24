@@ -31,6 +31,12 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 public class ModalitylExecutionTest {
 
 	@Test
+	public void testCores() throws Exception {
+		int cores = Runtime.getRuntime().availableProcessors();
+		System.out.println(cores);
+	}
+
+	@Test
 	public void test1() throws Exception {
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
@@ -206,145 +212,7 @@ public class ModalitylExecutionTest {
 	}
 
 	@Test
-	public void testManyConfigsClassic() throws Exception {
-
-		ExhaustiveEngine engine = new ExhaustiveEngine();
-		File fs = new File(
-				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
-		File ft = new File(
-				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
-
-		Tree tl = null;
-		Tree tr = null;
-		SpoonTreeBuilder builder = new SpoonTreeBuilder();
-		tl = builder.build(fs);
-		tr = builder.build(ft);
-
-		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
-
-		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
-
-		for (int i = 1000; i < 2000; i = i + 100) {
-			GumtreeProperties properies = new GumtreeProperties();
-			for (int mi = 1; mi <= 5; mi = mi + 1) {
-				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
-				// bu_minsize=1200}
-				properies.put(ConfigurationOptions.st_priocalc, "height");
-				properies.put(ConfigurationOptions.bu_minsim, 0.9);
-				properies.put(ConfigurationOptions.st_minprio, mi);
-				properies.put(ConfigurationOptions.bu_minsize, i);
-				combinations.add(properies);
-			}
-		}
-
-		ExecutionConfiguration config = new ExecutionConfiguration();
-
-		System.out.println("Serial");
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
-
-		// assertEquals(10, resultS.size());
-
-		DescriptiveStatistics statsS = new DescriptiveStatistics();
-		for (SingleDiffResult singleDiffResult : resultS) {
-			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
-			System.out.println(serial);
-			// assertTrue(serial > 0 && serial < 50);
-			statsS.addValue(serial);
-
-		}
-
-		System.out.println("Paralell");
-
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
-
-		// assertEquals(10, resultParalel.size());
-		DescriptiveStatistics statsP = new DescriptiveStatistics();
-		for (SingleDiffResult singleDiffResult : resultParalel) {
-			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
-			System.out.println(serial);
-			// assertTrue(serial > 1 && serial < 200);
-			statsP.addValue(serial);
-
-		}
-		System.out.println("Stat Serial");
-		System.out.println(statsS);
-
-		System.out.println("Stat Paralell");
-		System.out.println(statsP);
-	}
-
-	@Test
-	public void testManyConfigsComplete() throws Exception {
-
-		ExhaustiveEngine engine = new ExhaustiveEngine();
-		File fs = new File(
-				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
-		File ft = new File(
-				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
-
-		Tree tl = null;
-		Tree tr = null;
-		SpoonTreeBuilder builder = new SpoonTreeBuilder();
-		tl = builder.build(fs);
-		tr = builder.build(ft);
-
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
-
-		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
-
-		for (int i = 1000; i < 2000; i = i + 100) {
-			GumtreeProperties properies = new GumtreeProperties();
-			for (int mi = 1; mi <= 5; mi = mi + 1) {
-				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
-				// bu_minsize=1200}
-				properies.put(ConfigurationOptions.st_priocalc, "height");
-				properies.put(ConfigurationOptions.bu_minsim, 0.9);
-				properies.put(ConfigurationOptions.st_minprio, mi);
-				properies.put(ConfigurationOptions.bu_minsize, i);
-				combinations.add(properies);
-			}
-		}
-
-		ExecutionConfiguration config = new ExecutionConfiguration();
-
-		System.out.println("Serial");
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
-
-		// assertEquals(10, resultS.size());
-
-		DescriptiveStatistics statsS = new DescriptiveStatistics();
-		for (SingleDiffResult singleDiffResult : resultS) {
-			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
-			System.out.println(serial);
-			// assertTrue(serial > 0 && serial < 50);
-			statsS.addValue(serial);
-
-		}
-
-		System.out.println("Paralell");
-
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
-
-		// assertEquals(10, resultParalel.size());
-		DescriptiveStatistics statsP = new DescriptiveStatistics();
-		for (SingleDiffResult singleDiffResult : resultParalel) {
-			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
-			System.out.println(serial);
-			// assertTrue(serial > 1 && serial < 200);
-			statsP.addValue(serial);
-
-		}
-		System.out.println("Stat Serial");
-		System.out.println(statsS);
-
-		System.out.println("Stat Paralell");
-		System.out.println(statsP);
-	}
-
-	@Test
-	public void testManyConfigsComposite() throws Exception {
+	public void testConfigThreadVariability() throws Exception {
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
 		File fs = new File(
@@ -384,7 +252,7 @@ public class ModalitylExecutionTest {
 		DescriptiveStatistics statsS = new DescriptiveStatistics();
 		for (SingleDiffResult singleDiffResult : resultS) {
 			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
-			System.out.println(serial);
+			// System.out.println(serial);
 			// assertTrue(serial > 0 && serial < 50);
 			statsS.addValue(serial);
 
@@ -406,7 +274,7 @@ public class ModalitylExecutionTest {
 			DescriptiveStatistics statsP = new DescriptiveStatistics();
 			for (SingleDiffResult singleDiffResult : resultParalel) {
 				Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
-				System.out.println(serial);
+				// System.out.println(serial);
 				// assertTrue(serial > 1 && serial < 200);
 				statsP.addValue(serial);
 
@@ -414,14 +282,12 @@ public class ModalitylExecutionTest {
 			means.add(statsP.getMean());
 
 		}
+		System.out.println("Mean time by thread:");
 		System.out.println(means);
+		System.out.println("Time per exec:");
 		System.out.println(times);
+		System.out.println("Time serial:");
 		System.out.println(timeserial);
-		// System.out.println("Stat Serial");
-		// System.out.println(statsS);
-
-		// System.out.println("Stat Paralell");
-		// System.out.println(statsP);
 	}
 
 }

@@ -36,6 +36,7 @@ import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.DiffProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
@@ -688,6 +689,8 @@ public class ExhaustiveEngine implements SearchMethod {
 			// let's compute the median of each conf
 			Map<String, Double> medianByConfiguration = new HashMap<>();
 
+			Double minMedian = Double.MAX_VALUE;
+			int i = 0;
 			for (String aConfigresult : results.keySet()) {
 
 				DescriptiveStatistics stats = new DescriptiveStatistics();
@@ -696,18 +699,41 @@ public class ExhaustiveEngine implements SearchMethod {
 				for (Integer aSize : allSizesOfConfigs) {
 					stats.addValue(aSize);
 				}
-				double median = stats.getPercentile(50);
+				double median = 0;
+				if (configuration.getMetric().equals(METRIC.MEDIAN))
+					median = stats.getPercentile(50);
+
+				else if (configuration.getMetric().equals(METRIC.MEAN))
+					median = stats.getMean();
+
 				medianByConfiguration.put(aConfigresult, median);
 
+				if (median < minMedian) {
+					minMedian = median;
+				}
+
+				System.out.println(++i + " " + aConfigresult + " " + median + ": " + allSizesOfConfigs);
 			}
+			final Double minValuemedian = minMedian;
 			// Choose the config with best median
 
-			List<String> best = medianByConfiguration.keySet().stream()
-					.sorted((e1, e2) -> medianByConfiguration.get(e1).compareTo(medianByConfiguration.get(e2)))
-					.collect(Collectors.toList());
+			// List<String> best = medianByConfiguration.keySet().stream()
+			// .sorted((e1, e2) ->
+			// medianByConfiguration.get(e1).compareTo(medianByConfiguration.get(e2)))
+			// .collect(Collectors.toList());
 
-			bestResult.setMedian(medianByConfiguration.get(best.get(0)));
-			bestResult.setBest(best.get(0));
+			System.out.println("Min median " + minValuemedian);
+
+			List<String> bests = medianByConfiguration.keySet().stream()
+					.filter(e -> minValuemedian.equals(medianByConfiguration.get(e))).collect(Collectors.toList());
+
+			System.out.println("Total configs " + bests.size() + " / " + results.keySet().size());
+			//
+
+			bestResult.setMedian(minMedian);
+			bestResult.setBest(bests);
+
+			return bestResult;
 
 		} catch (Exception e) {
 
