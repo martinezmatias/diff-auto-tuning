@@ -17,6 +17,8 @@ public class ExecutionConfiguration extends HashMap<Object, Object> {
 	private int numberOfThreads = 16;
 	private long timeOut = 60 * 60; // 60 min
 
+	private boolean saveScript = false;
+
 	public enum METRIC {
 		MEDIAN, MEAN
 	}
@@ -63,5 +65,13 @@ public class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setMetric(METRIC metric) {
 		this.metric = metric;
+	}
+
+	public boolean isSaveScript() {
+		return saveScript;
+	}
+
+	public void setSaveScript(boolean saveScript) {
+		this.saveScript = saveScript;
 	}
 }

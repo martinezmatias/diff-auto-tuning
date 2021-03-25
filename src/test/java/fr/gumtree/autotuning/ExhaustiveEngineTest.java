@@ -154,6 +154,7 @@ public class ExhaustiveEngineTest {
 		ExecutionConfiguration ec = new ExecutionConfiguration();
 		// Only for test
 		ec.setMetric(METRIC.MEAN);
+		ec.setSaveScript(true);
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, ASTMODE.GTSPOON, ec);
 
 		assertEquals(5.3d, bestConfig.getMedian(), 0.1);

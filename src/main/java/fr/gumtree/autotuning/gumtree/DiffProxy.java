@@ -7,6 +7,7 @@ import com.github.gumtreediff.tree.Tree;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 
 /**
+ * Interface for running an algorithm
  * 
  * @author Matias Martinez
  *

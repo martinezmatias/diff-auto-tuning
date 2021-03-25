@@ -40,6 +40,7 @@ import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
+import fr.gumtree.autotuning.outils.SaverDiff;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -632,7 +633,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			ExecutionConfiguration configuration) throws Exception {
 		PARALLEL_EXECUTION parallel = PARALLEL_EXECUTION.PROPERTY_LEVEL;
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
-
+		SaverDiff saver = new SaverDiff();
 		// We select the parser
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
@@ -670,8 +671,17 @@ public class ExhaustiveEngine implements SearchMethod {
 						GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
 
 						// maybe to replace by a toString
-						String oneBest = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(), gt);
-						results.add(oneBest, isize);
+						String plainProperties = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(),
+								gt);
+						results.add(plainProperties, isize);
+
+						if (configuration.isSaveScript()) {
+
+							String key = sp[0].replace("/", "_") + "_c_" + plainProperties;
+
+							saver.saveUnified(key, plainProperties, diffResult.getDiff(), new File("./out/"));
+
+						}
 
 					}
 
@@ -682,6 +692,8 @@ public class ExhaustiveEngine implements SearchMethod {
 
 			}
 			reader.close();
+
+			saver.saveRelations(new File("./out/"));
 
 			// Now to summarize
 			ResponseBestParameter bestResult = new ResponseBestParameter();
