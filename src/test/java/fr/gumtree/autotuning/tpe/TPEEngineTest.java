@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.tpe;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -22,7 +22,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  * @author Matias Martinez
  *
  */
-public class TPEBridgeTest {
+public class TPEEngineTest {
 
 	@Test
 	public void testTPEBridge_Simple_1() throws Exception {

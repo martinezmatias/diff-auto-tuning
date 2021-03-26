@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.deprecated;
 
 import static org.junit.Assert.assertTrue;
 
@@ -14,6 +14,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
@@ -25,6 +26,8 @@ import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.outils.ResultVisualizer;
 
+@Deprecated
+@Ignore
 public class VisualDiffTest {
 
 	final File rootMegadiff = new File("./examples/");

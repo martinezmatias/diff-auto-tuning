@@ -17,7 +17,7 @@ import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
-import fr.gumtree.autotuning.server.ServerLauncher;
+import fr.gumtree.autotuning.server.DiffServerLauncher;
 
 /**
  * 
@@ -28,7 +28,7 @@ public class TPEEngine implements SearchMethod {
 
 	private static final String HEADER_RESPONSE_PYTHON = "Best config: ";
 
-	ServerLauncher launcher;
+	DiffServerLauncher launcher;
 
 	public TPEEngine() {
 	}
@@ -41,7 +41,7 @@ public class TPEEngine implements SearchMethod {
 			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		launcher = new ServerLauncher();
+		launcher = new DiffServerLauncher();
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
@@ -69,7 +69,7 @@ public class TPEEngine implements SearchMethod {
 			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		launcher = new ServerLauncher();
+		launcher = new DiffServerLauncher();
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 

@@ -24,7 +24,7 @@ import fr.gumtree.autotuning.gumtree.ASTMODE;
  * @author Matias Martinez
  *
  */
-public class ServerLauncher {
+public class DiffServerLauncher {
 
 	private HttpServer server = null;
 
@@ -33,7 +33,7 @@ public class ServerLauncher {
 
 	public static void main(String[] args) throws IOException {
 
-		ServerLauncher launcher = new ServerLauncher();
+		DiffServerLauncher launcher = new DiffServerLauncher();
 
 		launcher.start();
 

@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.exhaustive;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
@@ -28,7 +28,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  * @author Matias Martinez
  *
  */
-public class ModalitylExecutionTest {
+public class TimeExecutionTest {
 
 	@Test
 	public void testCores() throws Exception {

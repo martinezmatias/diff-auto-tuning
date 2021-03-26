@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.exhaustive;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -25,6 +25,12 @@ import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
+/**
+ * This test case focuses on testing one particular case
+ * 
+ * @author Matias Martinez
+ *
+ */
 public class CaseExecutionTest {
 	final File rootMegadiff = new File("./examples/megadiff-sample");
 	private ITreeBuilder treeBuilder = new SpoonTreeBuilder();
@@ -99,6 +105,7 @@ public class CaseExecutionTest {
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 
+		ITreeBuilder treeBuilder = new SpoonTreeBuilder();
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
 				configuration);
 
@@ -136,74 +143,4 @@ public class CaseExecutionTest {
 		assertTrue(propertiesSimple.keySet().contains(ConfigurationOptions.st_minprio.name()));
 	}
 
-	@Test
-	public void testDirect_1_02f3fd442349d4e7fdfc9c31a82bb1638db8495() throws IOException {
-
-		assertTrue(rootMegadiff.exists());
-
-		ExhaustiveEngine reader = new ExhaustiveEngine();
-
-		MegadiffRunner runner = new MegadiffRunner(reader);
-
-		File fs = new File(
-				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
-		File ft = new File(
-				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
-
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
-
-		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
-
-		CaseResult result = runner.runSingleOnPairOfFiles(treeBuilder, "./out/", 1, configuration, fs, ft,
-				"02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version");
-
-		assertNotNull(result);
-		System.out.println(result);
-
-		SingleDiffResult singleDiffResult = result.getResultByMatcher().values().stream().findFirst().get()
-				.getAlldiffresults().get(0);
-
-		Integer nrActions = (Integer) singleDiffResult.get(Constants.NRACTIONS);
-		assertTrue(nrActions > 0);
-
-		assertTrue(singleDiffResult.getDiff().editScript.asList().size() > 0);
-
-		Map<String, Object> properties = GTProxy
-				.toGumtreePropertyToMap((GumtreeProperties) singleDiffResult.get(Constants.CONFIG));
-		assertNotNull(properties);
-		assertTrue(properties.size() > 0);
-
-		System.out.println(properties);
-
-		MatcherResult resultMatcherSimple = result.getResultByMatcher().values().stream()
-				.filter(e -> e.getMatcherName().equals("SimpleGumtree")).findFirst().get();
-
-	}
-
-	@Test
-	public void testNavigate_SingleDiff_1_() throws IOException {
-
-		assertTrue(rootMegadiff.exists());
-
-		ExhaustiveEngine reader = new ExhaustiveEngine();
-
-		MegadiffRunner runner = new MegadiffRunner(reader);
-
-		String commitId = "0a664d752c4b0e5a7fb6f06d005181a0c9dc2905";
-
-		int megadiff_id = 1;
-
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
-
-		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
-
-		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
-				configuration);
-
-		assertNotNull(result);
-		System.out.println(result);
-
-		assertTrue(result.getResultByMatcher().keySet().size() > 0);
-
-	}
 }

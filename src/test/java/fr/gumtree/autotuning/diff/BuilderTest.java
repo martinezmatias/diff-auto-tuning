@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.diff;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;

@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.deprecated;
 
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
@@ -11,6 +11,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import org.junit.Ignore;
 import org.junit.Test;
 
 import com.github.gumtreediff.matchers.CompositeMatchers;
@@ -28,6 +29,8 @@ import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 
+@Deprecated
+@Ignore
 public class EngineTest {
 
 	final File rootMegadiff = new File("./examples/megadiff-sample");

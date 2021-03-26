@@ -1,4 +1,4 @@
-package fr.gumtree.autotuning;
+package fr.gumtree.autotuning.exhaustive;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
@@ -15,6 +15,7 @@ import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 
 public class ExhaustiveEngineTest {
+	final File rootMegadiff = new File("./examples/megadiff-sample");
 
 	@Test
 	public void testExhaustive_Local_Simple_1() throws Exception {
