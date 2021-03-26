@@ -18,7 +18,7 @@ import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.entity.SingleDiffResult;
-import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -65,7 +65,7 @@ public class ModalitylExecutionTest {
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
 		combinations.add(properies);
-		ExecutionConfiguration config = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
 				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
@@ -113,7 +113,7 @@ public class ModalitylExecutionTest {
 			combinations.add(properies);
 		}
 
-		ExecutionConfiguration config = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		System.out.println("Serial");
 		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
@@ -174,7 +174,7 @@ public class ModalitylExecutionTest {
 			}
 		}
 
-		ExecutionConfiguration config = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		System.out.println("Serial");
 		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
@@ -260,7 +260,8 @@ public class ModalitylExecutionTest {
 
 		System.out.println("Paralell");
 
-		ExecutionConfiguration config = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+
 		List<Double> means = new ArrayList<>();
 		List<Double> times = new ArrayList<>();
 		for (int i = 1; i <= 10; i++) {

@@ -12,7 +12,7 @@ import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
  * @author Matias Martinez
  *
  */
-public class ExecutionConfiguration extends HashMap<Object, Object> {
+public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	private PARALLEL_EXECUTION paralelisationMode = PARALLEL_EXECUTION.NONE;
 	private int numberOfThreads = 16;

@@ -21,7 +21,7 @@ import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
-import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
@@ -47,7 +47,7 @@ public class EngineTest {
 
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -68,7 +68,7 @@ public class EngineTest {
 		// Let's try with set 1
 		int[] megadiff_ids = new int[] { 1 };
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -92,7 +92,7 @@ public class EngineTest {
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setNumberOfThreads(10);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.MATCHER_LEVEL);
 
@@ -106,7 +106,7 @@ public class EngineTest {
 	public void testNavigate_CompareTimeouts() throws IOException {
 
 		assertTrue(rootMegadiff.exists());
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		ExhaustiveEngine reader = new ExhaustiveEngine();
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
@@ -233,7 +233,7 @@ public class EngineTest {
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -249,7 +249,7 @@ public class EngineTest {
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setTimeOut(0);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.MATCHER_LEVEL);
 
@@ -269,7 +269,7 @@ public class EngineTest {
 		assertTrue(rootMegadiff.exists());
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setTimeOut(0);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.MATCHER_LEVEL);
 
@@ -293,7 +293,7 @@ public class EngineTest {
 				+ "/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		CaseResult caseResult = reader.analyzeCase(treeBuilder, "1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t,

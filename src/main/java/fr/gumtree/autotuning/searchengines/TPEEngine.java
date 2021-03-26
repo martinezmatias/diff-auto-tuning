@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.ServerLauncher;
 
@@ -29,22 +30,11 @@ public class TPEEngine implements SearchMethod {
 
 	ServerLauncher launcher;
 
-	String pythonpath = "/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python";
-	String scriptpath = "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/src/runners/TPEBridge.py";
-
-	String classpath = System.getProperty("java.class.path");
-	String javahome = System.getProperty("java.home");
-
-	public TPEEngine(String pythonpath, String scriptpath) {
-		this.pythonpath = pythonpath;
-		this.scriptpath = scriptpath;
-	}
-
 	public TPEEngine() {
 	}
 
 	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionConfiguration());
+		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionTPEConfiguration());
 	}
 
 	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
@@ -59,7 +49,7 @@ public class TPEEngine implements SearchMethod {
 
 		JsonObject responseJSon = launcher.initSimple(left, right, astmode);
 
-		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
+		resultGeneral = processOutput(resultGeneral, handler, responseJSon, (ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
 		if (resultGeneral != null)
@@ -72,7 +62,7 @@ public class TPEEngine implements SearchMethod {
 	}
 
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
-		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionConfiguration());
+		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionTPEConfiguration());
 	}
 
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
@@ -87,7 +77,7 @@ public class TPEEngine implements SearchMethod {
 
 		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode);
 
-		resultGeneral = processOutput(resultGeneral, handler, responseJSon);
+		resultGeneral = processOutput(resultGeneral, handler, responseJSon, (ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
 		if (resultGeneral != null)
@@ -100,11 +90,11 @@ public class TPEEngine implements SearchMethod {
 	}
 
 	public ResponseBestParameter processOutput(ResponseBestParameter resultGeneral, GumtreeAbstractHttpHandler handler,
-			JsonObject responseJSon) throws IOException, InterruptedException {
+			JsonObject responseJSon, ExecutionTPEConfiguration configuration) throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
 		if ("created".equals(status)) {
 
-			String best = queryBestConfigOnServer(handler);
+			String best = queryBestConfigOnServer(handler, configuration);
 			if (best != null) {
 
 				System.out.println("Checking obtaining Best: ");
@@ -151,15 +141,17 @@ public class TPEEngine implements SearchMethod {
 	/**
 	 * 
 	 * @param handler
+	 * @param configuration
 	 * @return
 	 */
-	public String queryBestConfigOnServer(GumtreeAbstractHttpHandler handler) {
+	public String queryBestConfigOnServer(GumtreeAbstractHttpHandler handler, ExecutionTPEConfiguration configuration) {
 		// Call TPE
 
 		Runtime rt = Runtime.getRuntime();
 
 		// Create command
-		String[] commandAndArguments = { pythonpath, scriptpath, classpath, javahome, handler.getHost(),
+		String[] commandAndArguments = { configuration.getPythonpath(), configuration.getScriptpath(),
+				configuration.getClasspath(), configuration.getJavahome(), handler.getHost(),
 				Integer.toString(handler.getPort()), handler.getPath(), HEADER_RESPONSE_PYTHON };
 		try {
 			Process p = rt.exec(commandAndArguments);

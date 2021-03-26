@@ -37,6 +37,7 @@ import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.DiffProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
@@ -625,7 +626,7 @@ public class ExhaustiveEngine implements SearchMethod {
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
 
-		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionConfiguration());
+		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionExhaustiveConfiguration());
 	}
 
 	@Override
@@ -758,7 +759,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 	@Override
 	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionConfiguration());
+		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionExhaustiveConfiguration());
 
 	}
 

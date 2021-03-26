@@ -10,8 +10,8 @@ import org.junit.Test;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
-import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 
 public class ExhaustiveEngineTest {
@@ -26,7 +26,7 @@ public class ExhaustiveEngineTest {
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
 
-		ExecutionConfiguration ec = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration();
 		// Only for test
 		ec.setMetric(METRIC.MEAN);
 		ec.setSaveScript(true);
@@ -157,7 +157,7 @@ public class ExhaustiveEngineTest {
 		File fs = new File("./examples/input_multiple_3_diffs.txt");
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
-		ExecutionConfiguration ec = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration();
 		// Only for test
 		ec.setMetric(METRIC.MEAN);
 		ec.setSaveScript(true);

@@ -17,7 +17,7 @@ import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
-import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
@@ -42,7 +42,7 @@ public class CaseExecutionTest {
 
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
@@ -68,7 +68,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 
@@ -95,7 +95,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 
@@ -150,7 +150,7 @@ public class CaseExecutionTest {
 		File ft = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -193,7 +193,7 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 
