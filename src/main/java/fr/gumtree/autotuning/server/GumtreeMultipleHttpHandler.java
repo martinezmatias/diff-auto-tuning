@@ -110,11 +110,12 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 				// As the diff is null (probably an error happens) we put a large integer)
 				config.addProperty("nractions", Integer.MAX_VALUE);
 			}
-
-			try {
-				saver.saveUnified(this.names.get(i), parameters, diff, out);
-			} catch (Exception e) {
-				e.printStackTrace();
+			if (out != null) {
+				try {
+					saver.saveUnified(this.names.get(i), parameters, diff, out);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
 			}
 
 		}
