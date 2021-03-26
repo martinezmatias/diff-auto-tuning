@@ -16,8 +16,8 @@ import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
-import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
+import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
 
 /**
  * 
@@ -49,7 +49,8 @@ public class TPEEngine implements SearchMethod {
 
 		JsonObject responseJSon = launcher.initSimple(left, right, astmode);
 
-		resultGeneral = processOutput(resultGeneral, handler, responseJSon, (ExecutionTPEConfiguration) configuration);
+		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
+				(ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
 		if (resultGeneral != null)
@@ -77,7 +78,8 @@ public class TPEEngine implements SearchMethod {
 
 		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode);
 
-		resultGeneral = processOutput(resultGeneral, handler, responseJSon, (ExecutionTPEConfiguration) configuration);
+		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
+				(ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
 		if (resultGeneral != null)
@@ -89,8 +91,9 @@ public class TPEEngine implements SearchMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter processOutput(ResponseBestParameter resultGeneral, GumtreeAbstractHttpHandler handler,
-			JsonObject responseJSon, ExecutionTPEConfiguration configuration) throws IOException, InterruptedException {
+	public ResponseBestParameter processResponseFromServer(ResponseBestParameter resultGeneral,
+			GumtreeAbstractHttpHandler handler, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
+			throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
 		if ("created".equals(status)) {
 
@@ -104,8 +107,6 @@ public class TPEEngine implements SearchMethod {
 				JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);
 
 				String checkedBestParameters = responseJSonFromBest.get("parameters").getAsString();
-
-				System.out.println("");
 
 				JsonArray actionsArray = responseJSonFromBest.get("actions").getAsJsonArray();
 

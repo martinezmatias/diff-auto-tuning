@@ -19,6 +19,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.GTProxy;
+import fr.gumtree.autotuning.outils.SaverDiff;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -36,6 +37,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 	String host = "localhost";
 	int port = 8001;
 	String path = "multiple";
+	SaverDiff saver = new SaverDiff();
 
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {
@@ -54,7 +56,18 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			if (httpExchange.getRequestURI().getPath().equals("/multiple")) {
 
-				singleDiff(httpExchange, queryParams);
+				if (queryParams.get("action").contains("load")) {
+					loadTree(httpExchange, queryParams);
+
+				} else if (queryParams.get("action").contains("run")) {
+					runDiff(httpExchange, queryParams);
+
+				} else if (queryParams.get("action").contains("info")) {
+
+					System.out.println("Output info" + cacheResults.toString());
+					handleResponse(httpExchange, cacheResults.toString());
+
+				}
 
 			} else {
 				System.err.println("Error: unknown path: " + httpExchange.getRequestURI().getPath());
@@ -64,89 +77,87 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	}
 
-	public void singleDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
-		// http://localhost:8001/test?name=sam&action=load&model=jdt&left=l1&right=r1
-		if (queryParams.get("action").contains("load")) {
-			System.out.println("Load");
+	public void runDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
+		JsonObject root = new JsonObject();
 
-			String model = queryParams.get("model").get(0);
-			String file = queryParams.get("file").get(0);
+		JsonArray actions = new JsonArray();
+		root.add("actions", actions);
+		String parameters = queryParams.get("parameters").get(0);
+		root.addProperty("parameters", parameters);
 
-			System.out.println(model + " " + file);
+		System.out.println("\n**run with params " + parameters);
+		System.out.println("--current analyzed in cache: " + this.cacheResults.size());
+		for (int i = 0; i < this.files.size(); i++) {
+			System.out.println("running " + (i + 1) + "/" + this.files.size());
+			Pair<Tree, Tree> pair = files.get(i);
 
-			ITreeBuilder treebuilder = null;
-			if (ASTMODE.GTSPOON.name().equals(model)) {
-				treebuilder = new SpoonTreeBuilder();
-			} else if (ASTMODE.JDT.name().equals(model)) {
-				treebuilder = new JDTTreeBuilder();
+			File out = null;
+			if (queryParams.containsKey("out"))
+				out = new File(queryParams.get("out").get(0));
+
+			GTProxy proxy = new GTProxy();
+
+			Diff diff = proxy.run(pair.first, pair.second, parameters, out);
+
+			JsonObject config = new JsonObject();
+			config.addProperty("file", this.names.get(0));
+			actions.add(config);
+
+			if (diff != null) {
+				config.addProperty("nractions", diff.editScript.asList().size());
+
 			} else {
-				System.err.println("Mode not configured " + model);
+				// As the diff is null (probably an error happens) we put a large integer)
+				config.addProperty("nractions", Integer.MAX_VALUE);
 			}
 
 			try {
-				System.out.println("Creating multiples trees: ");
-				cacheResults = new JsonArray();
-				createMultipleTrees(httpExchange, treebuilder, file);
-
-				handleResponse(httpExchange,
-						"{status=created, operation=multiplecreate, pairs=" + this.files.size() + "}");
-
+				saver.saveUnified(this.names.get(i), parameters, diff, out);
 			} catch (Exception e) {
-				System.out.println("Error loading trees");
 				e.printStackTrace();
-
-				handleResponse(httpExchange, "error");
 			}
 
-		} else if (queryParams.get("action").contains("run")) {
-			JsonObject root = new JsonObject();
+		}
 
-			JsonArray actions = new JsonArray();
-			root.add("actions", actions);
-			String parameters = queryParams.get("parameters").get(0);
-			root.addProperty("parameters", parameters);
+		if (actions.size() > 0)
+			root.addProperty("status", "ok");
+		else
+			root.addProperty("status", "error");
 
-			System.out.println("\n**run with params " + parameters);
-			System.out.println("--current analyzed in cache: " + this.cacheResults.size());
-			for (int i = 0; i < this.files.size(); i++) {
-				System.out.println("running " + (i + 1) + "/" + this.files.size());
-				Pair<Tree, Tree> pair = files.get(i);
+		cacheResults.add(root);
+		System.out.println("Output " + root.toString());
+		handleResponse(httpExchange, root.toString());
+	}
 
-				File out = null;
-				if (queryParams.containsKey("out"))
-					out = new File(queryParams.get("out").get(0));
+	public void loadTree(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
+		System.out.println("Load");
 
-				GTProxy proxy = new GTProxy();
+		String model = queryParams.get("model").get(0);
+		String file = queryParams.get("file").get(0);
 
-				Diff diff = proxy.run(pair.first, pair.second, parameters, out);
+		System.out.println(model + " " + file);
 
-				JsonObject config = new JsonObject();
-				config.addProperty("file", this.names.get(0));
-				actions.add(config);
+		ITreeBuilder treebuilder = null;
+		if (ASTMODE.GTSPOON.name().equals(model)) {
+			treebuilder = new SpoonTreeBuilder();
+		} else if (ASTMODE.JDT.name().equals(model)) {
+			treebuilder = new JDTTreeBuilder();
+		} else {
+			System.err.println("Mode not configured " + model);
+		}
 
-				if (diff != null) {
-					config.addProperty("nractions", diff.editScript.asList().size());
+		try {
+			System.out.println("Creating multiples trees: ");
+			cacheResults = new JsonArray();
+			createMultipleTrees(httpExchange, treebuilder, file);
 
-				} else {
-					// As the diff is null (probably an error happens) we put a large integer)
-					config.addProperty("nractions", Integer.MAX_VALUE);
-				}
-			}
+			handleResponse(httpExchange, "{status=created, operation=multiplecreate, pairs=" + this.files.size() + "}");
 
-			if (actions.size() > 0)
-				root.addProperty("status", "ok");
-			else
-				root.addProperty("status", "error");
+		} catch (Exception e) {
+			System.out.println("Error loading trees");
+			e.printStackTrace();
 
-			cacheResults.add(root);
-			System.out.println("Output " + root.toString());
-			handleResponse(httpExchange, root.toString());
-
-		} else if (queryParams.get("action").contains("info")) {
-
-			System.out.println("Output info" + cacheResults.toString());
-			handleResponse(httpExchange, cacheResults.toString());
-
+			handleResponse(httpExchange, "error");
 		}
 	}
 

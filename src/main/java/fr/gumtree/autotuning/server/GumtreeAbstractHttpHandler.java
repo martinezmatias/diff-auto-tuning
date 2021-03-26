@@ -1,11 +1,14 @@
 package fr.gumtree.autotuning.server;
 
+import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
 
 import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+
+import fr.gumtree.autotuning.outils.SaverDiff;
 
 /**
  * 
@@ -20,10 +23,14 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 
 	public abstract String getPath();
 
+	File out = null;
+
 	/**
 	 * Stores the different calls to run
 	 */
 	JsonArray cacheResults = new JsonArray();
+
+	SaverDiff saver = new SaverDiff();
 
 	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
 
@@ -32,10 +39,6 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 		StringBuilder htmlBuilder = new StringBuilder();
 
 		htmlBuilder.append(reponse);
-
-		// encode HTML content
-
-		// this line is a must
 
 		httpExchange.getResponseHeaders().set("Content-Type", "appication/json");
 

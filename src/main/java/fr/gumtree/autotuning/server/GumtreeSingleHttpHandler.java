@@ -2,6 +2,7 @@ package fr.gumtree.autotuning.server;
 
 import java.io.File;
 import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
@@ -67,41 +68,7 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 	public void singleDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
 		// http://localhost:8001/test?name=sam&action=load&model=jdt&left=l1&right=r1
 		if (queryParams.get("action").contains("load")) {
-			System.out.println("Load");
-
-			String model = queryParams.get("model").get(0);
-			String left = queryParams.get("left").get(0);
-			String right = queryParams.get("right").get(0);
-
-			System.out.println(model + left + right);
-
-			ITreeBuilder treebuilder = null;
-			if (ASTMODE.GTSPOON.name().equals(model)) {
-				treebuilder = new SpoonTreeBuilder();
-			} else if (ASTMODE.JDT.name().equals(model)) {
-				treebuilder = new JDTTreeBuilder();
-			} else {
-				System.err.println("Mode not configured " + model);
-			}
-
-			try {
-				// Reset the cache
-				cacheResults = new JsonArray();
-
-				this.nameLeft = left;
-				tl = treebuilder.build(new File(left));
-
-				tr = treebuilder.build(new File(right));
-
-				handleResponse(httpExchange, "{status=created}");
-
-			} catch (Exception e) {
-				System.out.println("Error loading trees");
-				e.printStackTrace();
-
-				handleResponse(httpExchange, "{status=error}");
-
-			}
+			loadTrees(httpExchange, queryParams);
 
 		} else if (queryParams.get("action").contains("run")) {
 
@@ -109,11 +76,6 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 				System.out.println("One tree is null");
 				return;
 			}
-
-			File out = null;
-
-			if (queryParams.containsKey("out"))
-				out = new File(queryParams.get("out").get(0));
 
 			String parameters = queryParams.get("parameters").get(0);
 
@@ -142,6 +104,15 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				root.addProperty("status", "ok");
 
+				if (out != null) {
+					//
+					try {
+						saver.saveUnified(nameLeft, parameters, diff, out);
+					} catch (NoSuchAlgorithmException | IOException e) {
+						e.printStackTrace();
+					}
+				}
+
 			} else {
 				root.addProperty("status", "error");
 			}
@@ -155,6 +126,47 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			System.out.println("Output info" + cacheResults.toString());
 			handleResponse(httpExchange, cacheResults.toString());
+
+		}
+	}
+
+	public void loadTrees(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
+		System.out.println("Load");
+
+		String model = queryParams.get("model").get(0);
+		String left = queryParams.get("left").get(0);
+		String right = queryParams.get("right").get(0);
+
+		if (queryParams.containsKey("out"))
+			out = new File(queryParams.get("out").get(0));
+
+		System.out.println(model + left + right);
+
+		ITreeBuilder treebuilder = null;
+		if (ASTMODE.GTSPOON.name().equals(model)) {
+			treebuilder = new SpoonTreeBuilder();
+		} else if (ASTMODE.JDT.name().equals(model)) {
+			treebuilder = new JDTTreeBuilder();
+		} else {
+			System.err.println("Mode not configured " + model);
+		}
+
+		try {
+			// Reset the cache
+			cacheResults = new JsonArray();
+
+			this.nameLeft = left;
+			tl = treebuilder.build(new File(left));
+
+			tr = treebuilder.build(new File(right));
+
+			handleResponse(httpExchange, "{status=created}");
+
+		} catch (Exception e) {
+			System.out.println("Error loading trees");
+			e.printStackTrace();
+
+			handleResponse(httpExchange, "{status=error}");
 
 		}
 	}
