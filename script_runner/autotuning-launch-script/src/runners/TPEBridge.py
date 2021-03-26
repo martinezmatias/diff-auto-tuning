@@ -19,7 +19,6 @@ defaultConfigurations = {
 "SimpleGumtree":"SimpleGumtree_0.5_2",
 "ClassicGumtree":"ClassicGumtree_0.5_1000_1"	, ## "CompleteGumtreeMatcher_0.5_1000_2", GT2 uses H = 1 , GT 3 uses 2
 "CompleteGumtreeMatcher": "CompleteGumtreeMatcher_0.5_1000_1",#"CompleteGumtreeMatcher_0.5_1000_2",
-"ChangeDistiller": "ChangeDistiller_0.5_4_0.6_0.4",
 "XyMatcher": "XyMatcher_2_0.5"
 			}
 
@@ -76,39 +75,30 @@ def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None, xse
 propertiesPerMatcher["SimpleGumtree"] = ["st_minprio", "st_priocalc"]
 propertiesPerMatcher["ClassicGumtree"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priocalc"]
 propertiesPerMatcher["CompleteGumtreeMatcher"] = ["bu_minsim", "bu_minsize", "st_minprio", "st_priocalc"]
-propertiesPerMatcher["ChangeDistiller"] = ["cd_labsim", "cd_maxleaves","cd_structsim1",  "cd_structsim2"]
 propertiesPerMatcher["XyMatcher"] = ["st_minprio", "st_priocalc"]
 
 
 def createSpace(algorithm = None):
 	spaceAlgorithms = [
-		{  # ["GT_BUM_SMT_SBUP", "GT_STM_MH"]
+		{ 
 			'algorithm': 'SimpleGumtree',
 			"SimpleGumtree_st_minprio": hp.choice("SimpleGumtree_st_minprio", rangeMH),
 			"SimpleGumtree_st_priocalc": hp.choice("SimpleGumtree_st_priocalc", rangePriority),
 		},
-		{  # ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
+		{  
 			'algorithm': 'ClassicGumtree',
 			"ClassicGumtree_bu_minsim": hp.choice("ClassicGumtree_bu_minsim", rangeGT_BUM_SMT),
 			"ClassicGumtree_bu_minsize": hp.choice("ClassicGumtree_bu_minsize", rangeGT_BUM_SZT),
 			"ClassicGumtree_st_minprio": hp.choice("ClassicGumtree_st_minprio", rangeMH),
 			"ClassicGumtree_st_priocalc": hp.choice("ClassicGumtree_st_priocalc", rangePriority),
 		},
-		{  # ["GT_BUM_SMT", "GT_BUM_SZT", "GT_STM_MH"]
+		{ 
 			'algorithm': 'CompleteGumtreeMatcher',
 			"CompleteGumtreeMatcher_bu_minsim": hp.choice("CompleteGumtreeMatcher_bu_minsim", rangeGT_BUM_SMT),
 			"CompleteGumtreeMatcher_bu_minsize": hp.choice("CompleteGumtreeMatcher_bu_minsize", rangeGT_BUM_SZT),
 			"CompleteGumtreeMatcher_st_minprio": hp.choice("CompleteGumtreeMatcher_st_minprio", rangeMH),
 			"CompleteGumtreeMatcher_st_priocalc": hp.choice("CompleteGumtreeMatcher_st_priocalc", rangePriority),
 		},
-		{  # ["GT_CD_LSIM", "GT_CD_ML","GT_CD_SSIM1",  "GT_CD_SSIM2"]
-			'algorithm': 'ChangeDistiller',
-			"ChangeDistiller_cd_labsim": hp.choice("ChangeDistiller_cd_labsim", rangeLSIM),
-			"ChangeDistiller_cd_maxleaves": hp.choice("ChangeDistiller_cd_maxleaves", rangeML),
-			"ChangeDistiller_cd_structsim1": hp.choice("ChangeDistiller_cd_structsim1", rangeSSIM1),
-			"ChangeDistiller_cd_structsim2": hp.choice("ChangeDistiller_cd_structsim2", rangeSSIM2),
-		},
-		# ["GT_STM_MH", "GT_XYM_SIM"]
 		{
 			'algorithm': 'XyMatcher',
 			"XyMatcher_st_minprio": hp.choice("XyMatcher_st_minprio", rangeMH),
