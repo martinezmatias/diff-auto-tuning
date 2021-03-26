@@ -17,7 +17,7 @@ import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 public class ExhaustiveEngineTest {
 
 	@Test
-	public void testExhaustive_Simple_1() throws Exception {
+	public void testExhaustive_Local_Simple_1() throws Exception {
 
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
@@ -45,7 +45,7 @@ public class ExhaustiveEngineTest {
 	}
 
 	@Test
-	public void testExhaustive_Simple_2() throws Exception {
+	public void testExhaustive_Local_Simple_2() throws Exception {
 
 		File fs = new File(
 				"./examples/1_0007d191fec7fe2d6a0c4e87594cb286a553f92c/ASTInspector/1_0007d191fec7fe2d6a0c4e87594cb286a553f92c_ASTInspector_s.java");
@@ -68,7 +68,7 @@ public class ExhaustiveEngineTest {
 
 	/// examples/megadiff-sample/1/1_831e3b0420e70f7c2695cb248dd8b488b1fd84b7/NewProductAtomView/1_831e3b0420e70f7c2695cb248dd8b488b1fd84b7_NewProductAtomView_s.java
 	@Test
-	public void testExhaustive_Simple_3() throws Exception {
+	public void testExhaustive_Local_Simple_3() throws Exception {
 
 		File fs = new File(
 				"./examples/megadiff-sample/1/1_831e3b0420e70f7c2695cb248dd8b488b1fd84b7/NewProductAtomView/1_831e3b0420e70f7c2695cb248dd8b488b1fd84b7_NewProductAtomView_s.java");
@@ -91,7 +91,7 @@ public class ExhaustiveEngineTest {
 
 	/// examples/megadiff-sample/1/1_831e3b0420e70f7c2695cb248dd8b488b1fd84b7/NewProductAtomView/1_831e3b0420e70f7c2695cb248dd8b488b1fd84b7_NewProductAtomView_s.java
 	@Test
-	public void testExhaustive_Simple_4_paralell() throws Exception {
+	public void testExhaustive_Local_Simple_4_paralell() throws Exception {
 
 		File fs = new File(
 				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
@@ -113,7 +113,7 @@ public class ExhaustiveEngineTest {
 	}
 
 	@Test
-	public void testExhaustive_Simple_4_serial() throws Exception {
+	public void testExhaustive_Local_Simple_4_serial() throws Exception {
 
 		File fs = new File(
 				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
@@ -135,7 +135,7 @@ public class ExhaustiveEngineTest {
 	}
 
 	@Test
-	public void testExhaustive_Multiple_1() throws Exception {
+	public void testExhaustive_Global_Multiple_1() throws Exception {
 
 		File fs = new File("./examples/input_multiple3.txt");
 
@@ -152,7 +152,7 @@ public class ExhaustiveEngineTest {
 	}
 
 	@Test
-	public void testExhaustive_Multiple_2_small_files() throws Exception {
+	public void testExhaustive_Global_Multiple_2_small_files() throws Exception {
 
 		File fs = new File("./examples/input_multiple_3_diffs.txt");
 
