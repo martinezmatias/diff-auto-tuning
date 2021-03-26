@@ -631,7 +631,7 @@ public class ExhaustiveEngine implements SearchMethod {
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
 			ExecutionConfiguration configuration) throws Exception {
-		PARALLEL_EXECUTION parallel = PARALLEL_EXECUTION.PROPERTY_LEVEL;
+
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
 		SaverDiff saver = new SaverDiff();
 		// We select the parser
@@ -660,8 +660,10 @@ public class ExhaustiveEngine implements SearchMethod {
 				String[] sp = line.split(" ");
 
 				// Compute all diffs
-				CaseResult caseResult = this.analyzeCase(treebuilder, sp[0], new File(sp[0]), new File(sp[1]),
-						configuration, treeCharacteristics, this.allMatchers);
+				String filenameLeft = sp[0];
+				String filenameRight = sp[1];
+				CaseResult caseResult = this.analyzeCase(treebuilder, filenameLeft, new File(filenameLeft),
+						new File(filenameRight), configuration, treeCharacteristics, this.allMatchers);
 
 				// Navegate over the cases.
 				for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
@@ -677,9 +679,8 @@ public class ExhaustiveEngine implements SearchMethod {
 
 						if (configuration.isSaveScript()) {
 
-							String key = sp[0].replace("/", "_") + "_c_" + plainProperties;
-
-							saver.saveUnified(key, plainProperties, diffResult.getDiff(), new File("./out/"));
+							saver.saveUnifiedNotDuplicated(filenameLeft, plainProperties, diffResult.getDiff(),
+									configuration.getDirDiffTreeSerialOutput());
 
 						}
 
@@ -693,7 +694,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			}
 			reader.close();
 
-			saver.saveRelations(new File("./out/"));
+			saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
 
 			// Now to summarize
 			ResponseBestParameter bestResult = new ResponseBestParameter();
@@ -767,7 +768,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
 
-		PARALLEL_EXECUTION parallel = PARALLEL_EXECUTION.MATCHER_LEVEL;
+		SaverDiff saver = new SaverDiff();
 
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
@@ -804,6 +805,11 @@ public class ExhaustiveEngine implements SearchMethod {
 					GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
 					minDiff.add(new Pair<>(mresult.getMatcherName(), gt));
 
+					String plainProperty = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(), gt);
+
+					saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
+							configuration.getDirDiffTreeSerialOutput());
+
 				}
 
 			}
@@ -816,6 +822,8 @@ public class ExhaustiveEngine implements SearchMethod {
 			String oneBest = GTProxy.plainProperties(new JsonObject(), pair.first, pair.second);
 			bestResult.getAllBest().add(oneBest);
 		}
+
+		saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
 
 		return bestResult;
 	}

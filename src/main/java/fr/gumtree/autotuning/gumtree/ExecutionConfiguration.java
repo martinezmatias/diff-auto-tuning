@@ -1,5 +1,6 @@
 package fr.gumtree.autotuning.gumtree;
 
+import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
@@ -18,6 +19,8 @@ public class ExecutionConfiguration extends HashMap<Object, Object> {
 	private long timeOut = 60 * 60; // 60 min
 
 	private boolean saveScript = false;
+
+	private File dirDiffTreeSerialOutput = new File("./out/");
 
 	public enum METRIC {
 		MEDIAN, MEAN
@@ -73,5 +76,13 @@ public class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setSaveScript(boolean saveScript) {
 		this.saveScript = saveScript;
+	}
+
+	public File getDirDiffTreeSerialOutput() {
+		return dirDiffTreeSerialOutput;
+	}
+
+	public void setDirDiffTreeSerialOutput(File dirDiffTreeSerialOutput) {
+		this.dirDiffTreeSerialOutput = dirDiffTreeSerialOutput;
 	}
 }

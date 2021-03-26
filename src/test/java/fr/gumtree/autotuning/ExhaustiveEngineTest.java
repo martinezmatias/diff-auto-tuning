@@ -25,7 +25,13 @@ public class ExhaustiveEngineTest {
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft);
+
+		ExecutionConfiguration ec = new ExecutionConfiguration();
+		// Only for test
+		ec.setMetric(METRIC.MEAN);
+		ec.setSaveScript(true);
+
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, ASTMODE.GTSPOON, ec);
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
