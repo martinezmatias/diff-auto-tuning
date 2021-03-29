@@ -6,6 +6,8 @@ import java.util.TreeSet;
 
 import com.github.gumtreediff.tree.Tree;
 
+import spoon.reflect.code.CtBlock;
+import spoon.reflect.declaration.CtElement;
 import spoon.reflect.declaration.CtMethod;
 import spoon.reflect.declaration.CtModifiable;
 import spoon.reflect.declaration.CtVariable;
@@ -35,6 +37,9 @@ public class NodeCreator extends CtInheritanceScanner {
 		}
 		// We add the type of modifiable element
 		String type = MODIFIERS + getClassName(m.getClass().getSimpleName()) + "_" + m.getShortRepresentation();
+
+		// String type = MODIFIERS + getClassName(m.getClass().getSimpleName()) + "_" +
+		// m.getShortRepresentation();
 		Tree modifiers = builder.createNode(type, "");
 
 		// We create a virtual node
@@ -61,6 +66,17 @@ public class NodeCreator extends CtInheritanceScanner {
 
 	}
 
+	private String getNodeType(CtElement element) {
+		String nodeTypeName = "";
+		if (element != null) {
+			nodeTypeName = getTypeName(element.getClass().getSimpleName());
+		}
+		if (element instanceof CtBlock) {
+			nodeTypeName = element.getRoleInParent().toString();
+		}
+		return nodeTypeName;
+	}
+
 	private String getClassName(String simpleName) {
 		if (simpleName == null)
 			return "";
@@ -69,17 +85,28 @@ public class NodeCreator extends CtInheritanceScanner {
 
 	@Override
 	public <T> void scanCtVariable(CtVariable<T> e) {
+
 		CtTypeReference<T> type = e.getType();
 		if (type != null) {
-			Tree variableType = builder.createNode("VARIABLE_TYPE", type.getQualifiedName());
+			// TODO: workaround to avoid NPE
+			Tree variableType = builder.createNode(getNodeType(type), type.getQualifiedName());
+
+			// Tree variableType = builder.createNode("VARIABLE_TYPE",
+			// type.getQualifiedName());
 			variableType.setMetadata(SpoonGumTreeBuilder.SPOON_OBJECT, type);
 			type.putMetadata(SpoonGumTreeBuilder.GUMTREE_NODE, variableType);
 			builder.addSiblingNode(variableType);
 		}
 	}
 
+	private String getTypeName(String simpleName) {
+		// Removes the "Ct" at the beginning and the "Impl" at the end.
+		return simpleName.substring(2, simpleName.length() - 4);
+	}
+
 	@Override
 	public <T> void visitCtMethod(CtMethod<T> e) {
+
 		// add the return type of the method
 		CtTypeReference<T> type = e.getType();
 		if (type != null) {

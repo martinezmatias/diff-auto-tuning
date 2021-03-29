@@ -18,6 +18,8 @@ import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
+import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
+import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 
 /**
  * 
@@ -45,9 +47,9 @@ public class TPEEngine implements SearchMethod {
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
-		GumtreeAbstractHttpHandler handler = launcher.getHandlerSimple();
+		GumtreeSingleHttpHandler handler = launcher.getHandlerSimple();
 
-		JsonObject responseJSon = launcher.initSimple(left, right, astmode);
+		JsonObject responseJSon = launcher.initSimple(left, right, astmode, handler);
 
 		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
@@ -74,9 +76,9 @@ public class TPEEngine implements SearchMethod {
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
-		GumtreeAbstractHttpHandler handler = launcher.getHandlerMultiple();
+		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
 
-		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode);
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode, handler);
 
 		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);

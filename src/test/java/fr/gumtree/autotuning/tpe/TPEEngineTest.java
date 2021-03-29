@@ -4,6 +4,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -12,6 +13,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -97,6 +101,29 @@ public class TPEEngineTest {
 		System.out.println(bestConfig);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+	}
+
+	@Test
+	public void testTPBridgeMultiple_saveFiles() throws Exception {
+
+		File fs = new File("./examples/input_multiple.txt");
+		TPEEngine rp = new TPEEngine();
+
+		File out = File.createTempFile("test", (new Date()).toLocaleString());
+		ExecutionConfiguration config = new ExecutionTPEConfiguration();
+		config.setSaveScript(true);
+		config.setDirDiffTreeSerialOutput(out);
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, ASTMODE.JDT, config);
+
+		System.out.println(bestConfig);
+
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+		assertTrue(out.exists());
+		// assertTrue(out.listFiles().length > 0);
+
+		// System.out.println(Arrays.toString(out.listFiles()));
 
 	}
 

@@ -174,7 +174,7 @@ public class BuilderTest {
 	}
 
 	@Test
-	public void testChangesSpoon_3_04f0e8_CompleteMatcher() throws Exception {
+	public void testChangesSpoon_3_04f0e8_CompleteMatcher_VARIABLE_TYPE() throws Exception {
 
 		assertTrue(rootMegadiff.exists());
 
@@ -200,6 +200,92 @@ public class BuilderTest {
 
 		System.out.println(actionsAll);
 		assertEquals(4, actionsAll.size());
+
+	}
+
+	@Test
+	public void testChangesSpoon_3_04f0e8_CompleteMatcherBis() throws Exception {
+
+		assertTrue(rootMegadiff.exists());
+
+		GTProxy engine = new GTProxy();
+
+		String fl = rootMegadiff.getAbsolutePath()
+				+ "/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions2/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java";
+		String fr = rootMegadiff.getAbsolutePath()
+				+ "/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions2/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java";
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+
+		tl = builder.build(new File(fl));
+		tr = builder.build(new File(fr));
+
+		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
+
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
+
+		System.out.println(actionsAll);
+		assertEquals(2, actionsAll.size());
+
+	}
+
+	@Test
+	public void testChangesSpoon_Simple1() throws Exception {
+
+		assertTrue(rootMegadiff.exists());
+
+		GTProxy engine = new GTProxy();
+
+		String fl = "./examples/java_simple_case_1/T1_s.java";
+		String fr = "./examples/java_simple_case_1/T1_t.java";
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+
+		tl = builder.build(new File(fl));
+		tr = builder.build(new File(fr));
+
+		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
+
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
+
+		System.out.println(actionsAll);
+		assertEquals(1, actionsAll.size());
+
+	}
+
+	@Test
+	public void testChangesSpoon_Simple_modifier2() throws Exception {
+
+		assertTrue(rootMegadiff.exists());
+
+		GTProxy engine = new GTProxy();
+
+		String fl = "./examples/java_simple_case_modifier_2/T1_s.java";
+		String fr = "./examples/java_simple_case_modifier_2/T1_t.java";
+
+		Tree tl = null;
+		Tree tr = null;
+		SpoonTreeBuilder builder = new SpoonTreeBuilder();
+
+		tl = builder.build(new File(fl));
+		tr = builder.build(new File(fr));
+
+		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
+
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
+
+		System.out.println(actionsAll);
+		assertEquals(2, actionsAll.size());
 
 	}
 
