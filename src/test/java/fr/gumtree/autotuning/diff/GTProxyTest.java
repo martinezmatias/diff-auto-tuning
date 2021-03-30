@@ -35,9 +35,6 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  */
 public class GTProxyTest {
 
-	/// Users/matias/develop/gt-tuning/git-code-gpgt/./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java
-	/// Users/matias/develop/gt-tuning/git-code-gpgt/./examples/megadiff-sample/1/1_025055b307b6ef358d5153c7b50a1740e2b17f35/Acquaintance/1_025055b307b6ef358d5153c7b50a1740e2b17f35_Acquaintance_s.java
-
 	@Test
 	public void testProxy1_Passing_Clic() throws Exception {
 		GTProxy proxy = new GTProxy();
@@ -251,6 +248,11 @@ public class GTProxyTest {
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
 				.asList();
+
+		// By Default:
+		System.out.println("By default: ");
+		System.out.println(actionsAll);
+
 		assertEquals(1, actionsAll.size());
 
 		// XY has variability
@@ -262,7 +264,10 @@ public class GTProxyTest {
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies).editScript
 				.asList();
 
-		assertEquals(1, actionsAll.size());
+		System.out.println("Configured: ");
+		System.out.println(actionsAll);
+
+		assertEquals(7, actionsAll.size());// it was 1 before the change of Modifiers
 
 		properies.put(ConfigurationOptions.st_minprio, 3);// st_minprio
 		properies.put(ConfigurationOptions.xy_minsim, 0.2);// xy_minsim
@@ -270,7 +275,7 @@ public class GTProxyTest {
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies).editScript
 				.asList();
 
-		assertEquals(55, actionsAll.size());
+		assertEquals(43, actionsAll.size());
 
 		//
 		properies.put(ConfigurationOptions.st_minprio, 2);// st_minprio
@@ -279,7 +284,7 @@ public class GTProxyTest {
 		actionsAll = engine.computeDiff(tl, tr, new CompositeMatchers.XyMatcher(), edGenerator, properies).editScript
 				.asList();
 
-		assertEquals(19, actionsAll.size());
+		assertEquals(43, actionsAll.size());
 
 		// Now Classic
 		properies = new GumtreeProperties();
@@ -786,7 +791,7 @@ public class GTProxyTest {
 	}
 
 	@Test
-	public void testComplete_Matcher_Int2ObjectOpenHashMap() throws Exception {
+	public void testSPOONComplete_Matcher_Int2ObjectOpenHashMap_Null() throws Exception {
 		GTProxy engine = new GTProxy();
 
 		File fs = new File(
@@ -817,4 +822,34 @@ public class GTProxyTest {
 		assertEquals(1, result.get("NRACTIONS"));
 
 	}
+
+	@Test
+	public void testJDTComplete_Matcher_Int2ObjectOpenHashMap_Null() throws Exception {
+		GTProxy engine = new GTProxy();
+
+		File fs = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
+		File ft = new File(
+				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
+
+		Tree tl = null;
+		Tree tr = null;
+		JDTTreeBuilder builder = new JDTTreeBuilder();
+		tl = builder.build(fs);
+		tr = builder.build(ft);
+		System.out.println("JDT: ");
+		System.out.println("Left");
+		System.out.println(tl.toTreeString());
+
+		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+
+		GumtreeProperties properies = new GumtreeProperties();
+
+		SingleDiffResult result = engine.runDiff(tl, tr, matcher, properies);
+		System.out.println(result);
+
+		assertEquals(1, result.get("NRACTIONS"));
+
+	}
+
 }

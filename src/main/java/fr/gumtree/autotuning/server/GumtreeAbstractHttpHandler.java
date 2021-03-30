@@ -23,7 +23,7 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 
 	public abstract String getPath();
 
-	File out = null;
+	protected File outDirectory = null;
 
 	/**
 	 * Stores the different calls to run
@@ -52,6 +52,14 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 
 		outputStream.close();
 
+	}
+
+	public File getOutDirectory() {
+		return outDirectory;
+	}
+
+	public void setOutDirectory(File outDirectory) {
+		this.outDirectory = outDirectory;
 	}
 
 }

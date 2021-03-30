@@ -97,6 +97,9 @@ public class TPEEngine implements SearchMethod {
 			GumtreeAbstractHttpHandler handler, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
 			throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
+
+		handler.setOutDirectory(configuration.getDirDiffTreeSerialOutput());
+
 		if ("created".equals(status)) {
 
 			String best = queryBestConfigOnServer(handler, configuration);

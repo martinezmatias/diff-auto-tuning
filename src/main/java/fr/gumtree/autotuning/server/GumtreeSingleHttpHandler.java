@@ -81,7 +81,7 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			System.out.println("run with params " + parameters);
 			GTProxy proxy = new GTProxy();
-			Diff diff = proxy.run(tl, tr, parameters, out);
+			Diff diff = proxy.run(tl, tr, parameters, null); // we dont want to save here, so we pass null to the out
 
 			/////////
 			JsonObject root = new JsonObject();
@@ -104,10 +104,10 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				root.addProperty("status", "ok");
 
-				if (out != null) {
+				if (outDirectory != null) {
 					//
 					try {
-						saver.saveUnified(nameLeft, parameters, diff, out);
+						saver.saveUnified(nameLeft, parameters, diff, outDirectory);
 					} catch (NoSuchAlgorithmException | IOException e) {
 						e.printStackTrace();
 					}
@@ -138,7 +138,7 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 		String right = queryParams.get("right").get(0);
 
 		if (queryParams.containsKey("out"))
-			out = new File(queryParams.get("out").get(0));
+			outDirectory = new File(queryParams.get("out").get(0));
 
 		System.out.println(model + left + right);
 

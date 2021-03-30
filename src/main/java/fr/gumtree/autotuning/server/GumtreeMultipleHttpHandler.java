@@ -91,13 +91,10 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			System.out.println("running " + (i + 1) + "/" + this.files.size());
 			Pair<Tree, Tree> pair = files.get(i);
 
-			File out = null;
-			if (queryParams.containsKey("out"))
-				out = new File(queryParams.get("out").get(0));
-
 			GTProxy proxy = new GTProxy();
 
-			Diff diff = proxy.run(pair.first, pair.second, parameters, out);
+			Diff diff = proxy.run(pair.first, pair.second, parameters, null); // we dont want to save here, so we pass
+																				// null to the out
 
 			JsonObject config = new JsonObject();
 			config.addProperty("file", this.names.get(0));
@@ -110,9 +107,9 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 				// As the diff is null (probably an error happens) we put a large integer)
 				config.addProperty("nractions", Integer.MAX_VALUE);
 			}
-			if (out != null) {
+			if (this.getOutDirectory() != null) {
 				try {
-					saver.saveUnified(this.names.get(i), parameters, diff, out);
+					saver.saveUnified(this.names.get(i), parameters, diff, this.getOutDirectory());
 				} catch (Exception e) {
 					e.printStackTrace();
 				}

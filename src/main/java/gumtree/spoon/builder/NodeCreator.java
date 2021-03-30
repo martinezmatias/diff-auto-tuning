@@ -36,14 +36,14 @@ public class NodeCreator extends CtInheritanceScanner {
 
 		}
 		// We add the type of modifiable element
-		String type = MODIFIERS + getClassName(m.getClass().getSimpleName()) + "_" + m.getShortRepresentation();
+//		String type = MODIFIERS + getClassName(m.getClass().getSimpleName()) + "_" + m.getShortRepresentation();
 
-		// String type = MODIFIERS + getClassName(m.getClass().getSimpleName()) + "_" +
-		// m.getShortRepresentation();
-		Tree modifiers = builder.createNode(type, "");
+		// String type = MODIFIERS;
+		// Tree modifiers = builder.createNode(type, "");
 
 		// We create a virtual node
-		modifiers.setMetadata(SpoonGumTreeBuilder.SPOON_OBJECT, new CtVirtualElement(type, m, m.getModifiers()));
+		// modifiers.setMetadata(SpoonGumTreeBuilder.SPOON_OBJECT, new
+		// CtVirtualElement(type, m, m.getModifiers()));
 
 		// ensuring an order (instead of hashset)
 		// otherwise some flaky tests in CI
@@ -55,14 +55,25 @@ public class NodeCreator extends CtInheritanceScanner {
 		});
 		modifiers1.addAll(m.getModifiers());
 
+		System.out.println(modifiers1);
 		for (ModifierKind kind : modifiers1) {
 			// TODO: I added the kind of the modifier in the type
-			Tree modifier = builder.createNode("Modifier_" + kind.toString(), kind.toString());
-			modifiers.addChild(modifier);
+			// Tree modifier = builder.createNode("Modifier_" + kind.toString(),
+			// kind.toString());
+			Tree modifier = builder.createNode("Modifier", kind.toString());
+
+			// modifiers.addChild(modifier);
+
+			System.out.println(modifier);
+
+			// New:
+			if (!kind.equals(ModifierKind.PRIVATE))
+				builder.addSiblingNode(modifier);
+
 			// We wrap the modifier (which is not a ctelement)
 			modifier.setMetadata(SpoonGumTreeBuilder.SPOON_OBJECT, new CtWrapper(kind, m));
 		}
-		builder.addSiblingNode(modifiers);
+		// builder.addSiblingNode(modifiers);
 
 	}
 
@@ -89,10 +100,10 @@ public class NodeCreator extends CtInheritanceScanner {
 		CtTypeReference<T> type = e.getType();
 		if (type != null) {
 			// TODO: workaround to avoid NPE
-			Tree variableType = builder.createNode(getNodeType(type), type.getQualifiedName());
-
-			// Tree variableType = builder.createNode("VARIABLE_TYPE",
+			// Tree variableType = builder.createNode(getNodeType(type),
 			// type.getQualifiedName());
+
+			Tree variableType = builder.createNode("VARIABLE_TYPE", type.getQualifiedName());
 			variableType.setMetadata(SpoonGumTreeBuilder.SPOON_OBJECT, type);
 			type.putMetadata(SpoonGumTreeBuilder.GUMTREE_NODE, variableType);
 			builder.addSiblingNode(variableType);
