@@ -16,10 +16,12 @@ import java.util.zip.ZipOutputStream;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.searchengines.MapList;
+import fr.gumtree.autotuning.searchengines.ResultByConfig;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
@@ -33,12 +35,20 @@ public class DatOutputEngine {
 
 	private static final String PREFIX_FILE_SUMMARY_JSON = "equivalents_";
 
+	private static final String RESULTS_JSON = "result_size_per_config_";
+
 	private MapList<String, String> equivalent = new MapList<String, String>();
 
 	private boolean zipped = true;
 
+	private String id;
+
 	// Hash - First file with same
 	private Map<String, String> hashes = new HashMap<>();
+
+	public DatOutputEngine(String name) {
+		this.id = name;
+	}
 
 	// TODO add config on last parameter
 	public void saveUnifiedNotDuplicated(String filename, String plainProperties,
@@ -68,10 +78,10 @@ public class DatOutputEngine {
 			equivalent.add(key, key);
 
 			File uniflFile = new File(
-					parentDiff.getAbsolutePath() + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".json");
+					parentDiff.getAbsolutePath() + File.separator + this.id + PREFIX_TREEDIFF_FORMAT + key + ".json");
 			if (zipped) {
-				FileOutputStream fos = new FileOutputStream(
-						parentDiff.getAbsolutePath() + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".zip");
+				FileOutputStream fos = new FileOutputStream(parentDiff.getAbsolutePath() + File.separator + this.id
+						+ PREFIX_TREEDIFF_FORMAT + key + ".zip");
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 				zipOut.putNextEntry(zipEntry);
@@ -102,10 +112,10 @@ public class DatOutputEngine {
 
 		String json = gson.toJson(jsonunif);
 		File uniflFile = new File(
-				parentDiff.getAbsolutePath() + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".json");
+				parentDiff.getAbsolutePath() + File.separator + this.id + PREFIX_TREEDIFF_FORMAT + key + ".json");
 		if (zipped) {
 			FileOutputStream fos = new FileOutputStream(
-					parentDiff.getAbsolutePath() + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".zip");
+					parentDiff.getAbsolutePath() + File.separator + this.id + PREFIX_TREEDIFF_FORMAT + key + ".zip");
 			ZipOutputStream zipOut = new ZipOutputStream(fos);
 			ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 			zipOut.putNextEntry(zipEntry);
@@ -124,8 +134,8 @@ public class DatOutputEngine {
 
 		for (String xRquivalen : this.equivalent.keySet()) {
 
-			File uniflFile = new File(
-					parentDiff.getAbsolutePath() + File.separator + PREFIX_FILE_SUMMARY_JSON + xRquivalen + ".txt");
+			File uniflFile = new File(parentDiff.getAbsolutePath() + File.separator + this.id + PREFIX_FILE_SUMMARY_JSON
+					+ xRquivalen + ".txt");
 
 			List<String> equiv = this.equivalent.get(xRquivalen);
 			String content = "";
@@ -134,8 +144,8 @@ public class DatOutputEngine {
 				content += ("\n");
 			}
 			if (zipped) {
-				FileOutputStream fos = new FileOutputStream(
-						parentDiff.getAbsolutePath() + File.separator + PREFIX_FILE_SUMMARY_JSON + xRquivalen + ".zip");
+				FileOutputStream fos = new FileOutputStream(parentDiff.getAbsolutePath() + File.separator + this.id
+						+ PREFIX_FILE_SUMMARY_JSON + xRquivalen + ".zip");
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 				zipOut.putNextEntry(zipEntry);
@@ -146,6 +156,42 @@ public class DatOutputEngine {
 				fw.write(content);
 				fw.close();
 			}
+		}
+
+	}
+
+	public void save(File parentDiff, ResultByConfig result) throws Exception {
+
+		Gson gson = new GsonBuilder().setPrettyPrinting().create();
+		JsonArray allc = new JsonArray();
+		for (String key : result.keySet()) {
+
+			JsonObject resultConfig = new JsonObject();
+			resultConfig.addProperty("prop", key);
+			JsonArray arry = new JsonArray();
+			for (Integer i : result.get(key))
+				arry.add(i);
+
+			resultConfig.add("p", arry);
+			allc.add(resultConfig);
+		}
+
+		String content = gson.toJson(allc);
+
+		File uniflFile = new File(parentDiff.getAbsolutePath() + File.separator + this.id + RESULTS_JSON + ".json");
+
+		if (zipped) {
+			FileOutputStream fos = new FileOutputStream(
+					parentDiff.getAbsolutePath() + File.separator + this.id + RESULTS_JSON + ".zip");
+			ZipOutputStream zipOut = new ZipOutputStream(fos);
+			ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
+			zipOut.putNextEntry(zipEntry);
+			zipOut.write(content.getBytes());
+			zipOut.close();
+		} else {
+			FileWriter fw = new FileWriter(uniflFile);
+			fw.write(content);
+			fw.close();
 		}
 
 	}

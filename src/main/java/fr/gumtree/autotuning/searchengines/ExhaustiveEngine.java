@@ -634,8 +634,10 @@ public class ExhaustiveEngine implements SearchMethod {
 			ExecutionConfiguration configuration) throws Exception {
 
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
-		DatOutputEngine saver = new DatOutputEngine();
+		DatOutputEngine saver = new DatOutputEngine(dataFilePairs.getName().split("\\.")[0]);
+
 		// We select the parser
+
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
 			treebuilder = new SpoonTreeBuilder();
@@ -696,6 +698,8 @@ public class ExhaustiveEngine implements SearchMethod {
 			reader.close();
 
 			saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
+
+			saver.save(configuration.getDirDiffTreeSerialOutput(), results);
 
 			ResponseBestParameter bestResult = summarizeResults(results, configuration.getMetric());
 
@@ -781,7 +785,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
 
-		DatOutputEngine saver = new DatOutputEngine();
+		DatOutputEngine saver = new DatOutputEngine(left.getName().split("\\.")[0]);
 
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
@@ -841,6 +845,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			bestResult.getAllBest().add(oneBest);
 		}
 
+		saver.save(configuration.getDirDiffTreeSerialOutput(), results);
 		saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
 
 		return bestResult;
