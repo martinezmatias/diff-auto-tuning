@@ -41,7 +41,7 @@ import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
-import fr.gumtree.autotuning.outils.SaverDiff;
+import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -634,7 +634,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			ExecutionConfiguration configuration) throws Exception {
 
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
-		SaverDiff saver = new SaverDiff();
+		DatOutputEngine saver = new DatOutputEngine();
 		// We select the parser
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
@@ -646,7 +646,7 @@ public class ExhaustiveEngine implements SearchMethod {
 		}
 
 		BufferedReader reader;
-		MapList<String, Integer> results = new MapList<>();
+		ResultByConfig results = new ResultByConfig();
 
 		try {
 			// We read the file with the all pairs
@@ -697,55 +697,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 			saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
 
-			// Now to summarize
-			ResponseBestParameter bestResult = new ResponseBestParameter();
-
-			// let's compute the median of each conf
-			Map<String, Double> medianByConfiguration = new HashMap<>();
-
-			Double minMedian = Double.MAX_VALUE;
-			int i = 0;
-			for (String aConfigresult : results.keySet()) {
-
-				DescriptiveStatistics stats = new DescriptiveStatistics();
-
-				List<Integer> allSizesOfConfigs = results.get(aConfigresult);
-				for (Integer aSize : allSizesOfConfigs) {
-					stats.addValue(aSize);
-				}
-				double median = 0;
-				if (configuration.getMetric().equals(METRIC.MEDIAN))
-					median = stats.getPercentile(50);
-
-				else if (configuration.getMetric().equals(METRIC.MEAN))
-					median = stats.getMean();
-
-				medianByConfiguration.put(aConfigresult, median);
-
-				if (median < minMedian) {
-					minMedian = median;
-				}
-
-				System.out.println(++i + " " + aConfigresult + " " + median + ": " + allSizesOfConfigs);
-			}
-			final Double minValuemedian = minMedian;
-			// Choose the config with best median
-
-			// List<String> best = medianByConfiguration.keySet().stream()
-			// .sorted((e1, e2) ->
-			// medianByConfiguration.get(e1).compareTo(medianByConfiguration.get(e2)))
-			// .collect(Collectors.toList());
-
-			System.out.println("Min median " + minValuemedian);
-
-			List<String> bests = medianByConfiguration.keySet().stream()
-					.filter(e -> minValuemedian.equals(medianByConfiguration.get(e))).collect(Collectors.toList());
-
-			System.out.println("Total configs " + bests.size() + " / " + results.keySet().size());
-			//
-
-			bestResult.setMedian(minMedian);
-			bestResult.setBest(bests);
+			ResponseBestParameter bestResult = summarizeResults(results, configuration.getMetric());
 
 			return bestResult;
 
@@ -755,6 +707,66 @@ public class ExhaustiveEngine implements SearchMethod {
 		}
 
 		return null;
+	}
+
+	/**
+	 * Returns the summarization of the results
+	 * 
+	 * @param configuration
+	 * @param results
+	 * @return
+	 */
+	public ResponseBestParameter summarizeResults(ResultByConfig results, METRIC metric) {
+		// Now to summarize
+		ResponseBestParameter bestResult = new ResponseBestParameter();
+
+		// let's compute the median of each conf
+		Map<String, Double> medianByConfiguration = new HashMap<>();
+
+		Double minMedian = Double.MAX_VALUE;
+		int i = 0;
+		for (String aConfigresult : results.keySet()) {
+
+			DescriptiveStatistics stats = new DescriptiveStatistics();
+
+			List<Integer> allSizesOfConfigs = results.get(aConfigresult);
+			for (Integer aSize : allSizesOfConfigs) {
+				stats.addValue(aSize);
+			}
+			double median = 0;
+			if (metric.equals(METRIC.MEDIAN))
+				median = stats.getPercentile(50);
+
+			else if (metric.equals(METRIC.MEAN))
+				median = stats.getMean();
+
+			medianByConfiguration.put(aConfigresult, median);
+
+			if (median < minMedian) {
+				minMedian = median;
+			}
+
+			System.out.println(++i + " " + aConfigresult + " " + median + ": " + allSizesOfConfigs);
+		}
+		final Double minValuemedian = minMedian;
+		// Choose the config with best median
+
+		// List<String> best = medianByConfiguration.keySet().stream()
+		// .sorted((e1, e2) ->
+		// medianByConfiguration.get(e1).compareTo(medianByConfiguration.get(e2)))
+		// .collect(Collectors.toList());
+
+		System.out.println("Min median " + minValuemedian);
+
+		List<String> bests = medianByConfiguration.keySet().stream()
+				.filter(e -> minValuemedian.equals(medianByConfiguration.get(e))).collect(Collectors.toList());
+
+		System.out.println("Total configs " + bests.size() + " / " + results.keySet().size());
+		//
+
+		bestResult.setMedian(minMedian);
+		bestResult.setBest(bests);
+		return bestResult;
 	}
 
 	@Override
@@ -769,7 +781,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
 
-		SaverDiff saver = new SaverDiff();
+		DatOutputEngine saver = new DatOutputEngine();
 
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
@@ -784,7 +796,10 @@ public class ExhaustiveEngine implements SearchMethod {
 				treeProperties, this.allMatchers);
 
 		int min = Integer.MAX_VALUE;
+		// List with all the configs that produce the min
 		List<Pair<String, GumtreeProperties>> minDiff = new ArrayList<>();
+
+		ResultByConfig results = new ResultByConfig();
 
 		for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
 
@@ -795,6 +810,11 @@ public class ExhaustiveEngine implements SearchMethod {
 				}
 
 				int isize = (int) diffResult.get(Constants.NRACTIONS);
+
+				GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
+				String plainProperty = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(), gt);
+				results.add(plainProperty, isize);
+
 				if (isize <= min) {
 
 					// We discard the others in case is strictly less
@@ -803,10 +823,7 @@ public class ExhaustiveEngine implements SearchMethod {
 					}
 					min = isize;
 
-					GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
 					minDiff.add(new Pair<>(mresult.getMatcherName(), gt));
-
-					String plainProperty = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(), gt);
 
 					saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
 							configuration.getDirDiffTreeSerialOutput());

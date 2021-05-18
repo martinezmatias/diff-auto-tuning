@@ -5,6 +5,9 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.nio.file.Files;
+import java.util.Arrays;
+import java.util.Date;
 
 import org.junit.Test;
 
@@ -20,6 +23,10 @@ public class ExhaustiveEngineTest {
 	@Test
 	public void testExhaustive_Local_Simple_1() throws Exception {
 
+		File outDirTemp = Files.createTempDirectory("testDAT_exa_simple_" + new Long((new Date()).getTime()).toString())
+				.toFile();
+		assertTrue(outDirTemp.exists());
+
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
 		File ft = new File(
@@ -31,6 +38,7 @@ public class ExhaustiveEngineTest {
 		// Only for test
 		ec.setMetric(METRIC.MEAN);
 		ec.setSaveScript(true);
+		ec.setDirDiffTreeSerialOutput(outDirTemp);
 
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, ASTMODE.GTSPOON, ec);
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
@@ -42,6 +50,11 @@ public class ExhaustiveEngineTest {
 		System.out.println(bestConfig.getAllBest());
 		assertTrue(bestConfig.getAllBest()
 				.contains("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height"));
+
+		assertTrue(outDirTemp.exists());
+		assertTrue(outDirTemp.listFiles().length > 0);
+
+		System.out.println("Files output: " + Arrays.toString(outDirTemp.listFiles()));
 
 	}
 

@@ -19,7 +19,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.GTProxy;
-import fr.gumtree.autotuning.outils.SaverDiff;
+import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -37,7 +37,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 	String host = "localhost";
 	int port = 8001;
 	String path = "multiple";
-	SaverDiff saver = new SaverDiff();
+	DatOutputEngine saver = new DatOutputEngine();
 
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {

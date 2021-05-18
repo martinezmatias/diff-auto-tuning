@@ -8,7 +8,7 @@ import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import fr.gumtree.autotuning.outils.SaverDiff;
+import fr.gumtree.autotuning.outils.DatOutputEngine;
 
 /**
  * 
@@ -30,7 +30,7 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 	 */
 	JsonArray cacheResults = new JsonArray();
 
-	SaverDiff saver = new SaverDiff();
+	DatOutputEngine saver = new DatOutputEngine();
 
 	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
 
