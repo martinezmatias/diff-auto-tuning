@@ -3,6 +3,8 @@ package fr.gumtree.autotuning.searchengines;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.io.IOException;
+import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
@@ -483,8 +485,13 @@ public class ExhaustiveEngine implements SearchMethod {
 		Tree tr;
 		Matcher matcher;
 		GumtreeProperties aGumtreeProperties;
+		int idConfig;
+		int totalConfig;
 
-		public DiffCallable(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
+		public DiffCallable(int idConfing, int totalConfig, Tree tl, Tree tr, Matcher matcher,
+				GumtreeProperties aGumtreeProperties) {
+			this.idConfig = idConfing;
+			this.totalConfig = totalConfig;
 			this.tl = tl;
 			this.tr = tr;
 			this.matcher = matcher;
@@ -502,7 +509,7 @@ public class ExhaustiveEngine implements SearchMethod {
 					// matcher
 					, aGumtreeProperties);
 
-			printResult(matcher.getClass().getSimpleName(), 0, 0, result);
+			printResult(matcher.getClass().getSimpleName(), this.totalConfig, this.idConfig, result);
 
 			return result;
 		}
@@ -528,9 +535,9 @@ public class ExhaustiveEngine implements SearchMethod {
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
 		List<DiffCallable> callables = new ArrayList<>();
-
+		int i = 0;
 		for (GumtreeProperties aGumtreeProperties : combinations) {
-			callables.add(new DiffCallable(tl, tr, matcher, aGumtreeProperties));
+			callables.add(new DiffCallable(i++, combinations.size(), tl, tr, matcher, aGumtreeProperties));
 		}
 
 		List<Future<SingleDiffResult>> result = executor.invokeAll(callables, timeoutSeconds, unit);
@@ -699,7 +706,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 			saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
 
-			saver.save(configuration.getDirDiffTreeSerialOutput(), results);
+			saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
 
 			ResponseBestParameter bestResult = summarizeResults(results, configuration.getMetric());
 
@@ -783,10 +790,6 @@ public class ExhaustiveEngine implements SearchMethod {
 	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
 			ExecutionConfiguration configuration) throws Exception {
 
-		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
-
-		DatOutputEngine saver = new DatOutputEngine(left.getName().split("\\.")[0]);
-
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
 			treebuilder = new SpoonTreeBuilder();
@@ -795,6 +798,17 @@ public class ExhaustiveEngine implements SearchMethod {
 		} else {
 			System.err.println("Mode not configured " + astmode);
 		}
+
+		ResponseBestParameter bestResult = computeBestLocal(treebuilder, left, right, configuration);
+
+		return bestResult;
+	}
+
+	public ResponseBestParameter computeBestLocal(ITreeBuilder treebuilder, File left, File right,
+			ExecutionConfiguration configuration) throws IOException, NoSuchAlgorithmException, Exception {
+		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
+
+		DatOutputEngine saver = new DatOutputEngine(left.getName().split("\\.")[0]);
 
 		CaseResult caseResult = this.analyzeCase(treebuilder, left.getName(), left, right, configuration,
 				treeProperties, this.allMatchers);
@@ -829,10 +843,10 @@ public class ExhaustiveEngine implements SearchMethod {
 
 					minDiff.add(new Pair<>(mresult.getMatcherName(), gt));
 
-					saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
-							configuration.getDirDiffTreeSerialOutput());
-
 				}
+
+				saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
+						configuration.getDirDiffTreeSerialOutput());
 
 			}
 
@@ -845,9 +859,8 @@ public class ExhaustiveEngine implements SearchMethod {
 			bestResult.getAllBest().add(oneBest);
 		}
 
-		saver.save(configuration.getDirDiffTreeSerialOutput(), results);
+		saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
 		saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
-
 		return bestResult;
 	}
 

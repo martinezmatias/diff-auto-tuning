@@ -160,7 +160,7 @@ public class DatOutputEngine {
 
 	}
 
-	public void save(File parentDiff, ResultByConfig result) throws Exception {
+	public void saveSummarization(File parentDiff, ResultByConfig result) throws Exception {
 
 		Gson gson = new GsonBuilder().setPrettyPrinting().create();
 		JsonArray allc = new JsonArray();

@@ -6,9 +6,9 @@ import java.util.List;
 import java.util.concurrent.Callable;
 
 import fr.gumtree.autotuning.entity.CaseResult;
-import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
+import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
-import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -29,7 +29,7 @@ public class Main implements Callable<Integer> {
 	@Option(names = "-path", required = true)
 	File pathMegadiff;
 	@Option(names = "-subset", required = true)
-	int[] subsets;
+	String[] subsets;
 	@Option(names = "-begin")
 	int begin;
 	@Option(names = "-stop", defaultValue = "10000000")
@@ -58,13 +58,6 @@ public class Main implements Callable<Integer> {
 		m.execute(args);
 	}
 
-	public static List<CaseResult> mainAndResults(String[] args) {
-		System.out.println("Arguments received: " + Arrays.toString(args));
-		Main m = new Main();
-		m.execute(args);
-		return m.getResultsExecution();
-	}
-
 	public void execute(String[] args) {
 		CommandLine cl = new CommandLine(this);
 		cl.execute(args);
@@ -86,11 +79,11 @@ public class Main implements Callable<Integer> {
 		this.pathMegadiff = path;
 	}
 
-	public int[] getSubsets() {
+	public String[] getSubsets() {
 		return subsets;
 	}
 
-	public void setSubsets(int[] subsets) {
+	public void setSubsets(String[] subsets) {
 		this.subsets = subsets;
 	}
 
@@ -133,12 +126,11 @@ public class Main implements Callable<Integer> {
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
 
-		MegadiffRunner megadiff = new MegadiffRunner(engine);
-		// engine.setOverwriteResults(overwriteresults);
+		StructuredFolderfRunner runner = new StructuredFolderfRunner(engine);
 
 		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
 
-		ExecutionConfiguration configuration = new ExecutionConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setNumberOfThreads(nrthreads);
 		configuration.setTimeOut(timeout);
 		configuration.setParalelisationMode(execution);
@@ -153,9 +145,7 @@ public class Main implements Callable<Integer> {
 			System.err.println("Mode not configured " + model);
 		}
 
-		// We store the results of the execution
-		this.resultsExecution = megadiff.navigateMegaDiff(treebuilder, out, pathMegadiff, subsets, begin, stop,
-				configuration, this.matchers);
+		runner.navigateFolder(treebuilder, out, pathMegadiff, subsets, begin, stop, configuration, this.matchers);
 
 		System.out.println("-END-");
 		return null;
@@ -183,10 +173,6 @@ public class Main implements Callable<Integer> {
 
 	public void setMatchers(String[] matchers) {
 		this.matchers = matchers;
-	}
-
-	public List<CaseResult> getResultsExecution() {
-		return resultsExecution;
 	}
 
 }
