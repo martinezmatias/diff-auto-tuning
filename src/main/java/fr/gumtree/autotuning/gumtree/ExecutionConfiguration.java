@@ -18,7 +18,7 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 	private int numberOfThreads = 16;
 	private long timeOut = 60 * 60; // 60 min
 
-	private boolean saveScript = false;
+	private boolean saveScript = true;
 
 	private File dirDiffTreeSerialOutput = new File("./out/");
 

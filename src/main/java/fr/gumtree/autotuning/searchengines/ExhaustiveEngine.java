@@ -147,6 +147,17 @@ public class ExhaustiveEngine implements SearchMethod {
 				result.setTimeMatching(timeMatching);
 			}
 
+			if (result != null) {
+
+				String id = previousVersion.getName().split("\\.")[0];
+				File parent = new File(configuration.getDirDiffTreeSerialOutput() + File.separator + id);
+				parent.mkdirs();
+				File outResults = new File(parent.getAbsoluteFile() + File.separator + "result_" + id + "_"
+						+ treeBuilder.modelType().name() + ".zip");
+
+				DatOutputEngine.executionResultToCSV(outResults, result);
+			}
+
 			return result;
 		} catch (Exception e) {
 			e.printStackTrace();
@@ -708,7 +719,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 			saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
 
-			ResponseBestParameter bestResult = summarizeResults(results, configuration.getMetric());
+			ResponseBestParameter bestResult = summarizeResultsForGlobal(results, configuration.getMetric());
 
 			return bestResult;
 
@@ -727,7 +738,7 @@ public class ExhaustiveEngine implements SearchMethod {
 	 * @param results
 	 * @return
 	 */
-	public ResponseBestParameter summarizeResults(ResultByConfig results, METRIC metric) {
+	public ResponseBestParameter summarizeResultsForGlobal(ResultByConfig results, METRIC metric) {
 		// Now to summarize
 		ResponseBestParameter bestResult = new ResponseBestParameter();
 
@@ -778,6 +789,74 @@ public class ExhaustiveEngine implements SearchMethod {
 		bestResult.setMedian(minMedian);
 		bestResult.setBest(bests);
 		return bestResult;
+	}
+
+	public ResponseBestParameter summarizeResultsForLocal(List<ResultByConfig> allLocalResults, METRIC metric) {
+
+		Map<String, Integer> freqBest = new HashMap<String, Integer>();
+
+		for (ResultByConfig resultByConfig : allLocalResults) {
+			int min = Integer.MAX_VALUE;
+			List<String> currentMinConfigs = new ArrayList<>();
+
+			// For a results (local, i.e. one pair) we find the configs with shortest ed
+			for (String aCondif : resultByConfig.keySet()) {
+
+				int sizeConfig = resultByConfig.get(aCondif).get(0);
+
+				if (sizeConfig <= min) {
+
+					// it's a new min, we remove others
+					if (sizeConfig < min) {
+						currentMinConfigs.clear();
+					}
+
+					currentMinConfigs.add(aCondif);
+					min = sizeConfig;
+
+				}
+			}
+
+			// We increment the best counter with the best from the result
+
+			for (String minConfig : currentMinConfigs) {
+
+				int count = freqBest.containsKey(minConfig) ? freqBest.get(minConfig) : 0;
+				freqBest.put(minConfig, count + 1);
+
+			}
+
+		}
+
+		// Find the best local according with the number of times is the best
+
+		ResponseBestParameter bestResult = new ResponseBestParameter();
+
+		List<String> bestMinConfig = new ArrayList<>();
+		int min = Integer.MAX_VALUE;
+		for (String aConfig : freqBest.keySet()) {
+
+			int sizeConfig = freqBest.get(aConfig);
+
+			if (sizeConfig <= min) {
+
+				// it's a new min, we remove others
+				if (sizeConfig < min) {
+					bestMinConfig.clear();
+				}
+
+				bestMinConfig.add(aConfig);
+				min = sizeConfig;
+
+			}
+
+		}
+
+		bestResult.setBest(bestMinConfig);
+		bestResult.setNumberOfEvaluatedPairs(allLocalResults.size());
+
+		return bestResult;
+
 	}
 
 	@Override
@@ -845,8 +924,11 @@ public class ExhaustiveEngine implements SearchMethod {
 
 				}
 
-				saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
-						configuration.getDirDiffTreeSerialOutput());
+				if (configuration.isSaveScript()) {
+					saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
+							configuration.getDirDiffTreeSerialOutput());
+
+				}
 
 			}
 
