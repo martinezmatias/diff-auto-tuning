@@ -55,6 +55,8 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  */
 public class ExhaustiveEngine implements SearchMethod {
 
+	public static final String SUMMARY_CASES = "summary_cases_";
+
 	public enum PARALLEL_EXECUTION {
 		MATCHER_LEVEL, PROPERTY_LEVEL, NONE
 	}
@@ -152,8 +154,8 @@ public class ExhaustiveEngine implements SearchMethod {
 				String id = previousVersion.getName().split("\\.")[0];
 				File parent = new File(configuration.getDirDiffTreeSerialOutput() + File.separator + id);
 				parent.mkdirs();
-				File outResults = new File(parent.getAbsoluteFile() + File.separator + "result_" + id + "_"
-						+ treeBuilder.modelType().name() + ".zip");
+				File outResults = new File(parent.getAbsoluteFile() + File.separator + SUMMARY_CASES + id + "_"
+						+ treeBuilder.modelType().name() + ".csv");
 
 				DatOutputEngine.executionResultToCSV(outResults, result);
 			}
@@ -233,12 +235,9 @@ public class ExhaustiveEngine implements SearchMethod {
 		long initMatcher = (new Date()).getTime();
 		List<GumtreeProperties> combinations = null;
 
-		MatcherResult result = new MatcherResult();
-
 		String matcherName = getNameOfMatcher(matcher);
 
-		result.setMatcherName(matcherName);
-		result.setMatcher(matcher);
+		MatcherResult result = new MatcherResult(matcherName, matcher);
 
 		combinations = getConfigurations(matcher);
 
@@ -330,7 +329,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 	protected MatcherResult returnEmptyResult(Matcher[] matchers, List<Future<MatcherResult>> result,
 			Future<MatcherResult> e, ERROR_TYPE errortype) {
-		MatcherResult resultFromCancelled = new MatcherResult();
+		MatcherResult resultFromCancelled = new MatcherResult("none", null);
 
 		int indexFuture = result.indexOf(e);
 		if (indexFuture >= 0) {
@@ -373,12 +372,9 @@ public class ExhaustiveEngine implements SearchMethod {
 		long initMatcher = (new Date()).getTime();
 		List<GumtreeProperties> combinations = null;
 
-		MatcherResult result = new MatcherResult();
-
 		String matcherName = matcher.getClass().getSimpleName();
 
-		result.setMatcherName(matcherName);
-		result.setMatcher(matcher);
+		MatcherResult result = new MatcherResult(matcherName, matcher);
 
 		List<SingleDiffResult> alldiffresults = new ArrayList<>();
 
@@ -691,11 +687,10 @@ public class ExhaustiveEngine implements SearchMethod {
 
 					for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
 						int isize = (int) diffResult.get(Constants.NRACTIONS);
-						GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
 
 						// maybe to replace by a toString
-						String plainProperties = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(),
-								gt);
+						String plainProperties = diffResult.retrievePlainConfiguration();
+
 						results.add(plainProperties, isize);
 
 						if (configuration.isSaveScript()) {
@@ -909,7 +904,7 @@ public class ExhaustiveEngine implements SearchMethod {
 				int isize = (int) diffResult.get(Constants.NRACTIONS);
 
 				GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
-				String plainProperty = GTProxy.plainProperties(new JsonObject(), mresult.getMatcherName(), gt);
+				String plainProperty = diffResult.retrievePlainConfiguration();
 				results.add(plainProperty, isize);
 
 				if (isize <= min) {

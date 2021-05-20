@@ -26,6 +26,8 @@ public class Constants {
 	public static final String FILE = "FILE";
 	public static final String TIMEOUT = "TIMEOUT";
 
+	public static final String PLAIN_CONFIGURATION = "PLAIN_CONFIGURATION";
+
 	// TIMES:
 	public static final String TIME_ALL_MATCHER_DIFF = "TIME_ALL_MATCHER_DIFF";
 	public static final String TIME_TREES_PARSING = "TIME_TREES_PARSING";

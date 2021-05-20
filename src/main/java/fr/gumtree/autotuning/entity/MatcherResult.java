@@ -4,6 +4,8 @@ import java.util.List;
 
 import com.github.gumtreediff.matchers.Matcher;
 
+import fr.gumtree.autotuning.outils.Constants;
+
 /**
  * Entity that stores the results of a matcher
  * 
@@ -19,6 +21,12 @@ public class MatcherResult {
 	List<SingleDiffResult> alldiffresults;
 
 	long timeAllConfigs;
+
+	public MatcherResult(String matcherName, Matcher matcher) {
+		super();
+		this.matcherName = matcherName;
+		this.matcher = matcher;
+	}
 
 	/**
 	 * 
@@ -39,6 +47,9 @@ public class MatcherResult {
 
 	public void setAlldiffresults(List<SingleDiffResult> alldiffresults) {
 		this.alldiffresults = alldiffresults;
+		for (SingleDiffResult singleDiffResult : alldiffresults) {
+			singleDiffResult.put(Constants.MATCHER, this.matcherName);
+		}
 	}
 
 	public long getTimeAllConfigs() {

@@ -52,11 +52,11 @@ public class DatOutputEngine {
 
 	private static final String PREFIX_FILE_SUMMARY_JSON = "equivalents_";
 
-	private static final String RESULTS_JSON = "result_edsize_per_config_";
+	private static final String RESULTS_JSON = "result_size_per_config_";
 
 	private MapList<String, String> equivalent = new MapList<String, String>();
 
-	private boolean zipped = true;
+	private static boolean zipped = true;
 
 	private String id;
 
@@ -359,7 +359,9 @@ public class DatOutputEngine {
 
 		String row = "";
 		boolean first = true;
-		FileWriter fw = new FileWriter(out);
+
+		StringBuffer bufferS = new StringBuffer();
+
 		for (MatcherResult map : matchers) {
 
 			if (map == null || map.getMatcher() == null) {
@@ -370,7 +372,7 @@ public class DatOutputEngine {
 			String xmatcher = map.getMatcherName().toString();
 
 			List<SingleDiffResult> configs = (List<SingleDiffResult>) map.getAlldiffresults();
-			for (Map<String, Object> config : configs) {
+			for (SingleDiffResult config : configs) {
 				// re-init the row
 
 				if (config == null)
@@ -379,9 +381,11 @@ public class DatOutputEngine {
 				GumtreeProperties gtp = (config.containsKey(Constants.CONFIG))
 						? (GumtreeProperties) config.get(Constants.CONFIG)
 						: new GumtreeProperties();
-				if (config.get(Constants.TIMEOUT) != null) {
 
-					row = xmatcher + sep;
+				row = config.retrievePlainConfiguration() + sep;
+				row += xmatcher + sep;
+
+				if (config.get(Constants.TIMEOUT) != null) {
 
 					row += "" + sep;
 
@@ -404,8 +408,6 @@ public class DatOutputEngine {
 
 				} else {
 
-					row = xmatcher + sep;
-
 					row += config.get(Constants.NRACTIONS) + sep;
 
 					row += config.get(Constants.NRROOTS) + sep;
@@ -426,6 +428,7 @@ public class DatOutputEngine {
 					row += "0" + sep;
 				}
 				if (first) {
+					header += Constants.PLAIN_CONFIGURATION + sep;
 					header += Constants.MATCHER + sep;
 					header += Constants.NRACTIONS + sep;
 					header += Constants.NRROOTS + sep;
@@ -455,17 +458,37 @@ public class DatOutputEngine {
 				if (first) {
 					header += endline;
 					first = false;
-					fw.write(header);
+					// fw.write(header);
+					bufferS.append(header);
 				}
 
 				row += endline;
-				fw.write(row);
-				fw.flush();
+				// fw.write(row);
+				// fw.flush();
+				bufferS.append(row);
+
 			}
 
 		}
 
-		fw.close();
+		//
+
+		if (zipped) {
+			File fzipper = new File(out.getAbsolutePath().replace(".csv", ".zip"));
+			FileOutputStream fos = new FileOutputStream(fzipper);
+			ZipOutputStream zipOut = new ZipOutputStream(fos);
+			ZipEntry zipEntry = new ZipEntry(out.getName());
+			zipOut.putNextEntry(zipEntry);
+			zipOut.write(bufferS.toString().getBytes());
+			zipOut.close();
+		} else {
+			FileWriter fw = new FileWriter(out);
+			fw.close();
+
+		}
+
+		//
+
 		System.out.println("Saved file " + out.getAbsolutePath());
 
 	}
