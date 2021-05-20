@@ -151,10 +151,9 @@ public class ExhaustiveEngine implements SearchMethod {
 
 			if (result != null) {
 
-				String id = previousVersion.getName().split("\\.")[0];
-				File parent = new File(configuration.getDirDiffTreeSerialOutput() + File.separator + id);
+				File parent = new File(configuration.getDirDiffTreeSerialOutput() + File.separator + diffId);
 				parent.mkdirs();
-				File outResults = new File(parent.getAbsoluteFile() + File.separator + SUMMARY_CASES + id + "_"
+				File outResults = new File(parent.getAbsoluteFile() + File.separator + SUMMARY_CASES + diffId + "_"
 						+ treeBuilder.modelType().name() + ".csv");
 
 				DatOutputEngine.executionResultToCSV(outResults, result);
@@ -378,8 +377,6 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		List<SingleDiffResult> alldiffresults = new ArrayList<>();
 
-		result.setAlldiffresults(alldiffresults);
-
 		combinations = getConfigurations(matcher);
 
 		// parallel
@@ -394,6 +391,8 @@ public class ExhaustiveEngine implements SearchMethod {
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
+
+		result.setAlldiffresults(alldiffresults);
 
 		long timeAllConfigs = ((new Date()).getTime() - initMatcher);
 		result.setTimeAllConfigs(timeAllConfigs);
@@ -648,7 +647,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			ExecutionConfiguration configuration) throws Exception {
 
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
-		DatOutputEngine saver = new DatOutputEngine(dataFilePairs.getName().split("\\.")[0]);
+		DatOutputEngine saver = new DatOutputEngine(getDiffId(dataFilePairs));
 
 		// We select the parser
 
@@ -880,12 +879,24 @@ public class ExhaustiveEngine implements SearchMethod {
 
 	public ResponseBestParameter computeBestLocal(ITreeBuilder treebuilder, File left, File right,
 			ExecutionConfiguration configuration) throws IOException, NoSuchAlgorithmException, Exception {
+		return computeBestLocal(treebuilder, getDiffId(left), left, right, configuration);
+	}
+
+	public ResponseBestParameter computeBestLocal(ITreeBuilder treebuilder, String diffId, File left, File right,
+			ExecutionConfiguration configuration) throws IOException, NoSuchAlgorithmException, Exception {
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
 
-		DatOutputEngine saver = new DatOutputEngine(left.getName().split("\\.")[0]);
+		String outDiffId = configuration.getDirDiffTreeSerialOutput().getAbsolutePath() + File.separator + diffId;
 
-		CaseResult caseResult = this.analyzeCase(treebuilder, left.getName(), left, right, configuration,
-				treeProperties, this.allMatchers);
+		if (new File(outDiffId).exists()) {
+			System.out.println("Existing " + outDiffId);
+			return null;
+		}
+
+		DatOutputEngine saver = new DatOutputEngine(diffId);
+
+		CaseResult caseResult = this.analyzeCase(treebuilder, diffId, left, right, configuration, treeProperties,
+				this.allMatchers);
 
 		int min = Integer.MAX_VALUE;
 		// List with all the configs that produce the min
@@ -939,6 +950,10 @@ public class ExhaustiveEngine implements SearchMethod {
 		saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
 		saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
 		return bestResult;
+	}
+
+	public String getDiffId(File left) {
+		return left.getName().split("\\.")[0];
 	}
 
 }

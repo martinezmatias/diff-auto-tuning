@@ -20,6 +20,8 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	private boolean saveScript = true;
 
+	private boolean overwriteResults = false;
+
 	private File dirDiffTreeSerialOutput = new File("./out/");
 
 	public enum METRIC {
@@ -84,5 +86,13 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setDirDiffTreeSerialOutput(File dirDiffTreeSerialOutput) {
 		this.dirDiffTreeSerialOutput = dirDiffTreeSerialOutput;
+	}
+
+	public boolean isOverwriteResults() {
+		return overwriteResults;
+	}
+
+	public void setOverwriteResults(boolean overwriteResults) {
+		this.overwriteResults = overwriteResults;
 	}
 }

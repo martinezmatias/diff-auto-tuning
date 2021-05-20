@@ -10,7 +10,6 @@ import java.util.List;
 
 import com.github.gumtreediff.matchers.Matcher;
 
-import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -23,8 +22,6 @@ import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 public class StructuredFolderfRunner {
 
 	ExhaustiveEngine tuningEngine = new ExhaustiveEngine();
-
-	private boolean overwriteresults = true;
 
 	public StructuredFolderfRunner(ExhaustiveEngine tuningEngine) {
 		super();
@@ -107,7 +104,10 @@ public class StructuredFolderfRunner {
 
 			List<File> commits = Arrays.asList(pathSubset.listFiles());
 
-			//
+			File outFileSubset = new File(out + File.separator + subset + File.separator);
+			outFileSubset.mkdirs();
+			configuration.setDirDiffTreeSerialOutput(outFileSubset);
+
 			Collections.sort(commits);
 
 			for (File commit : commits) {
@@ -144,19 +144,7 @@ public class StructuredFolderfRunner {
 
 						continue;
 					}
-
-					String diffId = commit.getName() + "_" + fileModif.getName();
-
-					File outResults = new File(out + File.separator + subset + File.separator + "nr_" + nrCommit
-							+ "_id_" + diffId + "_" + treeBuilder.modelType().name() + ".csv");
-
-					if (!overwriteresults && outResults.exists()) {
-						System.out.println("Already analyzed: " + nrCommit + ": " + outResults.getName());
-						continue;
-					}
-
-					ResponseBestParameter response = tuningEngine.computeBestLocal(treeBuilder, previousVersion,
-							postVersion, configuration);
+					tuningEngine.computeBestLocal(treeBuilder, previousVersion, postVersion, configuration);
 
 				}
 			}

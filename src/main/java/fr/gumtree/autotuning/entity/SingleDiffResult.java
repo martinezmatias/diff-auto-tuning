@@ -36,8 +36,10 @@ public class SingleDiffResult extends HashMap<String, Object> {
 		if (!this.containsKey(Constants.PLAIN_CONFIGURATION)) {
 
 			GumtreeProperties gt = (GumtreeProperties) this.get(Constants.CONFIG);
-			String plainProperty = GTProxy.plainProperties(new JsonObject(), this.get(Constants.MATCHER).toString(),
-					gt);
+
+			Object d = this.get(Constants.MATCHER);
+
+			String plainProperty = GTProxy.plainProperties(new JsonObject(), (d != null) ? d.toString() : "", gt);
 			this.put(Constants.PLAIN_CONFIGURATION, plainProperty);
 			return plainProperty;
 		}

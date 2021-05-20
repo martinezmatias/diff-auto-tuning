@@ -47,7 +47,7 @@ public class Main implements Callable<Integer> {
 	long timeout;
 	@Option(names = "-matchers", required = false)
 	String[] matchers;
-	@Option(names = "-overwriteresults", defaultValue = "false", required = false)
+	@Option(names = "-overwriteresults", defaultValue = "true", required = false)
 	boolean overwriteresults;
 
 	List<CaseResult> resultsExecution;
@@ -134,6 +134,7 @@ public class Main implements Callable<Integer> {
 		configuration.setNumberOfThreads(nrthreads);
 		configuration.setTimeOut(timeout);
 		configuration.setParalelisationMode(execution);
+		configuration.setOverwriteResults(overwriteresults);
 
 		ASTMODE model = ASTMODE.valueOf(this.astmodel);
 		ITreeBuilder treebuilder = null;
