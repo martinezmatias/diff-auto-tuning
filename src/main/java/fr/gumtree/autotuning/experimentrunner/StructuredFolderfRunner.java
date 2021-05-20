@@ -1,6 +1,7 @@
 package fr.gumtree.autotuning.experimentrunner;
 
 import java.io.File;
+import java.io.IOException;
 import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -10,8 +11,12 @@ import java.util.List;
 
 import com.github.gumtreediff.matchers.Matcher;
 
+import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
+import fr.gumtree.autotuning.searchengines.ResultByConfig;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 
 /**
@@ -155,6 +160,65 @@ public class StructuredFolderfRunner {
 
 		System.out.println("TOTAL Time " + ((endTime - initTime) / 1000) + " secs");
 
+	}
+
+	public ResponseBestParameter summarizeBestGlobal(File rootFolder) throws IOException {
+
+		ExhaustiveEngine exa = new ExhaustiveEngine();
+
+		DatOutputEngine outputengine = new DatOutputEngine(null);
+
+		ResultByConfig results = new ResultByConfig();
+
+		for (File subset : rootFolder.listFiles()) {
+
+			for (File diffFolder : subset.listFiles()) {
+
+				for (File filesFromDiff : diffFolder.listFiles()) {
+
+					if (filesFromDiff.getName().startsWith("result_")) {
+
+						outputengine.readAndAdd(results, filesFromDiff);
+
+					}
+				}
+
+			}
+		}
+
+		ResponseBestParameter best = exa.summarizeResultsForGlobal(results, METRIC.MEDIAN);
+		return best;
+	}
+
+	public ResponseBestParameter summarizeBestLocal(File rootFolder) throws IOException {
+
+		List<ResultByConfig> allLocalResults = new ArrayList<>();
+
+		ExhaustiveEngine exa = new ExhaustiveEngine();
+
+		DatOutputEngine outputengine = new DatOutputEngine(null);
+
+		for (File subset : rootFolder.listFiles()) {
+
+			for (File diffFolder : subset.listFiles()) {
+
+				for (File filesFromDiff : diffFolder.listFiles()) {
+
+					if (filesFromDiff.getName().startsWith("result_")) {
+
+						ResultByConfig resultDiff = new ResultByConfig();
+
+						outputengine.readAndAdd(resultDiff, filesFromDiff);
+						allLocalResults.add(resultDiff);
+
+					}
+				}
+
+			}
+		}
+
+		ResponseBestParameter best = exa.summarizeResultsForLocal(allLocalResults, METRIC.MEDIAN);
+		return best;
 	}
 
 	protected String calculatePathName(File fileModif, File parentFile) {

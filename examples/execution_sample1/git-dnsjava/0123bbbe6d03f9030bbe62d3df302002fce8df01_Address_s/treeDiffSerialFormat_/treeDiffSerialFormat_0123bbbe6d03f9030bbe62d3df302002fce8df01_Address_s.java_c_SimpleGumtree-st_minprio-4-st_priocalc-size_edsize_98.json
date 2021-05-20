@@ -1,0 +1,994 @@
+{
+  "tool-info": {},
+  "diff": [
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "Try"
+      },
+      "location-after-char-start": 6158,
+      "location-after-char-end": 6335,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "Try"
+      },
+      "location-after-char-start": 6625,
+      "location-after-char-end": 6935,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-after-char-start": 6166,
+      "location-after-char-end": 6191,
+      "node-str": "return"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "Catch"
+      },
+      "location-after-char-start": 6195,
+      "location-after-char-end": 6335,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "addr",
+        "type": "LocalVariable"
+      },
+      "location-after-char-start": 6633,
+      "location-after-char-end": 6670,
+      "node-str": "addr"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-after-char-start": 6674,
+      "location-after-char-end": 6706,
+      "node-str": "return"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "Catch"
+      },
+      "location-after-char-start": 6710,
+      "location-after-char-end": 6935,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "getByAddress",
+        "type": "Invocation"
+      },
+      "location-after-char-start": 6173,
+      "location-after-char-end": 6190,
+      "node-str": "getByAddress"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "e",
+        "type": "CatchVariable"
+      },
+      "location-after-char-start": 6203,
+      "location-after-char-end": 6224,
+      "node-str": "e"
+    },
+    {
+      "type": "move-subtree",
+      "node": {
+        "label": "records",
+        "type": "LocalVariable"
+      },
+      "location-before-char-start": 6269,
+      "location-before-char-end": 6309,
+      "location-after-char-start": 6231,
+      "location-after-char-end": 6271,
+      "node-str": "records"
+    },
+    {
+      "type": "move-subtree",
+      "node": {
+        "label": "a",
+        "type": "LocalVariable"
+      },
+      "location-before-char-start": 6312,
+      "location-before-char-end": 6344,
+      "location-after-char-start": 6275,
+      "location-after-char-end": 6307,
+      "node-str": "a"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-after-char-start": 6311,
+      "location-after-char-end": 6332,
+      "node-str": "return"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "java.net.InetAddress",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "java.net.InetAddress"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "getByAddress",
+        "type": "Invocation"
+      },
+      "location-after-char-start": 6652,
+      "location-after-char-end": 6669,
+      "node-str": "getByAddress"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "NewArray"
+      },
+      "location-after-char-start": 6681,
+      "location-after-char-end": 6705,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "e",
+        "type": "CatchVariable"
+      },
+      "location-after-char-start": 6718,
+      "location-after-char-end": 6739,
+      "node-str": "e"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "addrs",
+        "type": "LocalVariable"
+      },
+      "location-after-char-start": 6746,
+      "location-after-char-end": 6800,
+      "node-str": "addrs"
+    },
+    {
+      "type": "move-subtree",
+      "node": {
+        "label": "",
+        "type": "For"
+      },
+      "location-before-char-start": 6872,
+      "location-before-char-end": 6981,
+      "location-after-char-start": 6804,
+      "location-after-char-end": 6916,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-after-char-start": 6920,
+      "location-after-char-end": 6932,
+      "node-str": "return"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6186,
+      "location-after-char-end": 6189,
+      "node-str": "name"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "java.net.UnknownHostException",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "java.net.UnknownHostException"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "getAddress",
+        "type": "Invocation"
+      },
+      "location-after-char-start": 6318,
+      "location-after-char-end": 6331,
+      "node-str": "getAddress"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6665,
+      "location-after-char-end": 6668,
+      "node-str": "name"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "addr",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6701,
+      "location-after-char-end": 6704,
+      "node-str": "addr"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "1",
+        "type": "Literal"
+      },
+      "location-after-char-start": 6697,
+      "location-after-char-end": 6697,
+      "node-str": "1"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "java.net.UnknownHostException",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "java.net.UnknownHostException"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "java.net.InetAddress[]",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "java.net.InetAddress[]"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "NewArray"
+      },
+      "location-after-char-start": 6769,
+      "location-after-char-end": 6799,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "LT",
+        "type": "BinaryOperator"
+      },
+      "location-after-char-start": 6820,
+      "location-after-char-end": 6837,
+      "node-str": "LT"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "a",
+        "type": "LocalVariable"
+      },
+      "location-after-char-start": 6850,
+      "location-after-char-end": 6882,
+      "node-str": "a"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "addrs",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6927,
+      "location-after-char-end": 6931,
+      "node-str": "addrs"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "a",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6318,
+      "location-after-char-end": 6318,
+      "node-str": "a"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "length",
+        "type": "FieldRead"
+      },
+      "location-after-char-start": 6785,
+      "location-after-char-end": 6798,
+      "node-str": "length"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "i",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6820,
+      "location-after-char-end": 6820,
+      "node-str": "i"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "length",
+        "type": "FieldRead"
+      },
+      "location-after-char-start": 6824,
+      "location-after-char-end": 6837,
+      "node-str": "length"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "ARecord",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "ARecord"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "",
+        "type": "ArrayRead"
+      },
+      "location-after-char-start": 6862,
+      "location-after-char-end": 6881,
+      "node-str": ""
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "records",
+        "type": "TypeAccess"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "records"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "records",
+        "type": "TypeAccess"
+      },
+      "location-after-char-start": 0,
+      "location-after-char-end": 0,
+      "node-str": "records"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "records",
+        "type": "FieldRead"
+      },
+      "location-after-char-start": 6872,
+      "location-after-char-end": 6878,
+      "node-str": "records"
+    },
+    {
+      "type": "insert-node",
+      "node": {
+        "label": "i",
+        "type": "VariableRead"
+      },
+      "location-after-char-start": 6880,
+      "location-after-char-end": 6880,
+      "node-str": "i"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6174,
+      "location-before-char-end": 6177,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "IPv4",
+        "type": "FieldRead"
+      },
+      "location-before-char-start": 6180,
+      "location-before-char-end": 6183,
+      "node-str": "IPv4"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "toByteArray",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6162,
+      "location-before-char-end": 6184,
+      "node-str": "toByteArray"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "null",
+        "type": "Literal"
+      },
+      "location-before-char-start": 6189,
+      "location-before-char-end": 6192,
+      "node-str": "null"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "NE",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6162,
+      "location-before-char-end": 6192,
+      "node-str": "NE"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6209,
+      "location-before-char-end": 6212,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "IPv6",
+        "type": "FieldRead"
+      },
+      "location-before-char-start": 6215,
+      "location-before-char-end": 6218,
+      "node-str": "IPv6"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "toByteArray",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6197,
+      "location-before-char-end": 6219,
+      "node-str": "toByteArray"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "null",
+        "type": "Literal"
+      },
+      "location-before-char-start": 6224,
+      "location-before-char-end": 6227,
+      "node-str": "null"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "NE",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6197,
+      "location-before-char-end": 6227,
+      "node-str": "NE"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "OR",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6162,
+      "location-before-char-end": 6227,
+      "node-str": "OR"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "java.net.InetAddress",
+        "type": "TypeAccess"
+      },
+      "location-before-char-start": 6239,
+      "location-before-char-end": 6249,
+      "node-str": "java.net.InetAddress"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6261,
+      "location-before-char-end": 6264,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "getByName",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6239,
+      "location-before-char-end": 6265,
+      "node-str": "getByName"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-before-char-start": 6232,
+      "location-before-char-end": 6266,
+      "node-str": "return"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "THEN",
+        "type": "then"
+      },
+      "location-before-char-start": 6232,
+      "location-before-char-end": 6266,
+      "node-str": "THEN"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "if",
+        "type": "If"
+      },
+      "location-before-char-start": 6158,
+      "location-before-char-end": 6266,
+      "node-str": "if"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "a",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6354,
+      "location-before-char-end": 6354,
+      "node-str": "a"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "getAddress",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6354,
+      "location-before-char-end": 6367,
+      "node-str": "getAddress"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-before-char-start": 6347,
+      "location-before-char-end": 6368,
+      "node-str": "return"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "i",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6888,
+      "location-before-char-end": 6888,
+      "node-str": "i"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "records",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6892,
+      "location-before-char-end": 6905,
+      "node-str": "records"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "length",
+        "type": "FieldRead"
+      },
+      "location-before-char-start": 6892,
+      "location-before-char-end": 6905,
+      "node-str": "length"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "LT",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6888,
+      "location-before-char-end": 6905,
+      "node-str": "LT"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "ARecord",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-before-char-start": 0,
+      "location-before-char-end": 0,
+      "node-str": "ARecord"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "records",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6939,
+      "location-before-char-end": 6945,
+      "node-str": "records"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "i",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6947,
+      "location-before-char-end": 6947,
+      "node-str": "i"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "",
+        "type": "ArrayRead"
+      },
+      "location-before-char-start": 6929,
+      "location-before-char-end": 6948,
+      "node-str": ""
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "a",
+        "type": "LocalVariable"
+      },
+      "location-before-char-start": 6917,
+      "location-before-char-end": 6949,
+      "node-str": "a"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6674,
+      "location-before-char-end": 6677,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "IPv4",
+        "type": "FieldRead"
+      },
+      "location-before-char-start": 6680,
+      "location-before-char-end": 6683,
+      "node-str": "IPv4"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "toByteArray",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6662,
+      "location-before-char-end": 6684,
+      "node-str": "toByteArray"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "null",
+        "type": "Literal"
+      },
+      "location-before-char-start": 6689,
+      "location-before-char-end": 6692,
+      "node-str": "null"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "NE",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6662,
+      "location-before-char-end": 6692,
+      "node-str": "NE"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6709,
+      "location-before-char-end": 6712,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "IPv6",
+        "type": "FieldRead"
+      },
+      "location-before-char-start": 6715,
+      "location-before-char-end": 6718,
+      "node-str": "IPv6"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "toByteArray",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6697,
+      "location-before-char-end": 6719,
+      "node-str": "toByteArray"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "null",
+        "type": "Literal"
+      },
+      "location-before-char-start": 6724,
+      "location-before-char-end": 6727,
+      "node-str": "null"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "NE",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6697,
+      "location-before-char-end": 6727,
+      "node-str": "NE"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "OR",
+        "type": "BinaryOperator"
+      },
+      "location-before-char-start": 6662,
+      "location-before-char-end": 6727,
+      "node-str": "OR"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "java.net.InetAddress",
+        "type": "TypeAccess"
+      },
+      "location-before-char-start": 6739,
+      "location-before-char-end": 6749,
+      "node-str": "java.net.InetAddress"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6764,
+      "location-before-char-end": 6767,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "getAllByName",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6739,
+      "location-before-char-end": 6768,
+      "node-str": "getAllByName"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-before-char-start": 6732,
+      "location-before-char-end": 6769,
+      "node-str": "return"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "THEN",
+        "type": "then"
+      },
+      "location-before-char-start": 6732,
+      "location-before-char-end": 6769,
+      "node-str": "THEN"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "if",
+        "type": "If"
+      },
+      "location-before-char-start": 6658,
+      "location-before-char-end": 6769,
+      "node-str": "if"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "Record[]",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-before-char-start": 0,
+      "location-before-char-end": 0,
+      "node-str": "Record[]"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "name",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6807,
+      "location-before-char-end": 6810,
+      "node-str": "name"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "lookupHostName",
+        "type": "Invocation"
+      },
+      "location-before-char-start": 6792,
+      "location-before-char-end": 6811,
+      "node-str": "lookupHostName"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "records",
+        "type": "LocalVariable"
+      },
+      "location-before-char-start": 6772,
+      "location-before-char-end": 6812,
+      "node-str": "records"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "java.net.InetAddress[]",
+        "type": "VARIABLE_TYPE"
+      },
+      "location-before-char-start": 0,
+      "location-before-char-end": 0,
+      "node-str": "java.net.InetAddress[]"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "records",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6854,
+      "location-before-char-end": 6867,
+      "node-str": "records"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "length",
+        "type": "FieldRead"
+      },
+      "location-before-char-start": 6854,
+      "location-before-char-end": 6867,
+      "node-str": "length"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "",
+        "type": "NewArray"
+      },
+      "location-before-char-start": 6838,
+      "location-before-char-end": 6868,
+      "node-str": ""
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "addrs",
+        "type": "LocalVariable"
+      },
+      "location-before-char-start": 6815,
+      "location-before-char-end": 6869,
+      "node-str": "addrs"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "addrs",
+        "type": "VariableRead"
+      },
+      "location-before-char-start": 6991,
+      "location-before-char-end": 6995,
+      "node-str": "addrs"
+    },
+    {
+      "type": "delete-node",
+      "node": {
+        "label": "return",
+        "type": "Return"
+      },
+      "location-before-char-start": 6984,
+      "location-before-char-end": 6996,
+      "node-str": "return"
+    }
+  ],
+  "before-file": {},
+  "after-file": {},
+  "mapping": {}
+}

@@ -740,12 +740,17 @@ public class ExhaustiveEngine implements SearchMethod {
 		Map<String, Double> medianByConfiguration = new HashMap<>();
 
 		Double minMedian = Double.MAX_VALUE;
+		int nrEvaluations = 0;
+
 		int i = 0;
 		for (String aConfigresult : results.keySet()) {
 
 			DescriptiveStatistics stats = new DescriptiveStatistics();
 
 			List<Integer> allSizesOfConfigs = results.get(aConfigresult);
+			if (allSizesOfConfigs.size() > nrEvaluations)
+				nrEvaluations = allSizesOfConfigs.size();
+
 			for (Integer aSize : allSizesOfConfigs) {
 				stats.addValue(aSize);
 			}
@@ -779,7 +784,7 @@ public class ExhaustiveEngine implements SearchMethod {
 
 		System.out.println("Total configs " + bests.size() + " / " + results.keySet().size());
 		//
-
+		bestResult.setNumberOfEvaluatedPairs(nrEvaluations);
 		bestResult.setMedian(minMedian);
 		bestResult.setBest(bests);
 		return bestResult;
