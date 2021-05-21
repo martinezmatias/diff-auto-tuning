@@ -34,7 +34,7 @@ else:
 
 #for i in range(1, 41):
 
-for i in os.listdir():
+for i in os.listdir(megadiffpath):
 
 	groupId, maxid = getMaxAnalyzed(outDir, str(i), model)
 	print(" groupId {} , maxid {} ".format(groupId, maxid))
