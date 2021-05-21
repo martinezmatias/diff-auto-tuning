@@ -30,16 +30,16 @@ if len(sys.argv) > 6:
 else:
 	paralelltype = "PROPERTY_LEVEL"
 
+if len(sys.argv) > 7:
+	targetproject = sys.argv[7]
+else:
+	print("Missing project last parameter")
+	exit()
 
-
-#for i in range(1, 41):
-
-for i in os.listdir():
-
-	groupId, maxid = getMaxAnalyzed(outDir, str(i), model)
-	print(" groupId {} , maxid {} ".format(groupId, maxid))
-	if maxid is None:
+groupId, maxid = getMaxAnalyzed(outDir, str(targetproject), model)
+print(" groupId {} , maxid {} ".format(groupId, maxid))
+if maxid is None:
 		maxid = begin
-	else:
+else:
 		maxid = maxid + 1
-	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=paralelltype, matchers=matchers)
+runProject(out = outDir, path = megadiffpath, subset=targetproject, begin=maxid, stop = end, astmodel=model, parallel=paralelltype, matchers=matchers)
