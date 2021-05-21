@@ -678,8 +678,10 @@ public class ExhaustiveEngine implements SearchMethod {
 				// Compute all diffs
 				String filenameLeft = sp[0];
 				String filenameRight = sp[1];
-				CaseResult caseResult = this.analyzeCase(treebuilder, filenameLeft, new File(filenameLeft),
-						new File(filenameRight), configuration, treeCharacteristics, this.allMatchers);
+				File previousVersion = new File(filenameLeft);
+				File postVersion = new File(filenameRight);
+				CaseResult caseResult = this.analyzeCase(treebuilder, filenameLeft, previousVersion, postVersion,
+						configuration, treeCharacteristics, this.allMatchers);
 
 				// Navegate over the cases.
 				for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
@@ -694,8 +696,8 @@ public class ExhaustiveEngine implements SearchMethod {
 
 						if (configuration.isSaveScript()) {
 
-							saver.saveUnifiedNotDuplicated(filenameLeft, plainProperties, diffResult.getDiff(),
-									configuration.getDirDiffTreeSerialOutput());
+							saver.saveUnifiedNotDuplicated(getDiffId(previousVersion), plainProperties,
+									diffResult.getDiff(), configuration.getDirDiffTreeSerialOutput());
 
 						}
 
@@ -771,11 +773,6 @@ public class ExhaustiveEngine implements SearchMethod {
 		}
 		final Double minValuemedian = minMedian;
 		// Choose the config with best median
-
-		// List<String> best = medianByConfiguration.keySet().stream()
-		// .sorted((e1, e2) ->
-		// medianByConfiguration.get(e1).compareTo(medianByConfiguration.get(e2)))
-		// .collect(Collectors.toList());
 
 		System.out.println("Min median " + minValuemedian);
 
@@ -936,7 +933,7 @@ public class ExhaustiveEngine implements SearchMethod {
 				}
 
 				if (configuration.isSaveScript()) {
-					saver.saveUnifiedNotDuplicated(left.getName(), plainProperty, diffResult.getDiff(),
+					saver.saveUnifiedNotDuplicated(getDiffId(left), plainProperty, diffResult.getDiff(),
 							configuration.getDirDiffTreeSerialOutput());
 
 				}
@@ -958,7 +955,7 @@ public class ExhaustiveEngine implements SearchMethod {
 	}
 
 	public String getDiffId(File left) {
-		return left.getName().split("\\.")[0];
+		return left.getName().split("\\.")[0].replace("_s", "").replace("_t", "");
 	}
 
 }

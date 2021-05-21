@@ -15,7 +15,8 @@ public class MainStructTest {
 		String[] command = new String[] { "-path=" + rootMegadiff.getAbsolutePath(), //
 				"-out=./out/", //
 				"-stop=1", //
-				"-subset=git-dnsjava", "-paralleltype=" + PARALLEL_EXECUTION.MATCHER_LEVEL.toString() };
+				"-overwriteresults=true", "-subset=git-dnsjava",
+				"-paralleltype=" + PARALLEL_EXECUTION.MATCHER_LEVEL.toString() };
 		Main.main(command);
 	}
 

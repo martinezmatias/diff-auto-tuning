@@ -13,8 +13,8 @@
 
 	<properties>
 
-		<maven.compiler.source>1.11</maven.compiler.source>
-		<maven.compiler.target>1.11</maven.compiler.target>
+		<maven.compiler.source>11</maven.compiler.source>
+		<maven.compiler.target>11</maven.compiler.target>
 		<project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
 
 		<github.global.server>github</github.global.server>
@@ -49,7 +49,7 @@
 		<dependency>
 			<groupId>fr.inria.gforge.spoon</groupId>
 			<artifactId>spoon-core</artifactId>
-			<version>8.3.0</version>
+			<version>9.0.0</version>
 		</dependency>
 
 		<dependency>
@@ -118,6 +118,13 @@
 			<artifactId>fastutil</artifactId>
 			<version>8.3.1</version>
 		</dependency>
+
+		<dependency>
+			<groupId>com.github.mpkorstanje</groupId>
+			<artifactId>simmetrics-core</artifactId>
+			<version>3.2.3</version>
+		</dependency>
+
 
 		<dependency>
 			<groupId>fr.gumtree</groupId>

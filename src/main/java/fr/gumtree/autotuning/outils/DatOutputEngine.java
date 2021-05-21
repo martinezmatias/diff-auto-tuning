@@ -44,15 +44,19 @@ import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
  */
 public class DatOutputEngine {
 
+	private static final String EDSIZE_CHAR = "_edsize_";
+
+	private static final String CONFIG_CHAR = "_c_";
+
 	public static final String ED_SIZE = "v";
 
 	public static final String CONFIGURATION = "c";
 
-	private static final String PREFIX_TREEDIFF_FORMAT = "treeDiffSerialFormat_";
+	private static final String PREFIX_TREEDIFF_FORMAT = "treeDiffSerialFormat";
 
-	private static final String PREFIX_FILE_SUMMARY_JSON = "equivalents_";
+	private static final String PREFIX_FILE_SUMMARY_JSON = "equivalents";
 
-	private static final String RESULTS_JSON = "result_size_per_config_";
+	private static final String RESULTS_JSON = "result_size_per_config";
 
 	private MapList<String, String> equivalent = new MapList<String, String>();
 
@@ -68,12 +72,10 @@ public class DatOutputEngine {
 	}
 
 	// TODO add config on last parameter
-	public void saveUnifiedNotDuplicated(String filename, String plainProperties,
+	public void saveUnifiedNotDuplicated(String diffId, String plainProperties,
 			com.github.gumtreediff.actions.Diff diffgtt, File parentDiff) throws IOException, NoSuchAlgorithmException {
 
-		filename = new File(filename).getName();
-
-		String key = filename.replace("/", "_") + "_c_" + plainProperties + "_edsize_" + diffgtt.editScript.size();
+		String key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + diffgtt.editScript.size();
 
 		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
 		JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
@@ -98,10 +100,10 @@ public class DatOutputEngine {
 			hashes.put(hashJson, key);
 			equivalent.add(key, key);
 
-			File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".json");
+			File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".json");
 			if (zipped) {
 				FileOutputStream fos = new FileOutputStream(
-						caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".zip");
+						caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".zip");
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 				zipOut.putNextEntry(zipEntry);
@@ -118,12 +120,15 @@ public class DatOutputEngine {
 		}
 	}
 
+	/**
+	 * This is used by TPE
+	 */
 	public void saveUnified(String filename, String plainProperties, com.github.gumtreediff.actions.Diff diffgtt,
 			File parentDiff) throws IOException, NoSuchAlgorithmException {
 
 		filename = new File(filename).getName();
 
-		String key = filename.replace("/", "_") + "_c_" + plainProperties;
+		String key = filename.replace("/", "_") + CONFIG_CHAR + plainProperties;
 
 		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
 		JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
@@ -136,10 +141,10 @@ public class DatOutputEngine {
 				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
 		caseFolder.mkdirs();
 
-		File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".json");
+		File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".json");
 		if (zipped) {
 			FileOutputStream fos = new FileOutputStream(
-					caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + key + ".zip");
+					caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".zip");
 			ZipOutputStream zipOut = new ZipOutputStream(fos);
 			ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 			zipOut.putNextEntry(zipEntry);
@@ -162,7 +167,8 @@ public class DatOutputEngine {
 
 		for (String xRquivalen : this.equivalent.keySet()) {
 
-			File uniflFile = new File(caseFolder + File.separator + PREFIX_FILE_SUMMARY_JSON + xRquivalen + ".txt");
+			File uniflFile = new File(
+					caseFolder + File.separator + PREFIX_FILE_SUMMARY_JSON + "_" + xRquivalen + ".txt");
 
 			List<String> equiv = this.equivalent.get(xRquivalen);
 			String content = "";
@@ -172,7 +178,7 @@ public class DatOutputEngine {
 			}
 			if (zipped) {
 				FileOutputStream fos = new FileOutputStream(
-						caseFolder + File.separator + PREFIX_FILE_SUMMARY_JSON + xRquivalen + ".zip");
+						caseFolder + File.separator + PREFIX_FILE_SUMMARY_JSON + "_" + xRquivalen + ".zip");
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 				zipOut.putNextEntry(zipEntry);
@@ -208,10 +214,11 @@ public class DatOutputEngine {
 		File caseFolder = new File(parentDiff.getAbsolutePath() + File.separator + this.id);
 		caseFolder.mkdirs();
 
-		File uniflFile = new File(caseFolder + File.separator + RESULTS_JSON + this.id + ".json");
+		File uniflFile = new File(caseFolder + File.separator + RESULTS_JSON + "_" + this.id + ".json");
 
 		if (zipped) {
-			FileOutputStream fos = new FileOutputStream(caseFolder + File.separator + RESULTS_JSON + this.id + ".zip");
+			FileOutputStream fos = new FileOutputStream(
+					caseFolder + File.separator + RESULTS_JSON + "_" + this.id + ".zip");
 			ZipOutputStream zipOut = new ZipOutputStream(fos);
 			ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 			zipOut.putNextEntry(zipEntry);
@@ -238,7 +245,7 @@ public class DatOutputEngine {
 				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
 		caseFolder.mkdirs();
 
-		File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + configId + ".json");
+		File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + configId + ".json");
 		FileWriter fw = new FileWriter(uniflFile);
 		fw.write(json);
 		fw.close();
