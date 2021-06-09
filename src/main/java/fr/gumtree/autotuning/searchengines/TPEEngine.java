@@ -26,7 +26,7 @@ import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
  * @author Matias Martinez
  *
  */
-public class TPEEngine implements SearchMethod {
+public class TPEEngine implements OptimizationMethod {
 
 	private static final String HEADER_RESPONSE_PYTHON = "Best config: ";
 

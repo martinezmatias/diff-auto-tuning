@@ -37,7 +37,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 	String host = "localhost";
 	int port = 8001;
 	String path = "multiple";
-	DatOutputEngine saver = new DatOutputEngine();
+	DatOutputEngine saver = new DatOutputEngine(null);
 
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {

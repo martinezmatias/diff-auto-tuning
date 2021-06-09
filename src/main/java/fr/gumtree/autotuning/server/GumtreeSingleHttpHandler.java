@@ -15,6 +15,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.GTProxy;
+import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
@@ -37,6 +38,8 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 	String path = "single";
 
 	String nameLeft = null;
+
+	DatOutputEngine saver = new DatOutputEngine(null);
 
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {

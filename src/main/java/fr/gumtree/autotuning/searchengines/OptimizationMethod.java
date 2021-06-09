@@ -5,8 +5,12 @@ import java.io.File;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
-
-public interface SearchMethod {
+/**
+ * 
+ * @author Matias Martinez
+ *
+ */
+public interface OptimizationMethod {
 
 	/**
 	 * Compute the best from a list of pairs contained in a file TODO: change to

@@ -8,8 +8,6 @@ import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
-import fr.gumtree.autotuning.outils.DatOutputEngine;
-
 /**
  * 
  * @author Matias Martinez
@@ -29,8 +27,6 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 	 * Stores the different calls to run
 	 */
 	JsonArray cacheResults = new JsonArray();
-
-	DatOutputEngine saver = new DatOutputEngine();
 
 	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
 

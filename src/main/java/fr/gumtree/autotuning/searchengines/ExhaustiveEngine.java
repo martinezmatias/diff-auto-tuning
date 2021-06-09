@@ -53,7 +53,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  * @author Matias Martinez
  *
  */
-public class ExhaustiveEngine implements SearchMethod {
+public class ExhaustiveEngine implements OptimizationMethod {
 
 	public static final String SUMMARY_CASES = "summary_cases_";
 
@@ -266,7 +266,7 @@ public class ExhaustiveEngine implements SearchMethod {
 			SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
 			if (resDiff != null) {
-				i = printResult(getNameOfMatcher(matcher), combinations.size(), i, resDiff);
+				// i = printResult(getNameOfMatcher(matcher), combinations.size(), i, resDiff);
 				alldiffresults.add(resDiff);
 			}
 		}
@@ -515,7 +515,8 @@ public class ExhaustiveEngine implements SearchMethod {
 					// matcher
 					, aGumtreeProperties);
 
-			printResult(matcher.getClass().getSimpleName(), this.totalConfig, this.idConfig, result);
+			// printResult(matcher.getClass().getSimpleName(), this.totalConfig,
+			// this.idConfig, result);
 
 			return result;
 		}
