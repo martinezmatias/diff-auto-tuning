@@ -34,12 +34,18 @@ else:
 
 #for i in range(1, 41):
 
-for i in os.listdir(megadiffpath):
+for aFileFromFolder in os.listdir(megadiffpath):
 
-	groupId, maxid = getMaxAnalyzed(outDir, str(i), model)
-	print(" groupId {} , maxid {} ".format(groupId, maxid))
+	abspath = os.path.join(megadiffpath, aFileFromFolder)
+	
+	if not str(aFileFromFolder).lower().startswith("git-"):
+		print("Discarding {}: is not a dir".format(abspath))
+		continue
+
+	groupId, maxid = getMaxAnalyzed(outDir, str(aFileFromFolder), model)
+	print("\n groupId {} , maxid {} ".format(groupId, maxid))
 	if maxid is None:
 		maxid = begin
 	else:
 		maxid = maxid + 1
-	runProject(out = outDir, path = megadiffpath, subset=i, begin=maxid, stop = end, astmodel=model, parallel=paralelltype, matchers=matchers)
+	runProject(out = outDir, path = megadiffpath, subset=aFileFromFolder, begin=maxid, stop = end, astmodel=model, parallel=paralelltype, matchers=matchers)
