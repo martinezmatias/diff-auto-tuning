@@ -171,14 +171,25 @@ public class StructuredFolderfRunner {
 		ResultByConfig results = new ResultByConfig();
 
 		for (File subset : rootFolder.listFiles()) {
+			if (subset.getName().equals(".DS_Store")) {
+				continue;
+			}
 
 			for (File diffFolder : subset.listFiles()) {
 
+				if (diffFolder.getName().equals(".DS_Store")) {
+					continue;
+				}
+
 				for (File filesFromDiff : diffFolder.listFiles()) {
 
-					if (filesFromDiff.getName().startsWith("result_")) {
+					if (filesFromDiff.getName().equals(".DS_Store")) {
+						continue;
+					}
 
-						outputengine.readAndAdd(results, filesFromDiff);
+					if (filesFromDiff.getName().startsWith("result_") && filesFromDiff.getName().endsWith(".zip")) {
+
+						outputengine.readZipAndAdd(results, filesFromDiff);
 
 					}
 				}
@@ -198,17 +209,31 @@ public class StructuredFolderfRunner {
 
 		DatOutputEngine outputengine = new DatOutputEngine(null);
 
+		System.out.println("Folders " + Arrays.toString(rootFolder.listFiles()));
+
 		for (File subset : rootFolder.listFiles()) {
+
+			if (subset.getName().equals(".DS_Store")) {
+				continue;
+			}
 
 			for (File diffFolder : subset.listFiles()) {
 
+				if (diffFolder.getName().equals(".DS_Store")) {
+					continue;
+				}
+
 				for (File filesFromDiff : diffFolder.listFiles()) {
 
-					if (filesFromDiff.getName().startsWith("result_")) {
+					if (filesFromDiff.getName().equals(".DS_Store")) {
+						continue;
+					}
+
+					if (filesFromDiff.getName().startsWith("result_") && filesFromDiff.getName().endsWith(".zip")) {
 
 						ResultByConfig resultDiff = new ResultByConfig();
 
-						outputengine.readAndAdd(resultDiff, filesFromDiff);
+						outputengine.readZipAndAdd(resultDiff, filesFromDiff);
 						allLocalResults.add(resultDiff);
 
 					}

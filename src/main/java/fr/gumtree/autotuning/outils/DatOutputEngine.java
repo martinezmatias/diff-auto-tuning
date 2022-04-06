@@ -317,7 +317,7 @@ public class DatOutputEngine {
 		return normalizePath;
 	}
 
-	public void readAndAdd(ResultByConfig results, File zip) throws IOException {
+	public void readZipAndAdd(ResultByConfig results, File zip) throws IOException {
 
 		String outJson = unzipFolder(zip.toPath());
 
