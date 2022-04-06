@@ -79,10 +79,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		this.gumtreeproxy = new GTProxy();
 	}
 
-	public void initCacheCombinationProperties() {
+	public void initCacheCombinationProperties(ParametersResolvers domain) {
 		this.cacheCombinations.clear();
 		for (Matcher matcher : allMatchers) {
-			List<GumtreeProperties> allCombinations = computesCombinations(matcher);
+			List<GumtreeProperties> allCombinations = computesCombinations(matcher, domain);
 			this.cacheCombinations.put(matcher.getClass().getCanonicalName(), allCombinations);
 
 		}
@@ -225,7 +225,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		MatcherResult result = new MatcherResult(matcherName, matcher);
 
-		combinations = getConfigurations(matcher);
+		ParametersResolvers domain = ParametersResolvers.defaultDomain;
+		combinations = getConfigurations(matcher, domain);
 
 		List<SingleDiffResult> alldiffresults = runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
 
@@ -329,7 +330,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			resultFromCancelled.setAlldiffresults(alldiffresults);
 
-			List<GumtreeProperties> combinations = getPropertiesCombinations(matcher);
+			ParametersResolvers domain = ParametersResolvers.defaultDomain;
+			List<GumtreeProperties> combinations = getPropertiesCombinations(matcher, domain);
 
 			for (GumtreeProperties GumtreeProperties : combinations) {
 
@@ -364,7 +366,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		List<SingleDiffResult> alldiffresults = new ArrayList<>();
 
-		combinations = getConfigurations(matcher);
+		ParametersResolvers domain = ParametersResolvers.defaultDomain;
+		combinations = getConfigurations(matcher, domain);
 
 		// parallel
 		try {
@@ -389,11 +392,11 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 	}
 
-	public List<GumtreeProperties> getConfigurations(Matcher matcher) {
+	public List<GumtreeProperties> getConfigurations(Matcher matcher, ParametersResolvers domain) {
 		List<GumtreeProperties> combinations;
 		if (matcher instanceof ConfigurableMatcher) {
 
-			combinations = getPropertiesCombinations(matcher);
+			combinations = getPropertiesCombinations(matcher, domain);
 
 		} else {
 			// The matcher does not allow customization
@@ -419,15 +422,15 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		return i;
 	}
 
-	public List<GumtreeProperties> getPropertiesCombinations(Matcher matcher) {
+	public List<GumtreeProperties> getPropertiesCombinations(Matcher matcher, ParametersResolvers domain) {
 
 		if (this.cacheCombinations == null || this.cacheCombinations.isEmpty()) {
-			this.initCacheCombinationProperties();
+			this.initCacheCombinationProperties(domain);
 		}
 		return this.cacheCombinations.get(matcher.getClass().getCanonicalName());
 	}
 
-	protected List<GumtreeProperties> computesCombinations(Matcher matcher) {
+	public List<GumtreeProperties> computesCombinations(Matcher matcher, ParametersResolvers domain) {
 		List<GumtreeProperties> combinations;
 		ConfigurableMatcher configurableMatcher = (ConfigurableMatcher) matcher;
 
@@ -439,7 +442,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		// We collect the domains
 		for (ConfigurationOptions option : options) {
 
-			ParameterDomain<?> paramOption = ParametersResolvers.parametersDomain.get(option);
+			ParameterDomain<?> paramOption = domain.getParametersDomain().get(option);
 			if (paramOption != null) {
 				domains.add(paramOption);
 			} else {

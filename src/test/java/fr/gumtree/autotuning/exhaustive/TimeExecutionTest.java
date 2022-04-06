@@ -83,7 +83,7 @@ public class TimeExecutionTest {
 	}
 
 	@Test
-	public void testManyConfigs_CompleteGumtreeMatcher1() throws Exception {
+	public void testManyConfigs_ClassicGumtreeMatcher1() throws Exception {
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
 		File fs = new File(

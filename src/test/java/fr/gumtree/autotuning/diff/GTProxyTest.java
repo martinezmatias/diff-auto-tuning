@@ -585,6 +585,56 @@ public class GTProxyTest {
 	}
 
 	/**
+	 * Updates a comment
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDiffForTestJDT_2_03_Hybrid() throws Exception {
+
+		assertTrue(rootMegadiff.exists());
+
+		String fl = rootMegadiff.getAbsolutePath()
+				+ "/2_03b1dec4d20cee110b68cf8325f28f4403468317/FTPClient/2_03b1dec4d20cee110b68cf8325f28f4403468317_FTPClient_s.java";
+		String fr = rootMegadiff.getAbsolutePath()
+				+ "/2_03b1dec4d20cee110b68cf8325f28f4403468317/FTPClient/2_03b1dec4d20cee110b68cf8325f28f4403468317_FTPClient_t.java";
+		System.out.println(fl);
+
+		String lc = new String(Files.readAllBytes(new File(fl).toPath()));
+		Tree tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+		lc = new String(Files.readAllBytes(new File(fr).toPath()));
+		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+		GTProxy engine = new GTProxy();
+
+		CompositeMatchers.HybridGumtree matcher = new CompositeMatchers.HybridGumtree();
+		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
+
+		System.out.println("Size  " + actionsAll.size());
+		System.out.println("All " + actionsAll);
+
+		assertEquals(1, actionsAll.size());
+
+		GumtreeProperties properies = new GumtreeProperties();
+
+		properies = new GumtreeProperties();
+		properies.put(ConfigurationOptions.bu_minsize, 100);
+
+		matcher.configure(properies);
+
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
+
+		System.out.println(actionsAll.size());
+		System.out.println(actionsAll);
+
+		assertEquals(1, actionsAll.size());
+
+	}
+
+	/**
 	 * Insertion of Import and update method invocation
 	 * 
 	 * @throws Exception
