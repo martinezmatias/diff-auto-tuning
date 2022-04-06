@@ -22,7 +22,6 @@ import com.github.gumtreediff.client.diff.webdiff.VanillaDiffHtmlBuilder;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffView;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.CompositeMatchers.ClassicGumtree;
-import com.github.gumtreediff.matchers.CompositeMatchers.CompleteGumtreeMatcher;
 import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
 import com.github.gumtreediff.matchers.CompositeMatchers.SimpleGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
@@ -193,8 +192,8 @@ public class ResultVisualizer {
 		if (props.toLowerCase().equals(SimpleGumtree.class.getSimpleName().toLowerCase()))
 			return new CompositeMatchers.SimpleGumtree();
 
-		if (props.toLowerCase().equals(CompleteGumtreeMatcher.class.getSimpleName().toLowerCase()))
-			return new CompositeMatchers.CompleteGumtreeMatcher();
+		if (props.toLowerCase().equals(ClassicGumtree.class.getSimpleName().toLowerCase()))
+			return new CompositeMatchers.ClassicGumtree();
 
 		if (props.toLowerCase().equals(ClassicGumtree.class.getSimpleName().toLowerCase()))
 			return new CompositeMatchers.ClassicGumtree();
@@ -242,7 +241,9 @@ public class ResultVisualizer {
 		//
 
 		// VanillaDiffView
-		Renderable view = new VanillaDiffView(fileLeftt, fileRight, (com.github.gumtreediff.actions.Diff) diffgtt);
+		boolean dump = true;// TODO check value
+		Renderable view = new VanillaDiffView(fileLeftt, fileRight, (com.github.gumtreediff.actions.Diff) diffgtt,
+				dump);
 		saveRenderable(parentDiff, diffId, configId, view, "vanillaDiffView");
 
 		// Text

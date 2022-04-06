@@ -121,15 +121,16 @@ public class GTProxy implements DiffProxy {
 
 		if (algoName.equals("SimpleGumtree"))
 			return new CompositeMatchers.SimpleGumtree();
-		//
+
 		if (algoName.equals("ClassicGumtree"))
 			return new CompositeMatchers.ClassicGumtree();
-		//
-		if (algoName.equals("CompleteGumtreeMatcher"))
-			return new CompositeMatchers.CompleteGumtreeMatcher();
+
+		if (algoName.equals("HybridGumtree"))
+			return new CompositeMatchers.HybridGumtree();
 
 		if (algoName.equals("ChangeDistiller"))
 			return new CompositeMatchers.ChangeDistiller();
+
 		if (algoName.equals("XyMatcher"))
 			return new CompositeMatchers.XyMatcher();
 

@@ -62,24 +62,13 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	DiffProxy gumtreeproxy = null;
-	// TODO: we cannot use the same generator when we execute on parallel.
-//	private ChawatheScriptGenerator editScriptGenerator = new ChawatheScriptGenerator();
 
 	public ExhaustiveEngine(DiffProxy gumtreeproxy) {
 		this.gumtreeproxy = gumtreeproxy;
 	}
 
-	public Matcher[] allMatchers = new Matcher[] {
-			//
-			new CompositeMatchers.SimpleGumtree(),
-			//
-			new CompositeMatchers.ClassicGumtree(),
-			//
-			new CompositeMatchers.CompleteGumtreeMatcher(),
-			//
-			// new CompositeMatchers.ChangeDistiller(),
-			//
-			new CompositeMatchers.XyMatcher(),
+	public Matcher[] allMatchers = new Matcher[] { new CompositeMatchers.SimpleGumtree(),
+			new CompositeMatchers.ClassicGumtree(), new CompositeMatchers.HybridGumtree(),
 
 	};
 
@@ -87,8 +76,6 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 	public ExhaustiveEngine() {
 		super();
-		// Not necessary here
-		// initCacheCombinationProperties();
 		this.gumtreeproxy = new GTProxy();
 	}
 
@@ -780,8 +767,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		List<String> bests = medianByConfiguration.keySet().stream()
 				.filter(e -> minValuemedian.equals(medianByConfiguration.get(e))).collect(Collectors.toList());
 
-		System.out.println("Total configs " + bests.size() + " / " + results.keySet().size());
+		System.out.println("Total best configs " + bests.size() + " / " + results.keySet().size());
 		//
+		System.out.println("Bests (" + bests.size() + ") : " + bests);
+
 		bestResult.setNumberOfEvaluatedPairs(nrEvaluations);
 		bestResult.setMedian(minMedian);
 		bestResult.setBest(bests);

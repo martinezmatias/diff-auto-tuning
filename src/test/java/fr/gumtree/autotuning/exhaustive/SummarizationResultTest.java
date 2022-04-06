@@ -19,6 +19,8 @@ public class SummarizationResultTest {
 		File fileResults = new File("./examples/execution_sample1");
 		assertTrue(fileResults.exists());
 
+		assertTrue(fileResults.list().length > 0);
+
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 
 		ResponseBestParameter best = runner.summarizeBestGlobal(fileResults);
@@ -38,6 +40,8 @@ public class SummarizationResultTest {
 
 		File fileResults = new File("./examples/execution_sample1");
 		assertTrue(fileResults.exists());
+
+		assertTrue(fileResults.list().length > 0);
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 

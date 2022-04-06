@@ -51,7 +51,7 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 
 		GumtreeProperties properies = new GumtreeProperties();
 
@@ -97,7 +97,7 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
@@ -116,6 +116,8 @@ public class TimeExecutionTest {
 		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		System.out.println("Serial");
+
+		long init = (new Date()).getTime();
 		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
 
 		assertEquals(10, resultS.size());
@@ -127,7 +129,11 @@ public class TimeExecutionTest {
 
 		}
 
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
+
 		System.out.println("Paralell");
+
+		init = (new Date()).getTime();
 
 		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
 				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
@@ -140,6 +146,9 @@ public class TimeExecutionTest {
 			assertTrue(serial > 900 && serial < 2500);
 
 		}
+
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
+
 	}
 
 	@Test
@@ -157,6 +166,7 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
+		long init = (new Date()).getTime();
 		CompositeMatchers.SimpleGumtree matcher = new CompositeMatchers.SimpleGumtree();
 
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
@@ -185,12 +195,15 @@ public class TimeExecutionTest {
 		for (SingleDiffResult singleDiffResult : resultS) {
 			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
 			System.out.println(serial);
-			assertTrue(serial > 0 && serial < 50);
+			assertTrue(serial > 0 && serial < 200);
 			statsS.addValue(serial);
 
 		}
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
 
 		System.out.println("Paralell");
+
+		init = (new Date()).getTime();
 
 		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
 				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
@@ -209,6 +222,9 @@ public class TimeExecutionTest {
 
 		System.out.println("Stat Paralell");
 		System.out.println(statsP);
+
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
+
 	}
 
 	@Test
@@ -226,15 +242,13 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		Matcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		Matcher matcher = new CompositeMatchers.ClassicGumtree();
 
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
 		for (int i = 1000; i < 2000; i = i + 100) {
 			GumtreeProperties properies = new GumtreeProperties();
 			for (int mi = 1; mi <= 5; mi = mi + 1) {
-				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
-				// bu_minsize=1200}
 				properies.put(ConfigurationOptions.st_priocalc, "height");
 				properies.put(ConfigurationOptions.bu_minsim, 0.9);
 				properies.put(ConfigurationOptions.st_minprio, mi);

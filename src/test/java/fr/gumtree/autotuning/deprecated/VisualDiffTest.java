@@ -19,7 +19,6 @@ import org.junit.Test;
 
 import com.github.gumtreediff.gen.jdt.JdtTreeGenerator;
 import com.github.gumtreediff.matchers.CompositeMatchers;
-import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
@@ -59,10 +58,10 @@ public class VisualDiffTest {
 
 		GumtreeProperties properies = new GumtreeProperties();
 
-		properies.getProperties().clear();
-		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.7);
-		properies.put(ConfigurationOptions.GT_BUM_SZT, 1900);
-		properies.put(ConfigurationOptions.GT_STM_MH, 2);
+//		properies.getProperties().clear();
+//		properies.put(ConfigurationOptions.GT_BUM_SMT, 0.7);
+//		properies.put(ConfigurationOptions.GT_BUM_SZT, 1900);
+//		properies.put(ConfigurationOptions.GT_STM_MH, 2);
 
 		Matcher matcher = new CompositeMatchers.ClassicGumtree();
 		File fout = new File("/Users/matias/Downloads/");

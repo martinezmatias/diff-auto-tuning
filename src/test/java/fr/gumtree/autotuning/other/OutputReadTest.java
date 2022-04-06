@@ -33,7 +33,7 @@ public class OutputReadTest {
 
 		ResultByConfig cr = new ResultByConfig();
 
-		output.readAndAdd(cr, new File(file2));
+		output.readZipAndAdd(cr, new File(file2));
 
 		assertFalse(cr.isEmpty());
 
