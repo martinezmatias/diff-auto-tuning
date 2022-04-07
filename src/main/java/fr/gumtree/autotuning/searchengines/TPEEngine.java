@@ -22,6 +22,7 @@ import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 
 /**
+ * Implementation of TPE
  * 
  * @author Matias Martinez
  *
@@ -33,14 +34,12 @@ public class TPEEngine implements OptimizationMethod {
 	DiffServerLauncher launcher;
 
 	public TPEEngine() {
+
 	}
 
-	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionTPEConfiguration());
-	}
-
-	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
-			ExecutionConfiguration configuration) throws Exception {
+	@Override
+	public ResponseBestParameter computeBestLocal(File left, File right, ExecutionConfiguration configuration)
+			throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new DiffServerLauncher();
@@ -49,6 +48,7 @@ public class TPEEngine implements OptimizationMethod {
 
 		GumtreeSingleHttpHandler handler = launcher.getHandlerSimple();
 
+		ASTMODE astmode = configuration.getAstmode();
 		JsonObject responseJSon = launcher.initSimple(left, right, astmode, handler);
 
 		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
@@ -64,12 +64,9 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
-		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionTPEConfiguration());
-	}
-
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
-			ExecutionConfiguration configuration) throws Exception {
+	@Override
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ExecutionConfiguration configuration)
+			throws Exception {
 
 		System.out.println("Starting server");
 		launcher = new DiffServerLauncher();
@@ -78,7 +75,7 @@ public class TPEEngine implements OptimizationMethod {
 
 		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
 
-		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode, handler);
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode(), handler);
 
 		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);

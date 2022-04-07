@@ -32,6 +32,8 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	TimeUnit timeUnit = TimeUnit.SECONDS;
 
+	private ASTMODE astmode;
+
 	public PARALLEL_EXECUTION getParalelisationMode() {
 		return paralelisationMode;
 	}
@@ -94,5 +96,20 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setOverwriteResults(boolean overwriteResults) {
 		this.overwriteResults = overwriteResults;
+	}
+
+	public ASTMODE getAstmode() {
+		return astmode;
+	}
+
+	public void setAstmode(ASTMODE astmode) {
+		this.astmode = astmode;
+	}
+
+	@Override
+	public String toString() {
+		return "ExecutionConfiguration [astmode=" + astmode + ", paralelisationMode=" + paralelisationMode
+				+ ", numberOfThreads=" + numberOfThreads + ", metric=" + metric + ", timeOut=" + timeOut + ", timeUnit="
+				+ timeUnit + "]";
 	}
 }

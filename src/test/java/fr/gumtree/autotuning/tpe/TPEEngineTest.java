@@ -17,6 +17,7 @@ import com.google.gson.JsonElement;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
@@ -39,13 +40,15 @@ public class TPEEngineTest {
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft);
+
+		ExecutionConfiguration configuration = new ExecutionTPEConfiguration();
+		configuration.setAstmode(ASTMODE.GTSPOON);
+
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
 		assertEquals(1d, bestConfig.getMedian(), 0);
 
-		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
-		// bestConfig.getBest());
 	}
 
 	@Test
@@ -57,7 +60,11 @@ public class TPEEngineTest {
 				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
 
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft);
+
+		ExecutionConfiguration configuration = new ExecutionTPEConfiguration();
+		configuration.setAstmode(ASTMODE.GTSPOON);
+
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
 
 		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
 
@@ -103,7 +110,10 @@ public class TPEEngineTest {
 
 		File fs = new File("./examples/input_multiple.txt");
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs);
+
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		config.setAstmode(ASTMODE.GTSPOON);
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
 		System.out.println(bestConfig);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
@@ -124,7 +134,9 @@ public class TPEEngineTest {
 		ExecutionConfiguration config = new ExecutionTPEConfiguration();
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, ASTMODE.JDT, config);
+
+		config.setAstmode(ASTMODE.JDT);
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
 
 		System.out.println(bestConfig);
 
@@ -157,8 +169,8 @@ public class TPEEngineTest {
 		ExecutionConfiguration config = new ExecutionTPEConfiguration();
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
-
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, ASTMODE.JDT, config);
+		config.setAstmode(ASTMODE.JDT);
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, config);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
 		assertEquals(2d, bestConfig.getMedian(), 0);
@@ -177,7 +189,11 @@ public class TPEEngineTest {
 
 		File fs = new File("./examples/input_multiple2.txt");
 		TPEEngine rp = new TPEEngine();
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs);
+
+		ExecutionConfiguration config = new ExecutionTPEConfiguration();
+		config.setAstmode(ASTMODE.GTSPOON);
+
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
 
 		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
 

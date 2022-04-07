@@ -67,14 +67,14 @@ public class TimeExecutionTest {
 		combinations.add(properies);
 		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
 				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
 
 		assertEquals(1, resultParalel.size());
 
 		assertEquals(400d, new Double(resultParalel.get(0).get(Constants.TIME).toString()), 150);
 
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
 
 		assertEquals(1, resultS.size());
 
@@ -104,8 +104,6 @@ public class TimeExecutionTest {
 		for (int i = 1000; i < 2000; i = i + 100) {
 			GumtreeProperties properies = new GumtreeProperties();
 
-			// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
-			// bu_minsize=1200}
 			properies.put(ConfigurationOptions.st_priocalc, "height");
 			properies.put(ConfigurationOptions.bu_minsim, 0.9);
 			properies.put(ConfigurationOptions.st_minprio, 2);
@@ -114,18 +112,18 @@ public class TimeExecutionTest {
 		}
 
 		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
-
+		// config.setNumberOfThreads(2);
 		System.out.println("Serial");
 
 		long init = (new Date()).getTime();
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
 
 		assertEquals(10, resultS.size());
 
 		for (SingleDiffResult singleDiffResult : resultS) {
 			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
 			System.out.println(serial);
-			assertTrue(serial > 200 && serial < 700);
+			assertTrue(serial > 200 && serial < 1000);
 
 		}
 
@@ -135,7 +133,7 @@ public class TimeExecutionTest {
 
 		init = (new Date()).getTime();
 
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
 				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
 
 		assertEquals(10, resultParalel.size());
@@ -187,7 +185,7 @@ public class TimeExecutionTest {
 		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		System.out.println("Serial");
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
 
 		// assertEquals(10, resultS.size());
 
@@ -205,7 +203,7 @@ public class TimeExecutionTest {
 
 		init = (new Date()).getTime();
 
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
 				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
 
 		// assertEquals(10, resultParalel.size());
@@ -259,7 +257,7 @@ public class TimeExecutionTest {
 
 		System.out.println("Serial");
 		long nns = (new Date()).getTime();
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
 		double timeserial = ((double) (new Date()).getTime() - nns) / 60;
 		// assertEquals(10, resultS.size());
 
@@ -282,7 +280,7 @@ public class TimeExecutionTest {
 
 			config.setNumberOfThreads(i);
 			long nn = (new Date()).getTime();
-			List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher,
+			List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher,
 					combinations, config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
 			times.add(((double) (new Date()).getTime() - nn) / 60);
 			// assertEquals(10, resultParalel.size());

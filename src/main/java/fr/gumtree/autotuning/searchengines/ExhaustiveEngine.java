@@ -39,7 +39,6 @@ import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.DiffProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
-import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.Constants;
@@ -100,7 +99,11 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 */
 	public CaseResult analyzeCase(ITreeBuilder treeBuilder, String diffId, File previousVersion, File postVersion,
 			ExecutionConfiguration configuration, Map<String, Pair<Map, Map>> treeProperties, Matcher[] matchers) {
+
 		try {
+
+			System.out.println("Starting experiment: " + configuration);
+
 			Tree tl = treeBuilder.build(previousVersion);
 			Tree tr = treeBuilder.build(postVersion);
 			long init = (new Date()).getTime();
@@ -138,7 +141,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			if (result != null) {
 
-				File parent = new File(configuration.getDirDiffTreeSerialOutput() + File.separator + diffId);
+				File parent = new File(
+						configuration.getDirDiffTreeSerialOutput().getAbsolutePath() + File.separator + diffId);
 				parent.mkdirs();
 				File outResults = new File(parent.getAbsoluteFile() + File.separator + SUMMARY_CASES + diffId + "_"
 						+ treeBuilder.modelType().name() + ".csv");
@@ -175,8 +179,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		for (Matcher matcher : matchers) {
 			try {
 
-				MatcherResult resultFromMatcher = runSingleMatcherMultipleConfigurations(tl, tr, matcher,
-						configuration);
+				MatcherResult resultFromMatcher = runSingleMatcherMultipleParameters(tl, tr, matcher, configuration);
 
 				resultsForCase.getResultByMatcher().put(matcher, resultFromMatcher);
 			} catch (Exception e) {
@@ -228,7 +231,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		ParametersResolvers domain = ParametersResolvers.defaultDomain;
 		combinations = getConfigurations(matcher, domain);
 
-		List<SingleDiffResult> alldiffresults = runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> alldiffresults = runSingleMatcherSerial(tl, tr, matcher, combinations);
 
 		result.setAlldiffresults(alldiffresults);
 
@@ -244,7 +247,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		return matcher.getClass().getSimpleName();
 	}
 
-	public List<SingleDiffResult> runInSerialMultipleConfiguration(Tree tl, Tree tr, Matcher matcher,
+	public List<SingleDiffResult> runSingleMatcherSerial(Tree tl, Tree tr, Matcher matcher,
 			List<GumtreeProperties> combinations) {
 		List<SingleDiffResult> alldiffresults = new ArrayList<>();
 
@@ -254,7 +257,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
 			if (resDiff != null) {
-				// i = printResult(getNameOfMatcher(matcher), combinations.size(), i, resDiff);
+				i = printResult(getNameOfMatcher(matcher), combinations.size(), i, resDiff);
 				alldiffresults.add(resDiff);
 			}
 		}
@@ -347,7 +350,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	/**
-	 * Executes a Matches
+	 * Gets all combinations of properties and run eachs on parallel.
 	 * 
 	 * @param tl
 	 * @param tr
@@ -355,7 +358,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * @param parallel
 	 * @return
 	 */
-	protected MatcherResult runSingleMatcherMultipleConfigurations(Tree tl, Tree tr, Matcher matcher,
+	protected MatcherResult runSingleMatcherMultipleParameters(Tree tl, Tree tr, Matcher matcher,
 			ExecutionConfiguration configuration) {
 		long initMatcher = (new Date()).getTime();
 		List<GumtreeProperties> combinations = null;
@@ -369,9 +372,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		ParametersResolvers domain = ParametersResolvers.defaultDomain;
 		combinations = getConfigurations(matcher, domain);
 
-		// parallel
 		try {
-			List<SingleDiffResult> results = runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
+			List<SingleDiffResult> results = runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
 					configuration.getTimeOut(), configuration.getTimeUnit(), configuration.getNumberOfThreads());
 			for (SingleDiffResult iResult : results) {
 
@@ -472,7 +474,39 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		@Override
 		public MatcherResult call() throws Exception {
 
-			return runSingleMatcherMultipleConfigurations(tl, tr, matcher, this.configuration);
+			// TODO: the initial v2 executed in paralell, why
+			// return runSingleMatcherMultipleParameters(tl, tr, matcher,
+			// this.configuration);
+
+			long initMatcher = (new Date()).getTime();
+			List<GumtreeProperties> combinations = null;
+
+			String matcherName = matcher.getClass().getSimpleName();
+
+			MatcherResult result = new MatcherResult(matcherName, matcher);
+
+			List<SingleDiffResult> alldiffresults = new ArrayList<>();
+
+			ParametersResolvers domain = ParametersResolvers.defaultDomain;
+			combinations = getConfigurations(matcher, domain);
+
+			// Sequence
+			for (GumtreeProperties aGumtreeProperties : combinations) {
+
+				SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
+
+				alldiffresults.add(resDiff);
+
+			}
+
+			result.setAlldiffresults(alldiffresults);
+
+			long timeAllConfigs = ((new Date()).getTime() - initMatcher);
+			result.setTimeAllConfigs(timeAllConfigs);
+			System.out.println("End Sequential execution Matcher " + matcherName + ", time " + timeAllConfigs
+					+ " milliseconds, Nr_config: " + combinations.size());
+			return result;
+
 		}
 	}
 
@@ -496,6 +530,9 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		@Override
 		public SingleDiffResult call() throws Exception {
+
+			System.out.println("Launch " + aGumtreeProperties.toString());
+
 			// GTProxy gumtreeproxy = new GTProxy();
 			SingleDiffResult result = gumtreeproxy.runDiff(tl, tr,
 					// TODO: Workaround: we cannot used the same instance of a matcher to match in
@@ -526,9 +563,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * @return
 	 * @throws Exception
 	 */
-	public List<SingleDiffResult> runInParallelMultipleConfigurations(Tree tl, Tree tr, Matcher matcher,
+	public List<SingleDiffResult> runSingleMatcherMultipleParameters(Tree tl, Tree tr, Matcher matcher,
 			List<GumtreeProperties> combinations, long timeoutSeconds, TimeUnit unit, int nrThreads) throws Exception {
 
+		System.out.println("nrThreads " + nrThreads);
 		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
 
 		List<DiffCallable> callables = new ArrayList<>();
@@ -543,9 +581,11 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		return result.stream().map(e -> {
 			try {
-				if (e.isDone() && !e.isCancelled())
-					return e.get();
-				else {
+				if (e.isDone() && !e.isCancelled()) {
+					SingleDiffResult singleDiffResult = e.get();
+					System.out.println("Finishing thread: " + singleDiffResult.retrievePlainConfiguration());
+					return singleDiffResult;
+				} else {
 
 					SingleDiffResult notFinishedConfig = new SingleDiffResult();
 					notFinishedConfig.put(Constants.TIMEOUT, "true");
@@ -628,20 +668,14 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
-
-		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionExhaustiveConfiguration());
-	}
-
-	@Override
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
-			ExecutionConfiguration configuration) throws Exception {
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ExecutionConfiguration configuration)
+			throws Exception {
 
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
 		DatOutputEngine saver = new DatOutputEngine(getDiffId(dataFilePairs));
 
 		// We select the parser
-
+		ASTMODE astmode = configuration.getAstmode();
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
 			treebuilder = new SpoonTreeBuilder();
@@ -671,8 +705,11 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				String filenameRight = sp[1];
 				File previousVersion = new File(filenameLeft);
 				File postVersion = new File(filenameRight);
-				CaseResult caseResult = this.analyzeCase(treebuilder, filenameLeft, previousVersion, postVersion,
-						configuration, treeCharacteristics, this.allMatchers);
+
+				String id = previousVersion.getName().replace("_s.java", "").replace(".java", "");
+
+				CaseResult caseResult = this.analyzeCase(treebuilder, id, previousVersion, postVersion, configuration,
+						treeCharacteristics, this.allMatchers);
 
 				// Navegate over the cases.
 				for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
@@ -765,7 +802,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		final Double minValuemedian = minMedian;
 		// Choose the config with best median
 
-		System.out.println("Min median " + minValuemedian);
+		System.out.println("Min " + metric.toString() + ": " + +minValuemedian);
 
 		List<String> bests = medianByConfiguration.keySet().stream()
 				.filter(e -> minValuemedian.equals(medianByConfiguration.get(e))).collect(Collectors.toList());
@@ -849,14 +886,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionExhaustiveConfiguration());
+	public ResponseBestParameter computeBestLocal(File left, File right, ExecutionConfiguration configuration)
+			throws Exception {
 
-	}
-
-	@Override
-	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
-			ExecutionConfiguration configuration) throws Exception {
+		ASTMODE astmode = configuration.getAstmode();
 
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(astmode)) {
