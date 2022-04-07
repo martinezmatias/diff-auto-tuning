@@ -1,6 +1,7 @@
 package fr.gumtree.autotuning.exhaustive;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
@@ -198,6 +199,7 @@ public class ExhaustiveEngineTest {
 
 		configuration.setAstmode(ASTMODE.GTSPOON);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
+		configuration.setMetric(METRIC.MEAN);
 
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
 
@@ -224,6 +226,14 @@ public class ExhaustiveEngineTest {
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
+
+		assertTrue(bestConfig.getAllBest().contains("SimpleGumtree-st_minprio-1-st_priocalc-size"));
+
+		assertFalse(bestConfig.getAllBest()
+				.contains("ClassicGumtree-bu_minsim-0.7-bu_minsize-2000-st_minprio-4-st_priocalc-height"));
+
+		// assertTrue(bestConfig.getAllBest()
+		// .contains("ClassicGumtree-bu_minsim-0.9-bu_minsize-2000-st_minprio-4-st_priocalc-height"));
 
 	}
 

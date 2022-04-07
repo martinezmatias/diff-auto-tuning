@@ -68,7 +68,7 @@ public class TimeExecutionTest {
 		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+				config);
 
 		assertEquals(1, resultParalel.size());
 
@@ -134,7 +134,7 @@ public class TimeExecutionTest {
 		init = (new Date()).getTime();
 
 		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+				config);
 
 		assertEquals(10, resultParalel.size());
 
@@ -204,7 +204,7 @@ public class TimeExecutionTest {
 		init = (new Date()).getTime();
 
 		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+				config);
 
 		// assertEquals(10, resultParalel.size());
 		DescriptiveStatistics statsP = new DescriptiveStatistics();
@@ -283,7 +283,7 @@ public class TimeExecutionTest {
 			config.setNumberOfThreads(i);
 			long nn = (new Date()).getTime();
 			List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher,
-					combinations, config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+					combinations, config);
 			times.add(((double) (new Date()).getTime() - nn) / 60);
 			// assertEquals(10, resultParalel.size());
 			DescriptiveStatistics statsP = new DescriptiveStatistics();

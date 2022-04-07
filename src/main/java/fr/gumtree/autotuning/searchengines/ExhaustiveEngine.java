@@ -255,8 +255,6 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			ExecutionConfiguration configuration, List<GumtreeProperties> combinations) {
 		List<SingleDiffResult> alldiffresults = new ArrayList<>();
 
-		int timeOutMilliseconds = 1000;
-
 		String matcherName = matcher.getClass().getSimpleName();
 
 		Set<String> withTimeout = new HashSet<>();
@@ -287,23 +285,18 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 				Future<SingleDiffResult> future = executor.submit(task);
 				try {
-					resDiff = future.get(timeOutMilliseconds, TimeUnit.MILLISECONDS);
+					resDiff = future.get(configuration.getTimeOutDiffExecution(),
+							configuration.getTimeUnitDiffExecution());
 
 				} catch (TimeoutException ex) {
-					System.out.println("Timeout............Timeout...........");
-
 					resDiff = new SingleDiffResult(matcher.getClass().getSimpleName());
 					resDiff.put(Constants.TIMEOUT, "true");
 					resDiff.put(Constants.CONFIG, aGumtreeProperties);
 
-					System.out.println("timeout for retrievePlainConfigurationReduced "
-							+ resDiff.retrievePlainConfigurationReduced());
 					withTimeout.add(resDiff.retrievePlainConfigurationReduced());
 
 				} catch (Exception e) {
 					e.printStackTrace();
-				} finally {
-					executor.shutdown(); // may or may not desire this
 				}
 			}
 			if (resDiff != null) {
@@ -429,7 +422,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		try {
 			List<SingleDiffResult> results = runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
-					configuration.getTimeOut(), configuration.getTimeUnit(), configuration.getNumberOfThreads());
+					configuration);
 			for (SingleDiffResult iResult : results) {
 
 				alldiffresults.add(iResult);
@@ -541,6 +534,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		GumtreeProperties aGumtreeProperties;
 		int idConfig;
 		int totalConfig;
+		Set<String> withTimeout;
 
 		public DiffCallable(int idConfing, int totalConfig, Tree tl, Tree tr, Matcher matcher,
 				GumtreeProperties aGumtreeProperties) {
@@ -552,12 +546,30 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			this.aGumtreeProperties = aGumtreeProperties;
 		}
 
+		public DiffCallable(int idConfing, int totalConfig, Tree tl, Tree tr, Matcher matcher,
+				GumtreeProperties aGumtreeProperties, Set<String> withTimeout) {
+			this(idConfing, totalConfig, tl, tr, matcher, aGumtreeProperties);
+			this.withTimeout = withTimeout;
+		}
+
 		@Override
 		public SingleDiffResult call() throws Exception {
 
-			System.out.println("Launch " + aGumtreeProperties.toString() + " by " + Thread.currentThread().getName());
+			System.out.println("\nLaunch " + aGumtreeProperties.toString() + " by " + Thread.currentThread().getName());
 
-			// GTProxy gumtreeproxy = new GTProxy();
+			String computeReduced = SingleDiffResult.computeReduced(matcher.getClass().getSimpleName(),
+					aGumtreeProperties);
+			System.out.println("Reducted to check" + computeReduced);
+			System.out.println("Alreadt analyzed " + withTimeout.size() + ": " + withTimeout);
+
+			if (withTimeout != null && withTimeout.contains(computeReduced)) {
+				System.out.println("Already compute, skip!" + computeReduced);
+				SingleDiffResult singleDiffResult = new SingleDiffResult(matcher.getClass().getSimpleName());
+				singleDiffResult.put(Constants.TIMEOUT, "prunned");
+				singleDiffResult.put(Constants.CONFIG, aGumtreeProperties);
+				return singleDiffResult;
+			}
+
 			SingleDiffResult result = gumtreeproxy.runDiff(tl, tr,
 					// TODO: Workaround: we cannot used the same instance of a matcher to match in
 					// parallel two diffs
@@ -565,9 +577,6 @@ public class ExhaustiveEngine implements OptimizationMethod {
 					// matcher
 					// matcher
 					, aGumtreeProperties);
-
-			// printResult(matcher.getClass().getSimpleName(), this.totalConfig,
-			// this.idConfig, result);
 
 			return result;
 		}
@@ -581,37 +590,35 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * @param tr
 	 * @param matcher
 	 * @param combinations
-	 * @param timeoutSeconds
+	 * @param timeout
 	 * @param nrThreads
 	 * 
 	 * @return
 	 * @throws Exception
 	 */
 	public List<SingleDiffResult> runSingleMatcherMultipleParameters(Tree tl, Tree tr, Matcher matcher,
-			List<GumtreeProperties> combinations, long timeoutSeconds, TimeUnit unit, int nrThreads) throws Exception {
+			List<GumtreeProperties> combinations, ExecutionConfiguration configuration) throws Exception {
 
-		System.out.println("nrThreads " + nrThreads);
-		ExecutorService executor = Executors.newFixedThreadPool(nrThreads);
+		System.out.println("nrThreads " + configuration.getNumberOfThreads());
+		ExecutorService executor = Executors.newFixedThreadPool(configuration.getNumberOfThreads());
 
-		List<DiffCallable> callables = new ArrayList<>();
+		List<Future<SingleDiffResult>> allFutures = new ArrayList<>();
 
-		List<Future<SingleDiffResult>> allFutures = new ArrayList();
+		Map<Future<SingleDiffResult>, GumtreeProperties> mapFprop = new HashMap<>();
 
-		Map<Future, GumtreeProperties> mapFprop = new HashMap<>();
-
-		Set<String> withTimeout = new HashSet();
+		Set<String> withTimeout = new HashSet<>();
 
 		int i = 0;
 		for (GumtreeProperties aGumtreeProperties : combinations) {
-			DiffCallable aCallable = new DiffCallable(i++, combinations.size(), tl, tr, matcher, aGumtreeProperties);
-			/// callables.add(aCallable);
-			Future aFuture = executor.submit(aCallable);
+			DiffCallable aCallable = new DiffCallable(i++, combinations.size(), tl, tr, matcher, aGumtreeProperties,
+					withTimeout);
+
+			Future<SingleDiffResult> aFuture = executor.submit(aCallable);
 
 			mapFprop.put(aFuture, aCallable.aGumtreeProperties);
 			allFutures.add(aFuture);
 		}
 
-		int timeout = 2000;
 		int countTimeout = 0;
 
 		List<SingleDiffResult> res = new ArrayList<>();
@@ -620,37 +627,41 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			GumtreeProperties p = mapFprop.get(e);
 			try {
-				singleDiffResult = (SingleDiffResult) e.get(timeout, TimeUnit.MILLISECONDS);
+				singleDiffResult = e.get(configuration.getTimeOutDiffExecution(),
+						configuration.getTimeUnitDiffExecution());
 
 				if (e.isDone() && !e.isCancelled()) {
-
 					System.out.println("Finishing thread: " + singleDiffResult.retrievePlainConfiguration());
-					res.add(singleDiffResult);
-				} else {
-					System.err.println("Error ");
-					SingleDiffResult notFinishedConfig = new SingleDiffResult(matcher.getClass().getSimpleName());
-					notFinishedConfig.put(Constants.TIMEOUT, "true");
-					notFinishedConfig.put(Constants.CONFIG, p);
 
-					res.add(notFinishedConfig);
+				} else {
+					// This branch should not be reached
+					System.out.println("Not done or cancelled ");
+					singleDiffResult = new SingleDiffResult(matcher.getClass().getSimpleName());
+					singleDiffResult.put(Constants.TIMEOUT, "true");
+					singleDiffResult.put(Constants.CONFIG, p);
 				}
 
 			} catch (TimeoutException e1) {
 
 				countTimeout++;
-				if (timeout >= 500)
-					timeout /= 2;
 
-				SingleDiffResult notFinishedConfig = new SingleDiffResult(matcher.getClass().getSimpleName());
-				notFinishedConfig.put(Constants.TIMEOUT, "true");
-				notFinishedConfig.put(Constants.CONFIG, p);
+				singleDiffResult = new SingleDiffResult(matcher.getClass().getSimpleName());
+				singleDiffResult.put(Constants.TIMEOUT, "true");
+				singleDiffResult.put(Constants.CONFIG, p);
 
-				System.out.println("Timeout " + timeout + " nr timeout " + countTimeout + " "
-						+ notFinishedConfig.retrievePlainConfiguration());
-				res.add(notFinishedConfig);
+				System.out.println("Timeout " + configuration.getTimeOutDiffExecution() + " nr timeout " + countTimeout
+						+ " " + singleDiffResult.retrievePlainConfiguration());
+
+				String key = singleDiffResult.retrievePlainConfigurationReduced();
+				System.out.println(key);
+				withTimeout.add(key);
 
 			} catch (Exception e2) {
 				e2.printStackTrace();
+			}
+
+			if (singleDiffResult != null) {
+				res.add(singleDiffResult);
 			}
 
 		}

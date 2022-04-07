@@ -16,7 +16,6 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	private PARALLEL_EXECUTION paralelisationMode = PARALLEL_EXECUTION.NONE;
 	private int numberOfThreads = 16;
-	private long timeOut = 60 * 60; // 60 min
 
 	private boolean saveScript = true;
 
@@ -30,7 +29,11 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	private METRIC metric = METRIC.MEDIAN;
 
-	TimeUnit timeUnit = TimeUnit.SECONDS;
+	private long timeOutDiffExecution = 1000;
+	TimeUnit timeUnitDiffExecution = TimeUnit.MILLISECONDS;
+
+	private long timeOutD = 60; // 60 min
+	TimeUnit timeUnit = TimeUnit.MINUTES;
 
 	private ASTMODE astmode;
 
@@ -51,11 +54,11 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 	}
 
 	public long getTimeOut() {
-		return timeOut;
+		return timeOutDiffExecution;
 	}
 
 	public void setTimeOut(long timeOutSeconds) {
-		this.timeOut = timeOutSeconds;
+		this.timeOutDiffExecution = timeOutSeconds;
 	}
 
 	public TimeUnit getTimeUnit() {
@@ -109,7 +112,23 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 	@Override
 	public String toString() {
 		return "ExecutionConfiguration [astmode=" + astmode + ", paralelisationMode=" + paralelisationMode
-				+ ", numberOfThreads=" + numberOfThreads + ", metric=" + metric + ", timeOut=" + timeOut + ", timeUnit="
-				+ timeUnit + "]";
+				+ ", numberOfThreads=" + numberOfThreads + ", metric=" + metric + ", timeOut=" + timeOutDiffExecution
+				+ ", timeUnit=" + timeUnit + "]";
+	}
+
+	public long getTimeOutDiffExecution() {
+		return timeOutDiffExecution;
+	}
+
+	public void setTimeOutDiffExecution(long timeOutDiffExecution) {
+		this.timeOutDiffExecution = timeOutDiffExecution;
+	}
+
+	public TimeUnit getTimeUnitDiffExecution() {
+		return timeUnitDiffExecution;
+	}
+
+	public void setTimeUnitDiffExecution(TimeUnit timeUnitDiffExecution) {
+		this.timeUnitDiffExecution = timeUnitDiffExecution;
 	}
 }
