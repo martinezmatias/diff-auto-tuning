@@ -74,7 +74,7 @@ public class TimeExecutionTest {
 
 		assertEquals(400d, new Double(resultParalel.get(0).get(Constants.TIME).toString()), 150);
 
-		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 
 		assertEquals(1, resultS.size());
 
@@ -116,7 +116,7 @@ public class TimeExecutionTest {
 		System.out.println("Serial");
 
 		long init = (new Date()).getTime();
-		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 
 		assertEquals(10, resultS.size());
 
@@ -185,7 +185,7 @@ public class TimeExecutionTest {
 		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
 
 		System.out.println("Serial");
-		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 
 		// assertEquals(10, resultS.size());
 
@@ -257,7 +257,8 @@ public class TimeExecutionTest {
 
 		System.out.println("Serial");
 		long nns = (new Date()).getTime();
-		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, combinations);
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 		double timeserial = ((double) (new Date()).getTime() - nns) / 60;
 		// assertEquals(10, resultS.size());
 
@@ -272,7 +273,8 @@ public class TimeExecutionTest {
 
 		System.out.println("Paralell");
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		// ExecutionExhaustiveConfiguration config = new
+		// ExecutionExhaustiveConfiguration();
 
 		List<Double> means = new ArrayList<>();
 		List<Double> times = new ArrayList<>();

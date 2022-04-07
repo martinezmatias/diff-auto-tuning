@@ -8,6 +8,7 @@ import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -15,8 +16,8 @@ import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
-import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -120,7 +121,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				result = analyzeDiffByPropertyParallel(tl, tr, configuration, matchers);
 
 			else if (configuration.getParalelisationMode().equals(PARALLEL_EXECUTION.NONE))
-				result = analyzeDiffByPropertySerial(tl, tr, matchers);
+				result = analyzeDiffByPropertySerial(tl, tr, configuration, matchers);
 			else {
 				throw new IllegalAccessError(
 						"Option not recognised " + configuration.getParalelisationMode().toString());
@@ -198,18 +199,20 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * 
 	 * @param tl
 	 * @param tr
+	 * @param configuration
 	 * @param parallel
 	 * @param matchers
 	 * @return
 	 */
-	private CaseResult analyzeDiffByPropertySerial(Tree tl, Tree tr, Matcher[] matchers) {
+	private CaseResult analyzeDiffByPropertySerial(Tree tl, Tree tr, ExecutionConfiguration configuration,
+			Matcher[] matchers) {
 
 		CaseResult resultsForCase = new CaseResult();
 
 		for (Matcher matcher : matchers) {
 			try {
 
-				MatcherResult resultFromMatcher = runSingleMatcherSerial(tl, tr, matcher);
+				MatcherResult resultFromMatcher = runSingleMatcherSerial(tl, tr, configuration, matcher);
 
 				resultsForCase.getResultByMatcher().put(matcher, resultFromMatcher);
 			} catch (Exception e) {
@@ -220,7 +223,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		return resultsForCase;
 	}
 
-	protected MatcherResult runSingleMatcherSerial(Tree tl, Tree tr, Matcher matcher) {
+	protected MatcherResult runSingleMatcherSerial(Tree tl, Tree tr, ExecutionConfiguration configuration,
+			Matcher matcher) {
 		long initMatcher = (new Date()).getTime();
 		List<GumtreeProperties> combinations = null;
 
@@ -231,7 +235,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		ParametersResolvers domain = ParametersResolvers.defaultDomain;
 		combinations = getConfigurations(matcher, domain);
 
-		List<SingleDiffResult> alldiffresults = runSingleMatcherSerial(tl, tr, matcher, combinations);
+		List<SingleDiffResult> alldiffresults = runSingleMatcherSerial(tl, tr, matcher, configuration, combinations);
 
 		result.setAlldiffresults(alldiffresults);
 
@@ -248,20 +252,71 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	public List<SingleDiffResult> runSingleMatcherSerial(Tree tl, Tree tr, Matcher matcher,
-			List<GumtreeProperties> combinations) {
+			ExecutionConfiguration configuration, List<GumtreeProperties> combinations) {
 		List<SingleDiffResult> alldiffresults = new ArrayList<>();
+
+		int timeOutMilliseconds = 1000;
+
+		String matcherName = matcher.getClass().getSimpleName();
+
+		Set<String> withTimeout = new HashSet<>();
 
 		int i = 0;
 		for (GumtreeProperties aGumtreeProperties : combinations) {
-			// GTProxy gumtreeproxy = new GTProxy();
-			SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
 
+			String computeReduced = SingleDiffResult.computeReduced(matcherName, aGumtreeProperties);
+			System.out.println("Reducted " + computeReduced);
+
+			SingleDiffResult resDiff = null;
+
+			// Already processed
+			if (withTimeout.contains(computeReduced)) {
+				// System.out.println("Exist continue");
+
+				resDiff = new SingleDiffResult(matcher.getClass().getSimpleName());
+				resDiff.put(Constants.TIMEOUT, "true");
+				resDiff.put(Constants.CONFIG, aGumtreeProperties);
+			} else {
+				// Not already processed
+				ExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+				Callable<SingleDiffResult> task = new Callable<SingleDiffResult>() {
+					public SingleDiffResult call() throws InterruptedException {
+						return runInSameThread(tl, tr, matcher, aGumtreeProperties);
+					}
+				};
+
+				Future<SingleDiffResult> future = executor.submit(task);
+				try {
+					resDiff = future.get(timeOutMilliseconds, TimeUnit.MILLISECONDS);
+
+				} catch (TimeoutException ex) {
+					System.out.println("Timeout............Timeout...........");
+
+					resDiff = new SingleDiffResult(matcher.getClass().getSimpleName());
+					resDiff.put(Constants.TIMEOUT, "true");
+					resDiff.put(Constants.CONFIG, aGumtreeProperties);
+
+					System.out.println("timeout for retrievePlainConfigurationReduced "
+							+ resDiff.retrievePlainConfigurationReduced());
+					withTimeout.add(resDiff.retrievePlainConfigurationReduced());
+
+				} catch (Exception e) {
+					e.printStackTrace();
+				} finally {
+					executor.shutdown(); // may or may not desire this
+				}
+			}
 			if (resDiff != null) {
 				i = printResult(getNameOfMatcher(matcher), combinations.size(), i, resDiff);
 				alldiffresults.add(resDiff);
 			}
 		}
 		return alldiffresults;
+	}
+
+	private SingleDiffResult runInSameThread(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
+		SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
+		return resDiff;
 	}
 
 	private CaseResult analyzeDiffByMatcherThread(Tree tl, Tree tr, ExecutionConfiguration configuration,
@@ -338,7 +393,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			for (GumtreeProperties GumtreeProperties : combinations) {
 
-				SingleDiffResult notFinishedConfig = new SingleDiffResult();
+				SingleDiffResult notFinishedConfig = new SingleDiffResult(matcher.getClass().getSimpleName());
 				notFinishedConfig.put(Constants.TIMEOUT, errortype.ordinal() + 1);
 				notFinishedConfig.put(Constants.CONFIG, GumtreeProperties);
 
@@ -474,38 +529,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		@Override
 		public MatcherResult call() throws Exception {
 
-			// TODO: the initial v2 executed in paralell, why
-			// return runSingleMatcherMultipleParameters(tl, tr, matcher,
-			// this.configuration);
-
-			long initMatcher = (new Date()).getTime();
-			List<GumtreeProperties> combinations = null;
-
-			String matcherName = matcher.getClass().getSimpleName();
-
-			MatcherResult result = new MatcherResult(matcherName, matcher);
-
-			List<SingleDiffResult> alldiffresults = new ArrayList<>();
-
-			ParametersResolvers domain = ParametersResolvers.defaultDomain;
-			combinations = getConfigurations(matcher, domain);
-
-			// Sequence
-			for (GumtreeProperties aGumtreeProperties : combinations) {
-
-				SingleDiffResult resDiff = gumtreeproxy.runDiff(tl, tr, matcher, aGumtreeProperties);
-
-				alldiffresults.add(resDiff);
-
-			}
-
-			result.setAlldiffresults(alldiffresults);
-
-			long timeAllConfigs = ((new Date()).getTime() - initMatcher);
-			result.setTimeAllConfigs(timeAllConfigs);
-			System.out.println("End Sequential execution Matcher " + matcherName + ", time " + timeAllConfigs
-					+ " milliseconds, Nr_config: " + combinations.size());
-			return result;
+			return runSingleMatcherSerial(this.tl, this.tr, this.configuration, this.matcher);
 
 		}
 	}
@@ -531,7 +555,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		@Override
 		public SingleDiffResult call() throws Exception {
 
-			System.out.println("Launch " + aGumtreeProperties.toString());
+			System.out.println("Launch " + aGumtreeProperties.toString() + " by " + Thread.currentThread().getName());
 
 			// GTProxy gumtreeproxy = new GTProxy();
 			SingleDiffResult result = gumtreeproxy.runDiff(tl, tr,
@@ -567,7 +591,93 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			List<GumtreeProperties> combinations, long timeoutSeconds, TimeUnit unit, int nrThreads) throws Exception {
 
 		System.out.println("nrThreads " + nrThreads);
-		ScheduledExecutorService executor = Executors.newScheduledThreadPool(nrThreads);
+		ExecutorService executor = Executors.newFixedThreadPool(nrThreads);
+
+		List<DiffCallable> callables = new ArrayList<>();
+
+		List<Future<SingleDiffResult>> allFutures = new ArrayList();
+
+		Map<Future, GumtreeProperties> mapFprop = new HashMap<>();
+
+		Set<String> withTimeout = new HashSet();
+
+		int i = 0;
+		for (GumtreeProperties aGumtreeProperties : combinations) {
+			DiffCallable aCallable = new DiffCallable(i++, combinations.size(), tl, tr, matcher, aGumtreeProperties);
+			/// callables.add(aCallable);
+			Future aFuture = executor.submit(aCallable);
+
+			mapFprop.put(aFuture, aCallable.aGumtreeProperties);
+			allFutures.add(aFuture);
+		}
+
+		int timeout = 2000;
+		int countTimeout = 0;
+
+		List<SingleDiffResult> res = new ArrayList<>();
+		for (Future<SingleDiffResult> e : allFutures) {
+			SingleDiffResult singleDiffResult = null;
+
+			GumtreeProperties p = mapFprop.get(e);
+			try {
+				singleDiffResult = (SingleDiffResult) e.get(timeout, TimeUnit.MILLISECONDS);
+
+				if (e.isDone() && !e.isCancelled()) {
+
+					System.out.println("Finishing thread: " + singleDiffResult.retrievePlainConfiguration());
+					res.add(singleDiffResult);
+				} else {
+					System.err.println("Error ");
+					SingleDiffResult notFinishedConfig = new SingleDiffResult(matcher.getClass().getSimpleName());
+					notFinishedConfig.put(Constants.TIMEOUT, "true");
+					notFinishedConfig.put(Constants.CONFIG, p);
+
+					res.add(notFinishedConfig);
+				}
+
+			} catch (TimeoutException e1) {
+
+				countTimeout++;
+				if (timeout >= 500)
+					timeout /= 2;
+
+				SingleDiffResult notFinishedConfig = new SingleDiffResult(matcher.getClass().getSimpleName());
+				notFinishedConfig.put(Constants.TIMEOUT, "true");
+				notFinishedConfig.put(Constants.CONFIG, p);
+
+				System.out.println("Timeout " + timeout + " nr timeout " + countTimeout + " "
+						+ notFinishedConfig.retrievePlainConfiguration());
+				res.add(notFinishedConfig);
+
+			} catch (Exception e2) {
+				e2.printStackTrace();
+			}
+
+		}
+
+		return res;
+
+	}
+
+	/**
+	 * replaced
+	 * 
+	 * @param tl
+	 * @param tr
+	 * @param matcher
+	 * @param combinations
+	 * @param timeoutSeconds
+	 * @param unit
+	 * @param nrThreads
+	 * @return
+	 * @throws Exception
+	 */
+	@Deprecated
+	public List<SingleDiffResult> runSingleMatcherMultipleParametersFuture(Tree tl, Tree tr, Matcher matcher,
+			List<GumtreeProperties> combinations, long timeoutSeconds, TimeUnit unit, int nrThreads) throws Exception {
+
+		System.out.println("nrThreads " + nrThreads);
+		ExecutorService executor = Executors.newFixedThreadPool(nrThreads);
 
 		List<DiffCallable> callables = new ArrayList<>();
 		int i = 0;
@@ -587,7 +697,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 					return singleDiffResult;
 				} else {
 
-					SingleDiffResult notFinishedConfig = new SingleDiffResult();
+					SingleDiffResult notFinishedConfig = new SingleDiffResult(matcher.getClass().getSimpleName());
 					notFinishedConfig.put(Constants.TIMEOUT, "true");
 
 					int indexFuture = result.indexOf(e);
@@ -715,8 +825,15 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				for (MatcherResult mresult : caseResult.getResultByMatcher().values()) {
 
 					for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
-						int isize = (int) diffResult.get(Constants.NRACTIONS);
 
+						int isize = Integer.MAX_VALUE;
+
+						if (!diffResult.containsKey(Constants.NRACTIONS)) {
+							// System.out.println("No results for " + diffResult);
+							isize = Integer.MAX_VALUE;
+						} else {
+							isize = (int) diffResult.get(Constants.NRACTIONS);
+						}
 						// maybe to replace by a toString
 						String plainProperties = diffResult.retrievePlainConfiguration();
 
@@ -936,12 +1053,13 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
 
+				int isize = Integer.MAX_VALUE;
+
 				if (diffResult == null || diffResult.get(Constants.NRACTIONS) == null) {
-					continue;
+					isize = Integer.MAX_VALUE;
+				} else {
+					isize = (int) diffResult.get(Constants.NRACTIONS);
 				}
-
-				int isize = (int) diffResult.get(Constants.NRACTIONS);
-
 				GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
 				String plainProperty = diffResult.retrievePlainConfiguration();
 				results.add(plainProperty, isize);
@@ -971,7 +1089,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		bestResult.setMedian(min);
 
 		for (Pair<String, GumtreeProperties> pair : minDiff) {
-			String oneBest = GTProxy.plainProperties(new JsonObject(), pair.first, pair.second);
+			String oneBest = GTProxy.plainProperties(pair.first, pair.second);
 			bestResult.getAllBest().add(oneBest);
 		}
 

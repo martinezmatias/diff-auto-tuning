@@ -75,16 +75,20 @@ public class DatOutputEngine {
 	public void saveUnifiedNotDuplicated(String diffId, String plainProperties,
 			com.github.gumtreediff.actions.Diff diffgtt, File parentDiff) throws IOException, NoSuchAlgorithmException {
 
-		String key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + diffgtt.editScript.size();
+		String jsonContent = "";
+		String key = "";
+		if (diffgtt != null && diffgtt.editScript != null) {
+			key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + diffgtt.editScript.size();
+			TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
+			JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			jsonContent = gson.toJson(jsonunif);
 
-		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
-		JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
+		} else {
+			key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + "no_ed";
+		}
 
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(jsonunif);
-
-		String hashJson = toHexString(getSHA(json));
+		String hashJson = toHexString(getSHA(jsonContent));
 
 		File caseFolder = new File(
 				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
@@ -107,12 +111,12 @@ public class DatOutputEngine {
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 				zipOut.putNextEntry(zipEntry);
-				zipOut.write(json.getBytes());
+				zipOut.write(jsonContent.getBytes());
 				zipOut.close();
 			} else {
 
 				FileWriter fw = new FileWriter(uniflFile);
-				fw.write(json);
+				fw.write(jsonContent);
 				fw.close();
 
 			}
