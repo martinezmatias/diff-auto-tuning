@@ -163,6 +163,11 @@ public class StructuredFolderfRunner {
 	}
 
 	public ResponseBestParameter summarizeBestGlobal(File rootFolder) throws IOException {
+		return summarizeBestGlobal(rootFolder, METRIC.MEDIAN, false);
+	}
+
+	public ResponseBestParameter summarizeBestGlobal(File rootFolder, METRIC metric, Boolean ignoreTimeout)
+			throws IOException {
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
 
@@ -197,7 +202,7 @@ public class StructuredFolderfRunner {
 			}
 		}
 
-		ResponseBestParameter best = exa.summarizeResultsForGlobal(results, METRIC.MEDIAN);
+		ResponseBestParameter best = exa.summarizeResultsForGlobal(results, metric, ignoreTimeout);
 		return best;
 	}
 

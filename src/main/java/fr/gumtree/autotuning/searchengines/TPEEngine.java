@@ -15,6 +15,7 @@ import com.google.gson.JsonObject;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
@@ -128,8 +129,14 @@ public class TPEEngine implements OptimizationMethod {
 				double mean = stats.getMean();
 				double std = stats.getStandardDeviation();
 				double median = stats.getPercentile(50);
-				result.setMedian(median);
 
+				if (configuration.getMetric().equals(METRIC.MEAN)) {
+					result.setMetricValue(mean);
+					result.setMetricUnit(METRIC.MEAN);
+				} else {
+					result.setMetricValue(median);
+					result.setMetricUnit(METRIC.MEDIAN);
+				}
 				resultGeneral = result;
 
 			}

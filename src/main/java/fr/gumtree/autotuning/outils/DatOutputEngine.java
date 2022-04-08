@@ -299,7 +299,6 @@ public class DatOutputEngine {
 			zis.closeEntry();
 
 		}
-		System.out.println(out);
 		return out;
 	}
 

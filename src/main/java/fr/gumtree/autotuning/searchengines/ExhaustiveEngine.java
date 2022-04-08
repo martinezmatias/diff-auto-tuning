@@ -871,7 +871,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
 
-			ResponseBestParameter bestResult = summarizeResultsForGlobal(results, configuration.getMetric());
+			ResponseBestParameter bestResult = summarizeResultsForGlobal(results, configuration.getMetric(), false);
 
 			return bestResult;
 
@@ -890,12 +890,13 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * @param results
 	 * @return
 	 */
-	public ResponseBestParameter summarizeResultsForGlobal(ResultByConfig results, METRIC metric) {
+	public ResponseBestParameter summarizeResultsForGlobal(ResultByConfig results, METRIC metric,
+			boolean ignoreTimeout) {
 		// Now to summarize
 		ResponseBestParameter bestResult = new ResponseBestParameter();
 
 		// let's compute the median of each conf
-		Map<String, Double> medianByConfiguration = new HashMap<>();
+		Map<String, Double> metricValueByConfiguration = new HashMap<>();
 
 		Double minMedian = Double.MAX_VALUE;
 		int nrEvaluations = 0;
@@ -904,14 +905,20 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		for (String aConfigresult : results.keySet()) {
 
 			DescriptiveStatistics stats = new DescriptiveStatistics();
-
+			int timeoutsConfig = 0;
 			List<Integer> allSizesOfConfigs = results.get(aConfigresult);
 			if (allSizesOfConfigs.size() > nrEvaluations)
 				nrEvaluations = allSizesOfConfigs.size();
 
 			for (Integer aSize : allSizesOfConfigs) {
-				stats.addValue(aSize);
+
+				if (!ignoreTimeout || aSize != Integer.MAX_VALUE)
+					stats.addValue(aSize);
+				else {
+					timeoutsConfig++;
+				}
 			}
+
 			double median = 0;
 			if (metric.equals(METRIC.MEDIAN))
 				median = stats.getPercentile(50);
@@ -919,29 +926,37 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			else if (metric.equals(METRIC.MEAN))
 				median = stats.getMean();
 
-			medianByConfiguration.put(aConfigresult, median);
+			metricValueByConfiguration.put(aConfigresult, median);
 
 			if (median < minMedian) {
 				minMedian = median;
 			}
 
-			System.out.println(++i + " " + aConfigresult + " " + median + ": " + allSizesOfConfigs);
+			long nrTimeout = allSizesOfConfigs.stream().filter(e -> e == Integer.MAX_VALUE).count();
+
+			System.out.println(++i + " " + aConfigresult + " " + median + ": (" + allSizesOfConfigs.size() + ") to: "
+					+ nrTimeout + " " + timeoutsConfig + " " // + allSizesOfConfigs
+			);
 		}
 		final Double minValuemedian = minMedian;
 		// Choose the config with best median
 
 		System.out.println("Min " + metric.toString() + ": " + +minValuemedian);
 
-		List<String> bests = medianByConfiguration.keySet().stream()
-				.filter(e -> minValuemedian.equals(medianByConfiguration.get(e))).collect(Collectors.toList());
+		List<String> bests = metricValueByConfiguration.keySet().stream()
+				.filter(e -> minValuemedian.equals(metricValueByConfiguration.get(e))).collect(Collectors.toList());
 
 		System.out.println("Total best configs " + bests.size() + " / " + results.keySet().size());
 		//
 		System.out.println("Bests (" + bests.size() + ") : " + bests);
 
+		bestResult.setMetricValue(minValuemedian);
+		bestResult.setMetricUnit(metric);
 		bestResult.setNumberOfEvaluatedPairs(nrEvaluations);
-		bestResult.setMedian(minMedian);
+		bestResult.setAllConfigs(metricValueByConfiguration.keySet());
+		bestResult.setMetricValueByConfiguration(metricValueByConfiguration);
 		bestResult.setBest(bests);
+		bestResult.setValuesPerConfig(results);
 		return bestResult;
 	}
 
@@ -1097,7 +1112,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		}
 		ResponseBestParameter bestResult = new ResponseBestParameter();
-		bestResult.setMedian(min);
+		bestResult.setMetricValue(min);
+		bestResult.setMetricUnit(configuration.getMetric());
 
 		for (Pair<String, GumtreeProperties> pair : minDiff) {
 			String oneBest = GTProxy.plainProperties(pair.first, pair.second);

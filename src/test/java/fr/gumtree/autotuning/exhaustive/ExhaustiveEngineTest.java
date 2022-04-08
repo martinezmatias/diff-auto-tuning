@@ -47,7 +47,7 @@ public class ExhaustiveEngineTest {
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -78,7 +78,7 @@ public class ExhaustiveEngineTest {
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -105,7 +105,7 @@ public class ExhaustiveEngineTest {
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -132,7 +132,7 @@ public class ExhaustiveEngineTest {
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -158,7 +158,7 @@ public class ExhaustiveEngineTest {
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -180,7 +180,7 @@ public class ExhaustiveEngineTest {
 
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
 
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -203,7 +203,7 @@ public class ExhaustiveEngineTest {
 
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
 
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -222,7 +222,7 @@ public class ExhaustiveEngineTest {
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
 
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
@@ -250,9 +250,9 @@ public class ExhaustiveEngineTest {
 		ec.setAstmode(ASTMODE.GTSPOON);
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, ec);
 
-		assertEquals(5.3d, bestConfig.getMedian(), 0.1);
+		assertEquals(5.3d, bestConfig.getMetricValue(), 0.1);
 
-		// assertEquals(1d, bestConfig.getMedian(), 0);
+		// assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());

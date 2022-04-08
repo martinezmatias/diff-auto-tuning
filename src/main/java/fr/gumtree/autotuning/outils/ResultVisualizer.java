@@ -35,6 +35,7 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
@@ -75,7 +76,7 @@ public class ResultVisualizer {
 
 		String rcontent = new String(Files.readAllBytes(fileRight.toPath()));
 
-		TreeBuilder builder = null;
+		ITreeBuilder builder = null;
 		if (isJDTModel) {
 			builder = new JDTTreeBuilder();
 		} else {
@@ -90,7 +91,7 @@ public class ResultVisualizer {
 		System.out.println("--Running for best: " + bestConfig);
 		GumtreeProperties propertiesBest = createProperties(bestConfig);
 		Matcher matcherBest = createMatcher(bestConfig);
-		System.out.println(propertiesBest.getProperties());
+		// System.out.println(propertiesBest.getProperties());
 		String nameBest = "best_" + bestConfig;
 
 		saveVisualization(fileLeftt, tl, fileRight, tr, propertiesBest, matcherBest, fout, diffId, nameBest);
@@ -101,7 +102,7 @@ public class ResultVisualizer {
 		Matcher matcherDefault = createMatcher(defaultConfig);
 
 		System.out.println("--Running for default: " + defaultConfig);
-		System.out.println(propertiesDefault.getProperties());
+		// System.out.println(propertiesDefault.getProperties());
 		String nameDefault = "default_" + defaultConfig;
 		saveVisualization(fileLeftt, tl, fileRight, tr, propertiesDefault, matcherDefault, fout, diffId, nameDefault);
 		System.out.println("End default");
@@ -168,7 +169,7 @@ public class ResultVisualizer {
 	}
 
 	public void exportMergely(String diffId, File fout, File fileLoriginal, File fileRoriginal) throws IOException {
-		Renderable view2 = new MergelyDiffView2(0, fileLoriginal.getName(), fileRoriginal.getName());
+		Renderable view2 = null;// new MergelyDiffView(0, fileLoriginal.getName(), fileRoriginal.getName());
 		HtmlCanvas html = new HtmlCanvas();
 		view2.renderOn(html);
 

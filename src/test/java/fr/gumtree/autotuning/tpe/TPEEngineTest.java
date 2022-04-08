@@ -47,7 +47,7 @@ public class TPEEngineTest {
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMedian(), 0);
+		assertEquals(1d, bestConfig.getMetricValue(), 0);
 
 	}
 
@@ -70,7 +70,7 @@ public class TPEEngineTest {
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
 
-		assertEquals(5d, bestConfig.getMedian(), 0.01);
+		assertEquals(5d, bestConfig.getMetricValue(), 0.01);
 
 		// assertEquals("CompleteGumtreeMatcher-bu_minsim-1.0-bu_minsize-1500-st_minprio-1-st_priocalc-size",
 		// bestConfig.getBest());
@@ -82,7 +82,7 @@ public class TPEEngineTest {
 
 		Diff diff = proxy.run(treebuilder.build(fs), treebuilder.build(ft), bestConfig.getBest());
 
-		assertEquals(diff.editScript.asList().size(), bestConfig.getMedian(), 0);
+		assertEquals(diff.editScript.asList().size(), bestConfig.getMetricValue(), 0);
 
 		assertEquals(5, diff.editScript.asList().size());
 
@@ -173,7 +173,7 @@ public class TPEEngineTest {
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, config);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(2d, bestConfig.getMedian(), 0);
+		assertEquals(2d, bestConfig.getMetricValue(), 0);
 
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
@@ -200,7 +200,7 @@ public class TPEEngineTest {
 		System.out.println(bestConfig);
 
 		assertEquals(2, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(3.0d, bestConfig.getMedian(), 0.001);
+		assertEquals(3.0d, bestConfig.getMetricValue(), 0.001);
 
 		// assertEquals("CompleteGumtreeMatcher-bu_minsim-1.0-bu_minsize-1500-st_minprio-1-st_priocalc-size",
 		// bestConfig.getBest());
