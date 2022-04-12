@@ -35,6 +35,8 @@ import fr.gumtree.autotuning.domain.ParameterDomain;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
+import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.DiffProxy;
@@ -890,10 +892,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * @param results
 	 * @return
 	 */
-	public ResponseBestParameter summarizeResultsForGlobal(ResultByConfig results, METRIC metric,
+	public ResponseGlobalBestParameter summarizeResultsForGlobal(ResultByConfig results, METRIC metric,
 			boolean ignoreTimeout) {
 		// Now to summarize
-		ResponseBestParameter bestResult = new ResponseBestParameter();
+		ResponseGlobalBestParameter bestResult = new ResponseGlobalBestParameter();
 
 		// let's compute the median of each conf
 		Map<String, Double> metricValueByConfiguration = new HashMap<>();
@@ -961,56 +963,86 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		return bestResult;
 	}
 
-	@Deprecated
-	public ResponseBestParameter summarizeResultsForLocal(List<ResultByConfig> allLocalResults, METRIC metric) {
-
-		Map<String, Integer> freqBest = new HashMap<String, Integer>();
-
-		for (ResultByConfig resultByConfig : allLocalResults) {
-			analyzeLocalResult(freqBest, resultByConfig);
-
-		}
-
-		ResponseBestParameter bestResult = findTheBestLocal(allLocalResults.size(), freqBest);
-
-		return bestResult;
-
-	}
-
-	public ResponseBestParameter findTheBestLocal(int numberOfEvaluations, Map<String, Integer> freqBest) {
+	public List<String> findTheBestLocal(ResponseLocalBestParameter localResults) {
 		// Find the best local according with the number of times is the best
 
-		ResponseBestParameter bestResult = new ResponseBestParameter();
-
 		List<String> bestMinConfig = new ArrayList<>();
-		int min = Integer.MAX_VALUE;
-		for (String aConfig : freqBest.keySet()) {
+		int mostNumberOfBest = Integer.MIN_VALUE;
 
-			int sizeConfig = freqBest.get(aConfig);
+		// For each config
+		for (String aConfig : localResults.getCountBestByConfigurations().keySet()) {
 
-			if (sizeConfig <= min) {
+			// times that the config is the best (shortest)
+			int timesThatIsTheBest = localResults.getCountBestByConfigurations().get(aConfig);
 
-				// it's a new min, we remove others
-				if (sizeConfig < min) {
+			if (timesThatIsTheBest >= mostNumberOfBest) {
+
+				// it's a new highest, we remove others
+				if (timesThatIsTheBest > mostNumberOfBest) {
 					bestMinConfig.clear();
 				}
 
 				bestMinConfig.add(aConfig);
-				min = sizeConfig;
+				mostNumberOfBest = timesThatIsTheBest;
 
 			}
 
 		}
 
-		bestResult.setBest(bestMinConfig);
-		bestResult.setNumberOfEvaluatedPairs(numberOfEvaluations);
-		return bestResult;
+		return bestMinConfig;
 	}
 
-	public void analyzeLocalResult(Map<String, Integer> freqBest, ResultByConfig resultByConfig) {
+	public class BestOfFile {
+		List<String> currentMinConfigs = new ArrayList<>();
+		int minBest;
+		int minDefault;
+
+		public BestOfFile(List<String> currentMinConfigs, int minBest, int minDefault) {
+			super();
+			this.currentMinConfigs = currentMinConfigs;
+			this.minBest = minBest;
+			this.minDefault = minDefault;
+		}
+
+		public List<String> getCurrentMinConfigs() {
+			return currentMinConfigs;
+		}
+
+		public void setCurrentMinConfigs(List<String> currentMinConfigs) {
+			this.currentMinConfigs = currentMinConfigs;
+		}
+
+		public int getMinBest() {
+			return minBest;
+		}
+
+		public void setMinBest(int minBest) {
+			this.minBest = minBest;
+		}
+
+		public int getMinDefault() {
+			return minDefault;
+		}
+
+		public void setMinDefault(int minDefault) {
+			this.minDefault = minDefault;
+		}
+
+		@Override
+		public String toString() {
+			return "BestOfFile [currentMinConfigs=" + currentMinConfigs + ", minBest=" + minBest + ", minDefault="
+					+ minDefault + "]";
+		}
+	}
+
+	public BestOfFile analyzeLocalResult(ResultByConfig resultByConfig, String targetConfing) {
 		int min = Integer.MAX_VALUE;
 		List<String> currentMinConfigs = new ArrayList<>();
+		int minTarget = Integer.MAX_VALUE;
 
+		// System.out
+		// .println(" " + resultByConfig.keySet().size() + " " +
+		// resultByConfig.keySet().contains(targetConfing));
 		// For a results (local, i.e. one pair) we find the configs with shortest ed
 		for (String aCondif : resultByConfig.keySet()) {
 
@@ -1023,7 +1055,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				System.err.println("A result has multiples pairs");
 				throw new IllegalArgumentException("ìnvalid data");
 			}
-
+			// pick the first
 			int sizeConfig = evaluations.get(0);
 
 			if (sizeConfig <= min) {
@@ -1037,16 +1069,13 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				min = sizeConfig;
 
 			}
+			// check if it s the target
+			if (aCondif.equals(targetConfing)) {
+				minTarget = sizeConfig;
+			}
 		}
+		return new BestOfFile(currentMinConfigs, min, minTarget);
 
-		// We increment the best counter with the best from the result
-
-		for (String minConfig : currentMinConfigs) {
-
-			int count = freqBest.containsKey(minConfig) ? freqBest.get(minConfig) : 0;
-			freqBest.put(minConfig, count + 1);
-
-		}
 	}
 
 	@Override

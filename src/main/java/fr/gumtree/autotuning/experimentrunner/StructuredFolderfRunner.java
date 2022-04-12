@@ -14,10 +14,13 @@ import java.util.Map;
 import com.github.gumtreediff.matchers.Matcher;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
+import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 
@@ -207,7 +210,7 @@ public class StructuredFolderfRunner {
 		return collected;
 	}
 
-	public ResponseBestParameter summarizeBestGlobal(File rootFolder, METRIC metric, Boolean ignoreTimeout)
+	public ResponseGlobalBestParameter summarizeBestGlobal(File rootFolder, METRIC metric, Boolean ignoreTimeout)
 			throws IOException {
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
@@ -243,11 +246,11 @@ public class StructuredFolderfRunner {
 			}
 		}
 
-		ResponseBestParameter best = exa.summarizeResultsForGlobal(results, metric, ignoreTimeout);
+		ResponseGlobalBestParameter best = exa.summarizeResultsForGlobal(results, metric, ignoreTimeout);
 		return best;
 	}
 
-	public ResponseBestParameter summarizeBestGlobal(List<File> toProcess, METRIC metric, Boolean ignoreTimeout)
+	public ResponseGlobalBestParameter summarizeBestGlobal(List<File> toProcess, METRIC metric, Boolean ignoreTimeout)
 			throws IOException {
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
@@ -262,19 +265,72 @@ public class StructuredFolderfRunner {
 
 		}
 
-		ResponseBestParameter best = exa.summarizeResultsForGlobal(results, metric, ignoreTimeout);
+		ResponseGlobalBestParameter best = exa.summarizeResultsForGlobal(results, metric, ignoreTimeout);
 		return best;
 	}
 
-	public ResponseBestParameter summarizeBestLocal(File rootFolder, METRIC metric) throws IOException {
-		// For optimizing
-		// List<ResultByConfig> allLocalResults = new ArrayList<>();
-		Map<String, Integer> freqBest = new HashMap<String, Integer>();
+	public ResponseLocalBestParameter summarizeBestLocal(List<File> toProcess, METRIC metric, String target)
+			throws IOException {
+
+		// Counter of number of times the config is the best (the shortest)
+
+		ResponseLocalBestParameter resultAllFiles = new ResponseLocalBestParameter();
+
+		ExhaustiveEngine exa = new ExhaustiveEngine();
+
+		int totalAnalyzed = 0;
+
+		DatOutputEngine outputengine = new DatOutputEngine(null);
+
+		Map<File, BestOfFile> resultPerFile = new HashMap<>();
+
+		for (File filesFromDiff : toProcess) {
+
+			ResultByConfig resultDiff = new ResultByConfig();
+
+			outputengine.readZipAndAdd(resultDiff, filesFromDiff);
+
+			BestOfFile bestdata = exa.analyzeLocalResult(resultDiff, target);
+
+			updateGeneralResults(resultAllFiles, bestdata);
+
+			resultPerFile.put(filesFromDiff, bestdata);
+
+			totalAnalyzed++;
+
+		}
+
+		List<String> bests = exa.findTheBestLocal(resultAllFiles);
+		resultAllFiles.setBests(bests);
+		resultAllFiles.setNumberOfEvaluatedPairs(totalAnalyzed);
+		resultAllFiles.setResultPerFile(resultPerFile);
+
+		return resultAllFiles;
+	}
+
+	private void updateGeneralResults(ResponseLocalBestParameter resultAllFiles, BestOfFile bestdata) {
+		// We increment the best counter with the best from the result
+
+		for (String minConfig : bestdata.getCurrentMinConfigs()) {
+
+			int count = resultAllFiles.getCountBestByConfigurations().containsKey(minConfig)
+					? resultAllFiles.getCountBestByConfigurations().get(minConfig)
+					: 0;
+			resultAllFiles.getCountBestByConfigurations().put(minConfig, count + 1);
+
+		}
+	}
+
+	public ResponseLocalBestParameter summarizeBestLocal(File rootFolder, METRIC metric, String target)
+			throws IOException {
+
+		ResponseLocalBestParameter resultAllFiles = new ResponseLocalBestParameter();
 		ExhaustiveEngine exa = new ExhaustiveEngine();
 		int totalAnalyzed = 0;
 		DatOutputEngine outputengine = new DatOutputEngine(null);
 
 		System.out.println("Folders " + Arrays.toString(rootFolder.listFiles()));
+		Map<File, BestOfFile> resultPerFile = new HashMap<>();
 
 		for (File subset : rootFolder.listFiles()) {
 
@@ -300,9 +356,12 @@ public class StructuredFolderfRunner {
 						ResultByConfig resultDiff = new ResultByConfig();
 
 						outputengine.readZipAndAdd(resultDiff, filesFromDiff);
-						// allLocalResults.add(resultDiff);
 
-						exa.analyzeLocalResult(freqBest, resultDiff);
+						BestOfFile bestdata = exa.analyzeLocalResult(resultDiff, target);
+
+						updateGeneralResults(resultAllFiles, bestdata);
+
+						resultPerFile.put(filesFromDiff, bestdata);
 
 						totalAnalyzed++;
 					}
@@ -311,11 +370,13 @@ public class StructuredFolderfRunner {
 			}
 		}
 
-		// ResponseBestParameter best = exa.summarizeResultsForLocal(allLocalResults,
-		// metric);
-		ResponseBestParameter best = exa.findTheBestLocal(totalAnalyzed, freqBest);
+		// ResponseBestParameter best = exa.findTheBestLocal(totalAnalyzed, freqBest);
+		List<String> bests = exa.findTheBestLocal(resultAllFiles);
+		resultAllFiles.setBests(bests);
+		resultAllFiles.setNumberOfEvaluatedPairs(totalAnalyzed);
+		resultAllFiles.setResultPerFile(resultPerFile);
 
-		return best;
+		return resultAllFiles;
 	}
 
 	protected String calculatePathName(File fileModif, File parentFile) {
