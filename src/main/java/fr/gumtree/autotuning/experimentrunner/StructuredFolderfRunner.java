@@ -7,7 +7,9 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import com.github.gumtreediff.matchers.Matcher;
 
@@ -166,6 +168,45 @@ public class StructuredFolderfRunner {
 		return summarizeBestGlobal(rootFolder, METRIC.MEDIAN, false);
 	}
 
+	public List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject) {
+		List<File> collected = new ArrayList<File>();
+
+		for (File subset : rootFolder.listFiles()) {
+			if (subset.getName().equals(".DS_Store")) {
+				continue;
+			}
+			int countFilesPerProject = 0;
+
+			for (File diffFolder : subset.listFiles()) {
+
+				if (diffFolder.getName().equals(".DS_Store")) {
+					continue;
+				}
+
+				for (File filesFromDiff : diffFolder.listFiles()) {
+
+					if (filesFromDiff.getName().equals(".DS_Store")) {
+						continue;
+					}
+
+					if (filesFromDiff.getName().startsWith("result_") && filesFromDiff.getName().endsWith(".zip")) {
+
+						collected.add(filesFromDiff);
+						countFilesPerProject++;
+
+					}
+				}
+
+				if (countFilesPerProject == maxPerProject) {
+					break;
+				}
+
+			}
+		}
+
+		return collected;
+	}
+
 	public ResponseBestParameter summarizeBestGlobal(File rootFolder, METRIC metric, Boolean ignoreTimeout)
 			throws IOException {
 
@@ -206,12 +247,31 @@ public class StructuredFolderfRunner {
 		return best;
 	}
 
-	public ResponseBestParameter summarizeBestLocal(File rootFolder) throws IOException {
-
-		List<ResultByConfig> allLocalResults = new ArrayList<>();
+	public ResponseBestParameter summarizeBestGlobal(List<File> toProcess, METRIC metric, Boolean ignoreTimeout)
+			throws IOException {
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
 
+		DatOutputEngine outputengine = new DatOutputEngine(null);
+
+		ResultByConfig results = new ResultByConfig();
+
+		for (File filesFromDiff : toProcess) {
+
+			outputengine.readZipAndAdd(results, filesFromDiff);
+
+		}
+
+		ResponseBestParameter best = exa.summarizeResultsForGlobal(results, metric, ignoreTimeout);
+		return best;
+	}
+
+	public ResponseBestParameter summarizeBestLocal(File rootFolder, METRIC metric) throws IOException {
+		// For optimizing
+		// List<ResultByConfig> allLocalResults = new ArrayList<>();
+		Map<String, Integer> freqBest = new HashMap<String, Integer>();
+		ExhaustiveEngine exa = new ExhaustiveEngine();
+		int totalAnalyzed = 0;
 		DatOutputEngine outputengine = new DatOutputEngine(null);
 
 		System.out.println("Folders " + Arrays.toString(rootFolder.listFiles()));
@@ -224,6 +284,7 @@ public class StructuredFolderfRunner {
 
 			for (File diffFolder : subset.listFiles()) {
 
+				System.out.println(diffFolder.getName());
 				if (diffFolder.getName().equals(".DS_Store")) {
 					continue;
 				}
@@ -239,15 +300,21 @@ public class StructuredFolderfRunner {
 						ResultByConfig resultDiff = new ResultByConfig();
 
 						outputengine.readZipAndAdd(resultDiff, filesFromDiff);
-						allLocalResults.add(resultDiff);
+						// allLocalResults.add(resultDiff);
 
+						exa.analyzeLocalResult(freqBest, resultDiff);
+
+						totalAnalyzed++;
 					}
 				}
 
 			}
 		}
 
-		ResponseBestParameter best = exa.summarizeResultsForLocal(allLocalResults, METRIC.MEDIAN);
+		// ResponseBestParameter best = exa.summarizeResultsForLocal(allLocalResults,
+		// metric);
+		ResponseBestParameter best = exa.findTheBestLocal(totalAnalyzed, freqBest);
+
 		return best;
 	}
 

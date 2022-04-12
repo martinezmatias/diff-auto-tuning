@@ -934,9 +934,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			long nrTimeout = allSizesOfConfigs.stream().filter(e -> e == Integer.MAX_VALUE).count();
 
-			System.out.println(++i + " " + aConfigresult + " " + median + ": (" + allSizesOfConfigs.size() + ") to: "
-					+ nrTimeout + " " + timeoutsConfig + " " // + allSizesOfConfigs
-			);
+			// System.out.println(++i + " " + aConfigresult + " " + median + ": (" +
+			// allSizesOfConfigs.size() + ") to: "
+			// + nrTimeout + " " + timeoutsConfig + " " // + allSizesOfConfigs
+			// );
 		}
 		final Double minValuemedian = minMedian;
 		// Choose the config with best median
@@ -960,43 +961,23 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		return bestResult;
 	}
 
+	@Deprecated
 	public ResponseBestParameter summarizeResultsForLocal(List<ResultByConfig> allLocalResults, METRIC metric) {
 
 		Map<String, Integer> freqBest = new HashMap<String, Integer>();
 
 		for (ResultByConfig resultByConfig : allLocalResults) {
-			int min = Integer.MAX_VALUE;
-			List<String> currentMinConfigs = new ArrayList<>();
-
-			// For a results (local, i.e. one pair) we find the configs with shortest ed
-			for (String aCondif : resultByConfig.keySet()) {
-
-				int sizeConfig = resultByConfig.get(aCondif).get(0);
-
-				if (sizeConfig <= min) {
-
-					// it's a new min, we remove others
-					if (sizeConfig < min) {
-						currentMinConfigs.clear();
-					}
-
-					currentMinConfigs.add(aCondif);
-					min = sizeConfig;
-
-				}
-			}
-
-			// We increment the best counter with the best from the result
-
-			for (String minConfig : currentMinConfigs) {
-
-				int count = freqBest.containsKey(minConfig) ? freqBest.get(minConfig) : 0;
-				freqBest.put(minConfig, count + 1);
-
-			}
+			analyzeLocalResult(freqBest, resultByConfig);
 
 		}
 
+		ResponseBestParameter bestResult = findTheBestLocal(allLocalResults.size(), freqBest);
+
+		return bestResult;
+
+	}
+
+	public ResponseBestParameter findTheBestLocal(int numberOfEvaluations, Map<String, Integer> freqBest) {
 		// Find the best local according with the number of times is the best
 
 		ResponseBestParameter bestResult = new ResponseBestParameter();
@@ -1022,10 +1003,50 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		}
 
 		bestResult.setBest(bestMinConfig);
-		bestResult.setNumberOfEvaluatedPairs(allLocalResults.size());
-
+		bestResult.setNumberOfEvaluatedPairs(numberOfEvaluations);
 		return bestResult;
+	}
 
+	public void analyzeLocalResult(Map<String, Integer> freqBest, ResultByConfig resultByConfig) {
+		int min = Integer.MAX_VALUE;
+		List<String> currentMinConfigs = new ArrayList<>();
+
+		// For a results (local, i.e. one pair) we find the configs with shortest ed
+		for (String aCondif : resultByConfig.keySet()) {
+
+			// By definition we have only one pair to analyze (as it's local search)
+
+			List<Integer> evaluations = resultByConfig.get(aCondif);
+			// System.out.println("size " + evaluations.size());
+
+			if (evaluations.size() != 1) {
+				System.err.println("A result has multiples pairs");
+				throw new IllegalArgumentException("ìnvalid data");
+			}
+
+			int sizeConfig = evaluations.get(0);
+
+			if (sizeConfig <= min) {
+
+				// it's a new min, we remove others
+				if (sizeConfig < min) {
+					currentMinConfigs.clear();
+				}
+
+				currentMinConfigs.add(aCondif);
+				min = sizeConfig;
+
+			}
+		}
+
+		// We increment the best counter with the best from the result
+
+		for (String minConfig : currentMinConfigs) {
+
+			int count = freqBest.containsKey(minConfig) ? freqBest.get(minConfig) : 0;
+			freqBest.put(minConfig, count + 1);
+
+		}
 	}
 
 	@Override
