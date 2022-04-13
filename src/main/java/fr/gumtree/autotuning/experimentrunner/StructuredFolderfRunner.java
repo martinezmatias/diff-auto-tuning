@@ -206,7 +206,7 @@ public class StructuredFolderfRunner {
 								collected.add(filesFromDiff);
 								countFilesPerProject++;
 							} else {
-								System.out.println("File with no change " + filesFromDiff.getAbsolutePath());
+								// System.out.println("File with no change " + filesFromDiff.getAbsolutePath());
 								filesWithZeroES++;
 							}
 						} else {

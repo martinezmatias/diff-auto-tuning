@@ -17,7 +17,6 @@ import com.google.gson.JsonElement;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
-import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
@@ -111,7 +110,7 @@ public class TPEEngineTest {
 		File fs = new File("./examples/input_multiple.txt");
 		TPEEngine rp = new TPEEngine();
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionTPEConfiguration config = new ExecutionTPEConfiguration();
 		config.setAstmode(ASTMODE.GTSPOON);
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
 		System.out.println(bestConfig);

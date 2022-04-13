@@ -19,6 +19,7 @@ import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
+import fr.gumtree.autotuning.server.GumtreeCacheHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 
@@ -91,6 +92,31 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
+	public ResponseBestParameter computeBestGlobalCache(File dataFilePairs, ExecutionConfiguration configuration)
+			throws Exception {
+
+		System.out.println("Starting server");
+		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler();
+		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(), handler);
+		launcher.start();
+		ResponseBestParameter resultGeneral = null;
+
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode(), handler);
+
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
+				(ExecutionTPEConfiguration) configuration);
+
+		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
+		// MM temp
+		// if (resultGeneral != null)
+		// resultGeneral.setInfoEvaluations(infoEvaluations);
+
+		launcher.stop();
+		System.out.println("End Multiple");
+
+		return resultGeneral;
+	}
+
 	public ResponseBestParameter computeBestCallingTPE(ResponseBestParameter resultGeneral,
 			GumtreeAbstractHttpHandler handler, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
 			throws IOException, InterruptedException {
@@ -100,7 +126,9 @@ public class TPEEngine implements OptimizationMethod {
 
 		if ("created".equals(status)) {
 
+			// TPE always returns only one
 			String best = queryBestConfigOnServer(handler, configuration);
+
 			if (best != null) {
 
 				System.out.println("Checking obtaining Best: ");
@@ -115,6 +143,8 @@ public class TPEEngine implements OptimizationMethod {
 
 				int nrActions = actionsArray.size();
 
+				//
+				// Retrieve values for the default an create a ResultsByConfig
 				ResponseBestParameter result = new ResponseBestParameter();
 				result.setBest(checkedBestParameters);
 				result.setNumberOfEvaluatedPairs(nrActions);

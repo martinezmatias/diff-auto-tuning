@@ -4,7 +4,10 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -12,12 +15,15 @@ import java.util.List;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.Test;
 
+import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
+import fr.gumtree.autotuning.searchengines.TPEEngine;
 import smile.math.MathEx;
 import smile.validation.Bag;
 import smile.validation.CrossValidation;
@@ -68,6 +74,32 @@ public class ResultProcessorTest {
 
 		runCrossValidation(fileResults);
 
+	}
+
+	@Test
+	public void testTPEJDTGlobal() throws Exception {
+
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+
+		StructuredFolderfRunner runner = new StructuredFolderfRunner();
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
+
+		Path fileWithData = Files.createTempFile("files", ".txt");
+		System.out.println(fileWithData);
+
+		FileWriter fr = new FileWriter(fileWithData.toFile());
+
+		for (File file : collected) {
+			fr.write(file.getAbsolutePath());
+			fr.write("\n");
+		}
+		fr.close();
+
+		TPEEngine tpe = new TPEEngine();
+		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(),
+				new ExecutionTPEConfiguration());
+
+		System.out.println("Best TPE " + bestTPE);
 	}
 
 	private void runCrossValidation(File fileResults) throws IOException {
@@ -141,7 +173,7 @@ public class ResultProcessorTest {
 	}
 
 	@Test
-	public void testGlobalSpoon() throws IOException {
+	public void testExhaustiveGlobalSpoon() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
@@ -154,7 +186,7 @@ public class ResultProcessorTest {
 	}
 
 	@Test
-	public void testLocalSpoon() throws IOException {
+	public void testExhaustiveLocalSpoon() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
@@ -166,7 +198,7 @@ public class ResultProcessorTest {
 	}
 
 	@Test
-	public void testGlobalJDT() throws IOException {
+	public void testExhaustiveGlobalJDT() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
@@ -180,7 +212,7 @@ public class ResultProcessorTest {
 	}
 
 	@Test
-	public void testLocalJDT() throws IOException {
+	public void testExhaustiveLocalJDT() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();

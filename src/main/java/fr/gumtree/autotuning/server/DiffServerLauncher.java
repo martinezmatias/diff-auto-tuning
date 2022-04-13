@@ -39,10 +39,19 @@ public class DiffServerLauncher {
 
 	}
 
-	public boolean start() throws IOException {
+	public DiffServerLauncher(GumtreeSingleHttpHandler handlerSimple, GumtreeMultipleHttpHandler handlerMultiple) {
+		super();
+		this.handlerSimple = handlerSimple;
+		this.handlerMultiple = handlerMultiple;
+	}
 
+	public DiffServerLauncher() {
+		super();
 		handlerSimple = new GumtreeSingleHttpHandler();
 		handlerMultiple = new GumtreeMultipleHttpHandler();
+	}
+
+	public boolean start() throws IOException {
 
 		server = HttpServer.create(new InetSocketAddress(handlerSimple.getHost(), handlerSimple.getPort()), 0);
 
@@ -86,7 +95,7 @@ public class DiffServerLauncher {
 		System.out.println(res);
 		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
 
-		System.out.println("-->" + res);
+		// System.out.println("-->" + res);
 		System.out.println(convertedObject);
 		return convertedObject;
 
@@ -121,7 +130,7 @@ public class DiffServerLauncher {
 		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
 
 		String res = d.body();
-		System.out.println("-->" + res);
+		// System.out.println("-->" + res);
 		JsonObject responseJSon = new Gson().fromJson(res, JsonObject.class);
 		return responseJSon;
 	}
@@ -153,7 +162,7 @@ public class DiffServerLauncher {
 		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());
 
 		String res = d.body();
-		System.out.println("-->" + res);
+		// System.out.println("-->" + res);
 		JsonArray responseJSon = new Gson().fromJson(res, JsonArray.class);
 		return responseJSon;
 	}
@@ -172,7 +181,7 @@ public class DiffServerLauncher {
 
 		String res = d.body();
 
-		System.out.println("-->" + res);
+		// System.out.println("-->" + res);
 
 		JsonObject jsonResponse = new JsonParser().parse(res).getAsJsonObject();
 		return jsonResponse;
