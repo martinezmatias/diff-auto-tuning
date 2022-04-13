@@ -8,7 +8,7 @@ package fr.gumtree.autotuning.gumtree;
 public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 
 	String pythonpath = "/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python";
-	String scriptpath = "/Users/matias/develop/gt-tuning/git-code-gpgt/script_runner/autotuning-launch-script/src/runners/TPEBridge.py";
+	String scriptpath = "/Users/matias/develop/gt-tuning/git-dat-experiment-runner/src/runners/TPEBridge.py";
 
 	String classpath = System.getProperty("java.class.path");
 	String javahome = System.getProperty("java.home");

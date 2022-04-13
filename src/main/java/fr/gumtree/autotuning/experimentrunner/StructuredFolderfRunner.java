@@ -171,8 +171,14 @@ public class StructuredFolderfRunner {
 		return summarizeBestGlobal(rootFolder, METRIC.MEDIAN, false);
 	}
 
-	public List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject) {
+	public List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject) throws IOException {
+		return retrievePairsToAnalyze(rootFolder, maxPerProject, true);
+	}
+
+	public List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject, boolean checkSize) throws IOException {
 		List<File> collected = new ArrayList<File>();
+		int filesWithZeroES = 0;
+		DatOutputEngine outputengine = new DatOutputEngine(null);
 
 		for (File subset : rootFolder.listFiles()) {
 			if (subset.getName().equals(".DS_Store")) {
@@ -194,8 +200,19 @@ public class StructuredFolderfRunner {
 
 					if (filesFromDiff.getName().startsWith("result_") && filesFromDiff.getName().endsWith(".zip")) {
 
-						collected.add(filesFromDiff);
-						countFilesPerProject++;
+						if (checkSize) {
+							if (!outputengine.isEmpty(filesFromDiff)) {
+
+								collected.add(filesFromDiff);
+								countFilesPerProject++;
+							} else {
+								System.out.println("File with no change " + filesFromDiff.getAbsolutePath());
+								filesWithZeroES++;
+							}
+						} else {
+							collected.add(filesFromDiff);
+							countFilesPerProject++;
+						}
 
 					}
 				}
@@ -206,7 +223,7 @@ public class StructuredFolderfRunner {
 
 			}
 		}
-
+		System.out.println("Files with zero ES: " + filesWithZeroES);
 		return collected;
 	}
 
@@ -272,6 +289,7 @@ public class StructuredFolderfRunner {
 	public ResponseLocalBestParameter summarizeBestLocal(List<File> toProcess, METRIC metric, String target)
 			throws IOException {
 
+		System.out.println("Amount of data " + toProcess.size());
 		// Counter of number of times the config is the best (the shortest)
 
 		ResponseLocalBestParameter resultAllFiles = new ResponseLocalBestParameter();

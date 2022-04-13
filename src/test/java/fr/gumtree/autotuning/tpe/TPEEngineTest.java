@@ -32,7 +32,7 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 public class TPEEngineTest {
 
 	@Test
-	public void testTPEBridge_Simple_1() throws Exception {
+	public void testTPEBridge_Local_Spoon() throws Exception {
 
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
@@ -52,7 +52,7 @@ public class TPEEngineTest {
 	}
 
 	@Test
-	public void testTPEBridge_Simple_2() throws Exception {
+	public void testTPEBridge_Local_spoon_2() throws Exception {
 
 		File fs = new File(
 				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
@@ -106,7 +106,7 @@ public class TPEEngineTest {
 	}
 
 	@Test
-	public void testTPBridgeMultiple_1() throws Exception {
+	public void testTPBridge_Global_1() throws Exception {
 
 		File fs = new File("./examples/input_multiple.txt");
 		TPEEngine rp = new TPEEngine();
@@ -121,7 +121,7 @@ public class TPEEngineTest {
 	}
 
 	@Test
-	public void testTPBridgeMultiple_saveFiles() throws Exception {
+	public void testTPBridge_Global_saveFiles() throws Exception {
 
 		File fs = new File("./examples/input_multiple.txt");
 		TPEEngine rp = new TPEEngine();
@@ -150,7 +150,7 @@ public class TPEEngineTest {
 	}
 
 	@Test
-	public void testTPEBridge_Simple_SaveFile() throws Exception {
+	public void testTPEBridge_Local_SaveFile() throws Exception {
 
 		File fs = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_s.java");
@@ -175,9 +175,6 @@ public class TPEEngineTest {
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
 		assertEquals(2d, bestConfig.getMetricValue(), 0);
 
-		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
-		// bestConfig.getBest());
-
 		assertTrue(outDirTemp.exists());
 		assertTrue(outDirTemp.listFiles().length > 0);
 
@@ -185,7 +182,7 @@ public class TPEEngineTest {
 	}
 
 	@Test
-	public void testTPBridgeMultiple_2() throws Exception {
+	public void testTPBridge_Global_2() throws Exception {
 
 		File fs = new File("./examples/input_multiple2.txt");
 		TPEEngine rp = new TPEEngine();

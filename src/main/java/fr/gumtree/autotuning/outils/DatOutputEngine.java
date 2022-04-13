@@ -330,6 +330,26 @@ public class DatOutputEngine {
 
 	}
 
+	public boolean isEmpty(File zip) throws IOException {
+		String outJson = unzipFolder(zip.toPath());
+
+		JsonElement jsonElement = new JsonParser().parse(outJson);
+
+		JsonArray arry = jsonElement.getAsJsonArray();
+
+		for (JsonElement config : arry) {
+
+			JsonArray values = config.getAsJsonObject().get(DatOutputEngine.ED_SIZE).getAsJsonArray();
+
+			for (JsonElement v : values) {
+				if (v.getAsInt() > 0 && v.getAsInt() < Integer.MAX_VALUE) {
+					return false;
+				}
+			}
+		}
+		return true;
+	}
+
 	public void readResultByConfig(ResultByConfig results, JsonElement result) {
 
 		JsonArray arry = result.getAsJsonArray();

@@ -52,7 +52,7 @@ public class TPEEngine implements OptimizationMethod {
 		ASTMODE astmode = configuration.getAstmode();
 		JsonObject responseJSon = launcher.initSimple(left, right, astmode, handler);
 
-		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
@@ -78,7 +78,7 @@ public class TPEEngine implements OptimizationMethod {
 
 		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode(), handler);
 
-		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
@@ -91,7 +91,7 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter processResponseFromServer(ResponseBestParameter resultGeneral,
+	public ResponseBestParameter computeBestCallingTPE(ResponseBestParameter resultGeneral,
 			GumtreeAbstractHttpHandler handler, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
 			throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
@@ -104,7 +104,7 @@ public class TPEEngine implements OptimizationMethod {
 			if (best != null) {
 
 				System.out.println("Checking obtaining Best: ");
-				JsonObject responseBest = launcher.callWithHandle(best, handler);
+				JsonObject responseBest = launcher.callRunWithHandle(best, handler);
 				System.out.println(responseBest);
 
 				JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);

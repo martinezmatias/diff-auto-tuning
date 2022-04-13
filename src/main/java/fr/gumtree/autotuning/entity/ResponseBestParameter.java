@@ -6,6 +6,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import com.google.gson.JsonArray;
+
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
 
@@ -24,6 +26,8 @@ public class ResponseBestParameter {
 
 	double metricValue = Integer.MIN_VALUE;
 	METRIC metricUnit;
+
+	JsonArray infoEvaluations;
 
 	public String getBest() {
 		if (bests.size() > 0)
@@ -81,4 +85,11 @@ public class ResponseBestParameter {
 		this.resultPerFile = resultPerFile;
 	}
 
+	public JsonArray getInfoEvaluations() {
+		return infoEvaluations;
+	}
+
+	public void setInfoEvaluations(JsonArray infoEvaluations) {
+		this.infoEvaluations = infoEvaluations;
+	}
 }

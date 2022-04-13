@@ -6,8 +6,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import com.google.gson.JsonArray;
-
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
 
 /**
@@ -20,8 +18,6 @@ public class ResponseGlobalBestParameter extends ResponseBestParameter {
 	ResultByConfig valuesPerConfig;
 	private Collection<String> allConfigs;
 	private Map<String, Double> metricValueByConfiguration = new HashMap<>();
-
-	JsonArray infoEvaluations;
 
 	public String getBest() {
 		if (bests.size() > 0)
@@ -45,14 +41,6 @@ public class ResponseGlobalBestParameter extends ResponseBestParameter {
 
 	public void setNumberOfEvaluatedPairs(int numberOfEvaluatedActions) {
 		this.numberOfEvaluatedPairs = numberOfEvaluatedActions;
-	}
-
-	public JsonArray getInfoEvaluations() {
-		return infoEvaluations;
-	}
-
-	public void setInfoEvaluations(JsonArray infoEvaluations) {
-		this.infoEvaluations = infoEvaluations;
 	}
 
 	public void setBest(List<String> best) {

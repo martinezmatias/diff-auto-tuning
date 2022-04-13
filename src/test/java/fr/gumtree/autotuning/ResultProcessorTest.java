@@ -12,9 +12,11 @@ import java.util.List;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.junit.Test;
 
-import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
+import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
 import smile.math.MathEx;
 import smile.validation.Bag;
@@ -51,13 +53,27 @@ public class ResultProcessorTest {
 	}
 
 	@Test
-	public void testCrossValidationGlobal() throws IOException {
+	public void testCrossValidationGlobalSpoon() throws IOException {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 
-		StructuredFolderfRunner runner = new StructuredFolderfRunner();
-		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100);
+		runCrossValidation(fileResults);
 
+	}
+
+	@Test
+	public void testCrossValidationGlobalJDT() throws IOException {
+
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+
+		runCrossValidation(fileResults);
+
+	}
+
+	private void runCrossValidation(File fileResults) throws IOException {
+		StructuredFolderfRunner runner = new StructuredFolderfRunner();
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
+		System.out.println("Collected " + collected.size());
 		int n = collected.size();
 		int k = 10;
 
@@ -85,10 +101,10 @@ public class ResultProcessorTest {
 			System.out.println("test (" + listTesting.size() + ")");
 
 			METRIC metric = METRIC.MEAN;
-			System.out.println("--TRANING: ");
-			ResponseBestParameter bestFromTraining = runner.summarizeBestGlobal(listTraining, metric, false);
-			System.out.println("--TESTING: ");
-			ResponseBestParameter bestFromTesting = runner.summarizeBestGlobal(listTesting, metric, false);
+			System.out.println("--Global TRANING: ");
+			ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(listTraining, metric, false);
+			System.out.println("--Global TESTING: ");
+			ResponseGlobalBestParameter bestFromTesting = runner.summarizeBestGlobal(listTesting, metric, false);
 
 			// inspectResults(best);
 			List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(bestFromTraining,
@@ -96,7 +112,7 @@ public class ResultProcessorTest {
 			allBestComparison.addAll(foldBestComparison);
 
 		}
-
+		System.out.println("****Final results");
 		DescriptiveStatistics statsBest = new DescriptiveStatistics();
 		DescriptiveStatistics statsWorst = new DescriptiveStatistics();
 		DescriptiveStatistics statsEquals = new DescriptiveStatistics();
@@ -109,7 +125,6 @@ public class ResultProcessorTest {
 
 		System.out.println(
 				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
-
 	}
 
 	@Test
@@ -132,10 +147,10 @@ public class ResultProcessorTest {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 
 		boolean ignoreTimeout = true;
-		ResponseBestParameter best = runner.summarizeBestGlobal(fileResults, METRIC.MEAN, ignoreTimeout);
+		ResponseGlobalBestParameter best = runner.summarizeBestGlobal(fileResults, METRIC.MEAN, ignoreTimeout);
 
 		inspectResults(best);
-		analyzeBest(best);
+		analyzeBestWithGlobal(best);
 	}
 
 	@Test
@@ -144,10 +159,10 @@ public class ResultProcessorTest {
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 
-		ResponseBestParameter best = runner.summarizeBestLocal(fileResults, METRIC.MEAN);
+		ResponseLocalBestParameter best = runner.summarizeBestLocal(fileResults, METRIC.MEAN, defaultConfiguration);
 
-		inspectResults(best);
-		analyzeBest(best);
+		// inspectResults(best);
+		analyzeBestWithLocal(best);
 	}
 
 	@Test
@@ -157,10 +172,10 @@ public class ResultProcessorTest {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 		boolean ignoreTimeout = false;
 
-		ResponseBestParameter best = runner.summarizeBestGlobal(fileResults, METRIC.MEAN, ignoreTimeout);
+		ResponseGlobalBestParameter best = runner.summarizeBestGlobal(fileResults, METRIC.MEAN, ignoreTimeout);
 
 		inspectResults(best);
-		analyzeBest(best);
+		analyzeBestWithGlobal(best);
 
 	}
 
@@ -169,11 +184,13 @@ public class ResultProcessorTest {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
+		boolean checkEDsize = true;
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 1000, checkEDsize);
 
-		ResponseBestParameter best = runner.summarizeBestLocal(fileResults, METRIC.MEAN);
+		ResponseLocalBestParameter best = runner.summarizeBestLocal(collected, METRIC.MEAN, defaultConfiguration);
 
-		inspectResults(best);
-		analyzeBest(best);
+		// inspectResults(best);
+		analyzeBestWithLocal(best);
 	}
 
 	public class ResultComparisonTwoConfigurations {
@@ -242,7 +259,36 @@ public class ResultProcessorTest {
 
 	}
 
-	public void analyzeBest(ResponseBestParameter best) {
+	private void analyzeBestWithLocal(ResponseLocalBestParameter best) {
+
+		int casesImprovement = 0;
+		int casesWorst = 0;
+		int casesAllEquals = 0;
+		int total = 0;
+		for (BestOfFile oneBestConfig : best.getResultPerFile().values()) {
+			total++;
+			System.out.println(oneBestConfig.getMinBest() + " " + oneBestConfig.getMinDefault());
+			if (oneBestConfig.getMinBest() < oneBestConfig.getMinDefault())
+				casesImprovement++;
+
+			else if (oneBestConfig.getMinBest() > oneBestConfig.getMinDefault())
+				casesWorst++;
+
+			else
+				casesAllEquals++;
+
+		}
+
+		System.out.println(
+				"Files local improve " + casesImprovement + " " + ((double) casesImprovement / (double) total));
+		System.out.println("Files local worse " + casesWorst + " " + ((double) casesWorst / (double) total));// must
+		// be
+		// zero
+		System.out.println("Cases  equals " + casesAllEquals + " " + ((double) casesAllEquals / (double) total));
+
+	}
+
+	private void analyzeBestWithGlobal(ResponseGlobalBestParameter best) {
 
 		ResultByConfig values = best.getValuesPerConfig();
 
@@ -283,10 +329,11 @@ public class ResultProcessorTest {
 		System.out.println("Cases a Best produces more worst " + casesWorst);
 		System.out.println("Cases all equals " + casesAllEquals);
 		System.out.println("Cases perfect balance " + casesBalance);
+
 	}
 
-	public List<ResultComparisonTwoConfigurations> analyzeBestCrossValidation(ResponseBestParameter bestTraining,
-			ResponseBestParameter bestTesting) {
+	private List<ResultComparisonTwoConfigurations> analyzeBestCrossValidation(ResponseGlobalBestParameter bestTraining,
+			ResponseGlobalBestParameter bestTesting) {
 
 		List<Double> perBest = new ArrayList<>();
 		List<ResultComparisonTwoConfigurations> outBestComparison = new ArrayList<>();
@@ -337,6 +384,9 @@ public class ResultProcessorTest {
 
 	private ResultComparisonTwoConfigurations compareConfigs(ResultByConfig values, List<Double> perBest,
 			String oneBestConfig, String defaultConfig) {
+
+		System.out.println("oneBestConfig " + oneBestConfig + " " + defaultConfig);
+
 		List<Integer> valuesOneBest = values.get(oneBestConfig);
 		List<Integer> valuesDefault = values.get(defaultConfig);
 
@@ -373,7 +423,7 @@ public class ResultProcessorTest {
 		return result;
 	}
 
-	private void inspectResults(ResponseBestParameter best) {
+	private void inspectResults(ResponseGlobalBestParameter best) {
 		System.out.println("Best " + best);
 
 		boolean configDefaultIsAnalyzed = best.getAllConfigs().contains(defaultConfiguration);

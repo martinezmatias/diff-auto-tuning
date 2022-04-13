@@ -69,7 +69,7 @@ public class DiffServerLauncher {
 		this.server.stop(0);
 	}
 
-	public JsonObject callWithHandle(String param, GumtreeAbstractHttpHandler handle)
+	public JsonObject callRunWithHandle(String param, GumtreeAbstractHttpHandler handle)
 			throws IOException, InterruptedException {
 
 		HttpClient client = HttpClient.newHttpClient();
@@ -94,13 +94,13 @@ public class DiffServerLauncher {
 
 	public JsonObject callMultiple(String param) throws IOException, InterruptedException {
 
-		return callWithHandle(param, handlerMultiple);
+		return callRunWithHandle(param, handlerMultiple);
 
 	}
 
 	public JsonObject call(String param) throws IOException, InterruptedException {
 
-		return callWithHandle(param, handlerSimple);
+		return callRunWithHandle(param, handlerSimple);
 	}
 
 	public JsonObject initSimple(File fs, File ft) throws IOException, InterruptedException {
@@ -158,15 +158,9 @@ public class DiffServerLauncher {
 		return responseJSon;
 	}
 
-	public JsonObject initMultiple(File fs) throws IOException, InterruptedException {
-		return initMultiple(fs, ASTMODE.GTSPOON, new GumtreeMultipleHttpHandler());
-	}
-
 	public JsonObject initMultiple(File fs, ASTMODE astomode, GumtreeMultipleHttpHandler handle)
 			throws IOException, InterruptedException {
 		HttpClient client = HttpClient.newHttpClient();
-
-		// GumtreeMultipleHttpHandler handle = new GumtreeMultipleHttpHandler();
 
 		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
 				+ "?action=load&model=" + astomode + "&file=" + fs.getAbsolutePath());

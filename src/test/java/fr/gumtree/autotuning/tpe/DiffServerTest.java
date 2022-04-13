@@ -11,7 +11,9 @@ import org.junit.Test;
 
 import com.google.gson.JsonObject;
 
+import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
+import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 
 /**
  * 
@@ -79,7 +81,7 @@ public class DiffServerTest {
 
 		File fs = new File("./examples/input_multiple.txt");
 
-		JsonObject jsonResponse = this.launcher.initMultiple(fs);
+		JsonObject jsonResponse = this.launcher.initMultiple(fs, ASTMODE.GTSPOON, new GumtreeMultipleHttpHandler());
 
 		assertEquals("created", jsonResponse.get("status").getAsString());
 
