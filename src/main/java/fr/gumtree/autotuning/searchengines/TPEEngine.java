@@ -4,12 +4,12 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.List;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
@@ -139,34 +139,17 @@ public class TPEEngine implements OptimizationMethod {
 
 				String checkedBestParameters = responseJSonFromBest.get("parameters").getAsString();
 
-				JsonArray actionsArray = responseJSonFromBest.get("actions").getAsJsonArray();
-
-				int nrActions = actionsArray.size();
+				Double fitness = responseJSonFromBest.get("fitness").getAsDouble();
+				Integer values = responseJSonFromBest.get("values").getAsInt();
 
 				//
 				// Retrieve values for the default an create a ResultsByConfig
 				ResponseBestParameter result = new ResponseBestParameter();
 				result.setBest(checkedBestParameters);
-				result.setNumberOfEvaluatedPairs(nrActions);
+				// result.setNumberOfEvaluatedPairs(nrActions);
+				result.setMetricValue(fitness);
+				result.setNumberOfEvaluatedPairs(values);
 
-				DescriptiveStatistics stats = new DescriptiveStatistics();
-
-				for (JsonElement action : actionsArray) {
-					int nractions = action.getAsJsonObject().get("nractions").getAsInt();
-					stats.addValue(nractions);
-				}
-
-				double mean = stats.getMean();
-				double std = stats.getStandardDeviation();
-				double median = stats.getPercentile(50);
-
-				if (configuration.getMetric().equals(METRIC.MEAN)) {
-					result.setMetricValue(mean);
-					result.setMetricUnit(METRIC.MEAN);
-				} else {
-					result.setMetricValue(median);
-					result.setMetricUnit(METRIC.MEDIAN);
-				}
 				resultGeneral = result;
 
 			}
@@ -176,6 +159,26 @@ public class TPEEngine implements OptimizationMethod {
 		}
 		// Stop server
 		return resultGeneral;
+	}
+
+	private void computeMetric(ExecutionTPEConfiguration configuration, ResponseBestParameter result,
+			List<Integer> allv) {
+		DescriptiveStatistics stats = new DescriptiveStatistics();
+		for (int s : allv) {
+			stats.addValue(s);
+		}
+
+		double mean = stats.getMean();
+		double std = stats.getStandardDeviation();
+		double median = stats.getPercentile(50);
+
+		if (configuration.getMetric().equals(METRIC.MEAN)) {
+			result.setMetricValue(mean);
+			result.setMetricUnit(METRIC.MEAN);
+		} else {
+			result.setMetricValue(median);
+			result.setMetricUnit(METRIC.MEDIAN);
+		}
 	}
 
 	/**

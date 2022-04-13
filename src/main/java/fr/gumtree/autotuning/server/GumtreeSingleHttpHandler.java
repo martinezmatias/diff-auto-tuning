@@ -92,18 +92,12 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				System.out.println("Computed GumTree actions " + diff.editScript.asList().size());
 
-				JsonArray actions = new JsonArray();
-				root.add("actions", actions);
+				root.addProperty("fitness", diff.editScript.asList().size());
+				root.addProperty("values", 1);
 
 				root.addProperty("parameters", parameters);
 
 				System.out.println("run with params " + parameters);
-
-				JsonObject config = new JsonObject();
-				config.addProperty("file", this.nameLeft);
-				config.addProperty("nractions", diff.editScript.asList().size());
-				//
-				actions.add(config);
 
 				root.addProperty("status", "ok");
 

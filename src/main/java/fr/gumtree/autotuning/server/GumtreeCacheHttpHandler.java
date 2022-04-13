@@ -56,7 +56,7 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 					retrieveFilesToAnalyze(httpExchange, queryParams);
 
 				} else if (queryParams.get("action").contains("run")) {
-					retrieveCacheDdiff(httpExchange, queryParams);
+					retrieveCacheDiff(httpExchange, queryParams);
 
 				} else if (queryParams.get("action").contains("info")) {
 
@@ -73,7 +73,7 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 
 	}
 
-	public void retrieveCacheDdiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams)
+	public void retrieveCacheDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams)
 			throws IOException {
 		JsonObject root = new JsonObject();
 

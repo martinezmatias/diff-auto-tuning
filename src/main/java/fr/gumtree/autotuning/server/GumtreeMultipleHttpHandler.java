@@ -80,15 +80,17 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 	public void runDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
 		JsonObject root = new JsonObject();
 
-		JsonArray actions = new JsonArray();
-		root.add("actions", actions);
 		String parameters = queryParams.get("parameters").get(0);
 		root.addProperty("parameters", parameters);
 
 		System.out.println("\n**run with params " + parameters);
 		System.out.println("--current analyzed in cache: " + this.cacheResults.size());
+
+		List<Integer> values = new ArrayList<>();
+
+		// Collect values
 		for (int i = 0; i < this.files.size(); i++) {
-			System.out.println("running " + (i + 1) + "/" + this.files.size());
+			// System.out.println("running " + (i + 1) + "/" + this.files.size());
 			Pair<Tree, Tree> pair = files.get(i);
 
 			GTProxy proxy = new GTProxy();
@@ -96,16 +98,12 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			Diff diff = proxy.run(pair.first, pair.second, parameters, null); // we dont want to save here, so we pass
 																				// null to the out
 
-			JsonObject config = new JsonObject();
-			config.addProperty("file", this.names.get(0));
-			actions.add(config);
-
 			if (diff != null) {
-				config.addProperty("nractions", diff.editScript.asList().size());
+				values.add(diff.editScript.asList().size());
 
 			} else {
 				// As the diff is null (probably an error happens) we put a large integer)
-				config.addProperty("nractions", Integer.MAX_VALUE);
+				values.add(Integer.MAX_VALUE);
 			}
 			if (this.getOutDirectory() != null) {
 				try {
@@ -117,13 +115,16 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 		}
 
-		if (actions.size() > 0)
+		double fitness = computeFitness(values);
+		root.addProperty("fitness", fitness);
+		root.addProperty("values", values.size());
+		if (values.size() > 0)
 			root.addProperty("status", "ok");
 		else
 			root.addProperty("status", "error");
 
 		cacheResults.add(root);
-		System.out.println("Output " + root.toString());
+		System.out.println("Output for parameter after " + values.size() + " evaluations " + root.toString());
 		handleResponse(httpExchange, root.toString());
 	}
 
