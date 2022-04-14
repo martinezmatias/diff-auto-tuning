@@ -195,7 +195,10 @@ public class TPEEngine implements OptimizationMethod {
 		// Create command
 		String[] commandAndArguments = { configuration.getPythonpath(), configuration.getScriptpath(),
 				configuration.getClasspath(), configuration.getJavahome(), handler.getHost(),
-				Integer.toString(handler.getPort()), handler.getPath(), HEADER_RESPONSE_PYTHON };
+				Integer.toString(handler.getPort()), handler.getPath(), HEADER_RESPONSE_PYTHON,
+				configuration.getSearchType().name().toLowerCase(),
+				Integer.toString(configuration.getNumberOfAttempts()),
+				Integer.toString(configuration.getRandomseed()) };
 		try {
 			Process p = rt.exec(commandAndArguments);
 			String response = readProcessOutput(p);

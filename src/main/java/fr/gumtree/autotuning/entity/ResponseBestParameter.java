@@ -92,4 +92,11 @@ public class ResponseBestParameter {
 	public void setInfoEvaluations(JsonArray infoEvaluations) {
 		this.infoEvaluations = infoEvaluations;
 	}
+
+	@Override
+	public String toString() {
+		return "ResponseBestParameter [numberOfEvaluatedPairs=" + numberOfEvaluatedPairs + ", bests=" + bests
+				+ ", resultPerFile=" + resultPerFile + ", metricValue=" + metricValue + ", metricUnit=" + metricUnit
+				+ "]";
+	}
 }

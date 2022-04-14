@@ -21,6 +21,7 @@ import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TYPESearch;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
@@ -63,7 +64,7 @@ public class ResultProcessorTest {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 
-		runCrossValidation(fileResults);
+		runCrossValidationExahustive(fileResults);
 
 	}
 
@@ -72,7 +73,25 @@ public class ResultProcessorTest {
 
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
-		runCrossValidation(fileResults);
+		runCrossValidationExahustive(fileResults);
+
+	}
+
+	@Test
+	public void testTPECrossValidationGlobalJDT() throws Exception {
+
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		int maxPerProject = 100;
+		runCrossValidationTPE(fileResults, maxPerProject);
+
+	}
+
+	@Test
+	public void testTPECrossValidationGlobalSpoon() throws Exception {
+
+		File fileResults = new File(results_path + "/outDAT2_Spoon_onlyresult/");
+		int maxPerProject = 100;
+		runCrossValidationTPE(fileResults, maxPerProject);
 
 	}
 
@@ -84,6 +103,42 @@ public class ResultProcessorTest {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
 
+		Path fileWithData = createFileWithDataToAnalyze(collected);
+
+		TPEEngine tpe = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration();
+		configuration.setNumberOfAttempts(98);
+		configuration.setSearchType(TYPESearch.TPE);
+		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), configuration);
+
+		assertEquals(147.80, bestTPE.getMetricValue(), 0.1);
+		System.out.println("Best TPE " + bestTPE);
+	}
+
+	@Test
+	public void testRandomTPEJDTGlobal() throws Exception {
+
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+
+		StructuredFolderfRunner runner = new StructuredFolderfRunner();
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
+
+		Path fileWithData = createFileWithDataToAnalyze(collected);
+
+		TPEEngine tpe = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration();
+		configuration.setNumberOfAttempts(98);
+		configuration.setSearchType(TYPESearch.RANDOM);
+		configuration.setRandomseed(12);
+		ResponseBestParameter bestRandomTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), configuration);
+
+		assertEquals(149.17, bestRandomTPE.getMetricValue(), 0.1);
+		System.out.println("Best TPE " + bestRandomTPE);
+	}
+
+	private Path createFileWithDataToAnalyze(List<File> collected) throws IOException {
 		Path fileWithData = Files.createTempFile("files", ".txt");
 		System.out.println(fileWithData);
 
@@ -94,15 +149,75 @@ public class ResultProcessorTest {
 			fr.write("\n");
 		}
 		fr.close();
-
-		TPEEngine tpe = new TPEEngine();
-		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(),
-				new ExecutionTPEConfiguration());
-
-		System.out.println("Best TPE " + bestTPE);
+		return fileWithData;
 	}
 
-	private void runCrossValidation(File fileResults) throws IOException {
+	private void runCrossValidationTPE(File fileResults, int maxPerFile) throws Exception {
+		StructuredFolderfRunner runner = new StructuredFolderfRunner();
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, maxPerFile, true);
+		System.out.println("Collected " + collected.size());
+		int n = collected.size();
+		int k = 10;
+
+		File[] array = new File[collected.size()];
+		collected.toArray(array);
+
+		smile.validation.Bag[] cvresult = CrossValidation.of(n, k);
+
+		List<ResultComparisonTwoConfigurations> allBestComparison = new ArrayList<>();
+
+		System.out.println(cvresult);
+
+		for (int i = 0; i < cvresult.length; i++) {
+
+			System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+			Bag bag = cvresult[i];
+
+			File[] training = MathEx.slice(array, bag.samples);
+			File[] testing = MathEx.slice(array, bag.oob);
+
+			List<File> listTraining = Arrays.asList(training);
+			List<File> listTesting = Arrays.asList(testing);
+
+			Path fileWithData = createFileWithDataToAnalyze(listTraining);
+
+			System.out.println("sample (" + listTraining.size() + ")");
+			System.out.println("test (" + listTesting.size() + ")");
+
+			METRIC metric = METRIC.MEAN;
+			System.out.println("--Global TPE TRANING: ");
+			// ResponseGlobalBestParameter bestFromTraining =
+			// runner.summarizeBestGlobal(listTraining, metric, false);
+
+			TPEEngine tpe = new TPEEngine();
+
+			ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(),
+					new ExecutionTPEConfiguration());
+
+			System.out.println("--Global TPE TESTING: ");
+			ResponseGlobalBestParameter bestFromTesting = runner.summarizeBestGlobal(listTesting, metric, false);
+
+			List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(bestTPEfromTraining,
+					bestFromTesting);
+			allBestComparison.addAll(foldBestComparison);
+
+		}
+		System.out.println("****Final results");
+		DescriptiveStatistics statsBest = new DescriptiveStatistics();
+		DescriptiveStatistics statsWorst = new DescriptiveStatistics();
+		DescriptiveStatistics statsEquals = new DescriptiveStatistics();
+
+		for (ResultComparisonTwoConfigurations resultComparisonTwoConfigurations : allBestComparison) {
+			statsBest.addValue(resultComparisonTwoConfigurations.getBetterBestPer());
+			statsWorst.addValue(resultComparisonTwoConfigurations.getWorstBestPer());
+			statsEquals.addValue(resultComparisonTwoConfigurations.getEqualsBestPer());
+		}
+
+		System.out.println(
+				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
+	}
+
+	private void runCrossValidationExahustive(File fileResults) throws IOException {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
 		System.out.println("Collected " + collected.size());
@@ -364,17 +479,19 @@ public class ResultProcessorTest {
 
 	}
 
-	private List<ResultComparisonTwoConfigurations> analyzeBestCrossValidation(ResponseGlobalBestParameter bestTraining,
+	private List<ResultComparisonTwoConfigurations> analyzeBestCrossValidation(ResponseBestParameter bestTraining,
 			ResponseGlobalBestParameter bestTesting) {
 
 		List<Double> perBest = new ArrayList<>();
 		List<ResultComparisonTwoConfigurations> outBestComparison = new ArrayList<>();
-
 		int casesImprovement = 0;
 		int casesWorst = 0;
 		int casesAllEquals = 0;
 
 		int casesBalance = 0;
+
+		System.out.println("\nAnalyzing Improvement best from training (" + bestTraining.getAllBest().size() + ") "
+				+ bestTraining.getAllBest());
 		// We take the best from Training
 		for (String oneBestConfigFromTraining : bestTraining.getAllBest()) {
 
@@ -405,6 +522,8 @@ public class ResultProcessorTest {
 
 		}
 		System.out.println(perBest);
+
+		System.out.println("Total from testing set: " + bestTesting.getNumberOfEvaluatedPairs());
 
 		System.out.println("Cases a Best produces more improvement " + casesImprovement);
 		System.out.println("Cases a Best produces more worst " + casesWorst);

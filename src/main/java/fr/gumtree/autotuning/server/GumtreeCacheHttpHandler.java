@@ -77,8 +77,6 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 			throws IOException {
 		JsonObject root = new JsonObject();
 
-		JsonArray actions = new JsonArray();
-		root.add("actions", actions);
 		String parameters = queryParams.get("parameters").get(0);
 		root.addProperty("parameters", parameters);
 
@@ -98,34 +96,17 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 
 		System.out.println("Values " + values.size());
 
-		for (int i = 0; i < this.filesToAnalyze.size(); i++) {
-			// System.out.println("running " + (i + 1) + "/" + this.filesToAnalyze.size());
-			File pair = filesToAnalyze.get(i);
+		root.addProperty("fitness", computeFitness(values));
+		root.addProperty("values", values.size());
 
-			JsonObject config = new JsonObject();
-			config.addProperty("file", pair.getName());
-			actions.add(config);
-
-			config.addProperty("nractions", values.get(i));
-
-			if (this.getOutDirectory() != null) {
-				try {
-					// saver.saveUnified(this.names.get(i), parameters, diff,
-					// this.getOutDirectory());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
-		}
-
-		if (actions.size() > 0)
+		if (values.size() > 0)
 			root.addProperty("status", "ok");
 		else
 			root.addProperty("status", "error");
 
 		cacheResults.add(root);
-		System.out.println("Output " + root.toString());
+		System.out.println("Output for parameter after " + values.size() + " evaluations " + root.toString());
+
 		handleResponse(httpExchange, root.toString());
 	}
 
