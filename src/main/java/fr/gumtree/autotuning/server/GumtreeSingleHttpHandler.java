@@ -13,7 +13,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -26,6 +28,10 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  *
  */
 public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
+
+	public GumtreeSingleHttpHandler(Fitness fitnessFunction, METRIC metric) {
+		super(fitnessFunction, metric);
+	}
 
 	int a = 0;
 	String param = "";

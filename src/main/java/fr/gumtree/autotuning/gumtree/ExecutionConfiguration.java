@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import fr.gumtree.autotuning.fitness.Fitness;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 
 /**
@@ -36,6 +38,8 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 	TimeUnit timeUnit = TimeUnit.MINUTES;
 
 	private ASTMODE astmode;
+
+	Fitness fitnessFunction = new LengthEditScriptFitness();
 
 	public PARALLEL_EXECUTION getParalelisationMode() {
 		return paralelisationMode;
@@ -130,5 +134,13 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setTimeUnitDiffExecution(TimeUnit timeUnitDiffExecution) {
 		this.timeUnitDiffExecution = timeUnitDiffExecution;
+	}
+
+	public Fitness getFitnessFunction() {
+		return fitnessFunction;
+	}
+
+	public void setFitnessFunction(Fitness fitnessFunction) {
+		this.fitnessFunction = fitnessFunction;
 	}
 }

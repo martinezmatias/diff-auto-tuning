@@ -206,7 +206,7 @@ public class DatOutputEngine {
 			JsonObject resultConfig = new JsonObject();
 			resultConfig.addProperty(CONFIGURATION, key);
 			JsonArray arry = new JsonArray();
-			for (Integer i : result.get(key))
+			for (Double i : result.get(key))
 				arry.add(i);
 
 			resultConfig.add(ED_SIZE, arry);
@@ -360,7 +360,12 @@ public class DatOutputEngine {
 			JsonArray values = config.getAsJsonObject().get(DatOutputEngine.ED_SIZE).getAsJsonArray();
 
 			for (JsonElement v : values) {
-				results.add(key, v.getAsInt());
+
+				int valueInt = v.getAsInt();
+
+				double valueD = (valueInt == Integer.MAX_VALUE) ? Double.MAX_VALUE : v.getAsDouble();
+
+				results.add(key, valueD);
 			}
 		}
 

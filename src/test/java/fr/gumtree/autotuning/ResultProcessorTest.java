@@ -19,6 +19,7 @@ import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TYPESearch;
@@ -116,7 +117,9 @@ public class ResultProcessorTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration();
 		configuration.setNumberOfAttempts(98);
 		configuration.setSearchType(TYPESearch.TPE);
-		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), configuration);
+		configuration.setMetric(METRIC.MEAN);
+		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);
 
 		assertEquals(147.80, bestTPE.getMetricValue(), 0.1);
 		System.out.println("Best TPE " + bestTPE);
@@ -138,7 +141,8 @@ public class ResultProcessorTest {
 		configuration.setNumberOfAttempts(98);
 		configuration.setSearchType(TYPESearch.RANDOM);
 		configuration.setRandomseed(12);
-		ResponseBestParameter bestRandomTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), configuration);
+		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+		ResponseBestParameter bestRandomTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);
 
 		assertEquals(149.17, bestRandomTPE.getMetricValue(), 0.1);
 		System.out.println("Best TPE " + bestRandomTPE);
@@ -174,6 +178,9 @@ public class ResultProcessorTest {
 
 		System.out.println(cvresult);
 
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration();
+		configuration.setMetric(metric);
+
 		for (int i = 0; i < cvresult.length; i++) {
 
 			System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
@@ -196,8 +203,10 @@ public class ResultProcessorTest {
 
 			TPEEngine tpe = new TPEEngine();
 
-			ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(),
-					new ExecutionTPEConfiguration());
+			LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+
+			ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
+					configuration);
 
 			System.out.println("--Global TPE TESTING: ");
 			ResponseGlobalBestParameter bestFromTesting = runner.summarizeBestGlobal(listTesting, metric, false);
@@ -238,8 +247,8 @@ public class ResultProcessorTest {
 
 		System.out.println(cvresult);
 
-		List<Integer> valuesBest = new ArrayList<>();
-		List<Integer> valuesDefault = new ArrayList<>();
+		List<Double> valuesBest = new ArrayList<>();
+		List<Double> valuesDefault = new ArrayList<>();
 
 		for (int i = 0; i < cvresult.length; i++) {
 
@@ -289,10 +298,10 @@ public class ResultProcessorTest {
 				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
 	}
 
-	private void storeInFile(List<Integer> valuesBest, String string) throws IOException {
+	private void storeInFile(List<Double> valuesBest, String string) throws IOException {
 		File f = new File("./out/values_" + string + ".txt");
 		FileWriter fw = new FileWriter(f);
-		for (Integer v : valuesBest) {
+		for (Double v : valuesBest) {
 			fw.write(String.valueOf(v));
 			fw.write("\n");
 		}
@@ -625,19 +634,19 @@ public class ResultProcessorTest {
 
 		System.out.println("oneBestConfig " + oneBestConfig + " " + defaultConfig);
 
-		List<Integer> valuesOneBest = values.get(oneBestConfig);
-		List<Integer> valuesDefault = values.get(defaultConfig);
+		List<Double> valuesOneBest = values.get(oneBestConfig);
+		List<Double> valuesDefault = values.get(defaultConfig);
 
-		List<Integer> resultsComparison = new ArrayList<>();
+		List<Double> resultsComparison = new ArrayList<>();
 		ResultComparisonTwoConfigurations result = null;
 		if (valuesDefault.size() == valuesOneBest.size()) {
 
 			System.out.println();
 			for (int i = 0; i < valuesDefault.size(); i++) {
-				Integer iVD = valuesDefault.get(i);
-				Integer iVB = valuesOneBest.get(i);
+				Double iVD = valuesDefault.get(i);
+				Double iVB = valuesOneBest.get(i);
 
-				int diff = iVB - iVD;
+				double diff = iVB - iVD;
 				resultsComparison.add(diff);
 			}
 

@@ -16,6 +16,7 @@ import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
@@ -26,6 +27,10 @@ import fr.gumtree.autotuning.searchengines.ResultByConfig;
  *
  */
 public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
+
+	public GumtreeCacheHttpHandler(Fitness fitnessFunction, METRIC metric) {
+		super(fitnessFunction, metric);
+	}
 
 	ResultByConfig valuesPerConfig;
 
@@ -84,7 +89,7 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 		// System.out.println("--current analyzed in cache: " +
 		// this.cacheResults.size());
 
-		List<Integer> values = this.valuesPerConfig.get(parameters);
+		List<Double> values = this.valuesPerConfig.get(parameters);
 
 		if (values == null) {
 			System.out.println(" no values for " + parameters);
@@ -95,8 +100,8 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 		}
 
 		System.out.println("Values " + values.size());
-
-		root.addProperty("fitness", computeFitness(values));
+		Double fitness = fitnessFunction.computeFitness(values, this.metric);
+		root.addProperty("fitness", fitness);
 		root.addProperty("values", values.size());
 
 		if (values.size() > 0)

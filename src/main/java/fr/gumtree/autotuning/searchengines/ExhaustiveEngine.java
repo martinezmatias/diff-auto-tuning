@@ -38,6 +38,7 @@ import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.DiffProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
@@ -265,7 +266,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		for (GumtreeProperties aGumtreeProperties : combinations) {
 
 			String computeReduced = SingleDiffResult.computeReduced(matcherName, aGumtreeProperties);
-			System.out.println("Reducted " + computeReduced);
+			// System.out.println("Reducted " + computeReduced);
 
 			SingleDiffResult resDiff = null;
 
@@ -561,11 +562,11 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			String computeReduced = SingleDiffResult.computeReduced(matcher.getClass().getSimpleName(),
 					aGumtreeProperties);
-			System.out.println("Reducted to check" + computeReduced);
-			System.out.println("Alreadt analyzed " + withTimeout.size() + ": " + withTimeout);
+			System.out.println("Reduced to check" + computeReduced);
+			System.out.println("Observed timeout: " + withTimeout.size() + ": " + withTimeout);
 
 			if (withTimeout != null && withTimeout.contains(computeReduced)) {
-				System.out.println("Already compute, skip!" + computeReduced);
+				System.out.println("Prunned due to similar config with timeout" + computeReduced);
 				SingleDiffResult singleDiffResult = new SingleDiffResult(matcher.getClass().getSimpleName());
 				singleDiffResult.put(Constants.TIMEOUT, "prunned");
 				singleDiffResult.put(Constants.CONFIG, aGumtreeProperties);
@@ -791,8 +792,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ExecutionConfiguration configuration)
-			throws Exception {
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception {
 
 		Map<String, Pair<Map, Map>> treeCharacteristics = new HashMap<String, Pair<Map, Map>>();
 		DatOutputEngine saver = new DatOutputEngine(getDiffId(dataFilePairs));
@@ -839,18 +840,12 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 					for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
 
-						int isize = Integer.MAX_VALUE;
-
-						if (!diffResult.containsKey(Constants.NRACTIONS)) {
-							// System.out.println("No results for " + diffResult);
-							isize = Integer.MAX_VALUE;
-						} else {
-							isize = (int) diffResult.get(Constants.NRACTIONS);
-						}
+						//
+						Double fitnessValue = fitnessFunction.getFitnessValue(diffResult, configuration.getMetric());
 						// maybe to replace by a toString
 						String plainProperties = diffResult.retrievePlainConfiguration();
 
-						results.add(plainProperties, isize);
+						results.add(plainProperties, fitnessValue);
 
 						if (configuration.isSaveScript()) {
 
@@ -908,11 +903,11 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			DescriptiveStatistics stats = new DescriptiveStatistics();
 			int timeoutsConfig = 0;
-			List<Integer> allSizesOfConfigs = results.get(aConfigresult);
+			List<Double> allSizesOfConfigs = results.get(aConfigresult);
 			if (allSizesOfConfigs.size() > nrEvaluations)
 				nrEvaluations = allSizesOfConfigs.size();
 
-			for (Integer aSize : allSizesOfConfigs) {
+			for (Double aSize : allSizesOfConfigs) {
 
 				if (!ignoreTimeout || aSize != Integer.MAX_VALUE)
 					stats.addValue(aSize);
@@ -934,12 +929,9 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				minMedian = median;
 			}
 
-			long nrTimeout = allSizesOfConfigs.stream().filter(e -> e == Integer.MAX_VALUE).count();
+			// long nrTimeout = allSizesOfConfigs.stream().filter(e -> e ==
+			// Integer.MAX_VALUE).count();
 
-			// System.out.println(++i + " " + aConfigresult + " " + median + ": (" +
-			// allSizesOfConfigs.size() + ") to: "
-			// + nrTimeout + " " + timeoutsConfig + " " // + allSizesOfConfigs
-			// );
 		}
 		final Double minValuemedian = minMedian;
 		// Choose the config with best median
@@ -994,10 +986,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 	public class BestOfFile {
 		List<String> currentMinConfigs = new ArrayList<>();
-		int minBest;
-		int minDefault;
+		double minBest;
+		double minDefault;
 
-		public BestOfFile(List<String> currentMinConfigs, int minBest, int minDefault) {
+		public BestOfFile(List<String> currentMinConfigs, double minBest, double minDefault) {
 			super();
 			this.currentMinConfigs = currentMinConfigs;
 			this.minBest = minBest;
@@ -1012,19 +1004,19 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			this.currentMinConfigs = currentMinConfigs;
 		}
 
-		public int getMinBest() {
+		public double getMinBest() {
 			return minBest;
 		}
 
-		public void setMinBest(int minBest) {
+		public void setMinBest(double minBest) {
 			this.minBest = minBest;
 		}
 
-		public int getMinDefault() {
+		public double getMinDefault() {
 			return minDefault;
 		}
 
-		public void setMinDefault(int minDefault) {
+		public void setMinDefault(double minDefault) {
 			this.minDefault = minDefault;
 		}
 
@@ -1036,9 +1028,9 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	public BestOfFile analyzeLocalResult(ResultByConfig resultByConfig, String targetConfing) {
-		int min = Integer.MAX_VALUE;
+		double min = Double.MAX_VALUE;
 		List<String> currentMinConfigs = new ArrayList<>();
-		int minTarget = Integer.MAX_VALUE;
+		double minTarget = Double.MAX_VALUE;
 
 		// System.out
 		// .println(" " + resultByConfig.keySet().size() + " " +
@@ -1048,7 +1040,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			// By definition we have only one pair to analyze (as it's local search)
 
-			List<Integer> evaluations = resultByConfig.get(aCondif);
+			List<Double> evaluations = resultByConfig.get(aCondif);
 			// System.out.println("size " + evaluations.size());
 
 			if (evaluations.size() != 1) {
@@ -1056,7 +1048,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				throw new IllegalArgumentException("ìnvalid data");
 			}
 			// pick the first
-			int sizeConfig = evaluations.get(0);
+			double sizeConfig = evaluations.get(0);
 
 			if (sizeConfig <= min) {
 
@@ -1079,8 +1071,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestLocal(File left, File right, ExecutionConfiguration configuration)
-			throws Exception {
+	public ResponseBestParameter computeBestLocal(File left, File right, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception {
 
 		ASTMODE astmode = configuration.getAstmode();
 
@@ -1093,19 +1085,17 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			System.err.println("Mode not configured " + astmode);
 		}
 
-		ResponseBestParameter bestResult = computeBestLocal(treebuilder, left, right, configuration);
+		ResponseBestParameter bestResult = computeBestLocal(treebuilder, left, right, fitnessFunction, configuration);
 
 		return bestResult;
 	}
 
 	public ResponseBestParameter computeBestLocal(ITreeBuilder treebuilder, File left, File right,
-			ExecutionConfiguration configuration) throws IOException, NoSuchAlgorithmException, Exception {
-		return computeBestLocal(treebuilder, getDiffId(left), left, right, configuration);
-	}
-
-	public ResponseBestParameter computeBestLocal(ITreeBuilder treebuilder, String diffId, File left, File right,
-			ExecutionConfiguration configuration) throws IOException, NoSuchAlgorithmException, Exception {
+			Fitness fitnessFunction, ExecutionConfiguration configuration)
+			throws IOException, NoSuchAlgorithmException, Exception {
 		Map<String, Pair<Map, Map>> treeProperties = new HashMap<String, Pair<Map, Map>>();
+
+		String diffId = getDiffId(left);
 
 		String outDiffId = configuration.getDirDiffTreeSerialOutput().getAbsolutePath() + File.separator + diffId;
 
@@ -1119,7 +1109,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		CaseResult caseResult = this.analyzeCase(treebuilder, diffId, left, right, configuration, treeProperties,
 				this.allMatchers);
 
-		int min = Integer.MAX_VALUE;
+		double bestFitnessValue = Double.MAX_VALUE;
+
 		// List with all the configs that produce the min
 		List<Pair<String, GumtreeProperties>> minDiff = new ArrayList<>();
 
@@ -1129,24 +1120,21 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			for (SingleDiffResult diffResult : mresult.getAlldiffresults()) {
 
-				int isize = Integer.MAX_VALUE;
+				double fitnessValue = fitnessFunction.getFitnessValue(diffResult, configuration.getMetric());
 
-				if (diffResult == null || diffResult.get(Constants.NRACTIONS) == null) {
-					isize = Integer.MAX_VALUE;
-				} else {
-					isize = (int) diffResult.get(Constants.NRACTIONS);
-				}
 				GumtreeProperties gt = (GumtreeProperties) diffResult.get(Constants.CONFIG);
 				String plainProperty = diffResult.retrievePlainConfiguration();
-				results.add(plainProperty, isize);
 
-				if (isize <= min) {
+				results.add(plainProperty, fitnessValue);
+
+				// TODO: control if we want to minimize or maximize the fitness value
+				if (fitnessValue <= bestFitnessValue) {
 
 					// We discard the others in case is strictly less
-					if (isize < min) {
+					if (fitnessValue < bestFitnessValue) {
 						minDiff.clear();
 					}
-					min = isize;
+					bestFitnessValue = fitnessValue;
 
 					minDiff.add(new Pair<>(mresult.getMatcherName(), gt));
 
@@ -1162,7 +1150,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		}
 		ResponseBestParameter bestResult = new ResponseBestParameter();
-		bestResult.setMetricValue(min);
+		bestResult.setMetricValue(bestFitnessValue);
 		bestResult.setMetricUnit(configuration.getMetric());
 
 		for (Pair<String, GumtreeProperties> pair : minDiff) {

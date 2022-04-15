@@ -15,6 +15,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
@@ -43,8 +44,8 @@ public class TPEEngineTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration();
 		configuration.setAstmode(ASTMODE.GTSPOON);
 		configuration.setNumberOfAttempts(50);
-
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
 		assertEquals(1d, bestConfig.getMetricValue(), 0);
@@ -64,7 +65,8 @@ public class TPEEngineTest {
 		ExecutionConfiguration configuration = new ExecutionTPEConfiguration();
 		configuration.setAstmode(ASTMODE.GTSPOON);
 
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
 
 		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
 
@@ -114,7 +116,8 @@ public class TPEEngineTest {
 		ExecutionTPEConfiguration config = new ExecutionTPEConfiguration();
 		config.setAstmode(ASTMODE.GTSPOON);
 		config.setNumberOfAttempts(50);
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);
 		System.out.println(bestConfig);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
@@ -137,7 +140,8 @@ public class TPEEngineTest {
 		config.setDirDiffTreeSerialOutput(outDirTemp);
 
 		config.setAstmode(ASTMODE.JDT);
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);
 
 		System.out.println(bestConfig);
 
@@ -171,7 +175,8 @@ public class TPEEngineTest {
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
 		config.setAstmode(ASTMODE.JDT);
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, config);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, config);
 
 		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
 		assertEquals(2d, bestConfig.getMetricValue(), 0);
@@ -190,8 +195,8 @@ public class TPEEngineTest {
 
 		ExecutionConfiguration config = new ExecutionTPEConfiguration();
 		config.setAstmode(ASTMODE.GTSPOON);
-
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, config);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);
 
 		JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
 

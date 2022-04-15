@@ -11,9 +11,10 @@ import org.junit.Test;
 
 import com.google.gson.JsonObject;
 
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
-import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 
 /**
  * 
@@ -27,7 +28,7 @@ public class DiffServerTest {
 	@Before
 	public void setup() throws IOException {
 		System.out.println("Starting server");
-		launcher = new DiffServerLauncher();
+		launcher = new DiffServerLauncher(new LengthEditScriptFitness(), METRIC.MEAN);
 		launcher.start();
 	}
 
@@ -46,7 +47,7 @@ public class DiffServerTest {
 		File ft = new File(
 				"./examples/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e/Version/1_02f3fd442349d4e7fdfc9c31a82bb1638db8495e_Version_t.java");
 
-		JsonObject responseJSon = this.launcher.initSimple(fs, ft);
+		JsonObject responseJSon = this.launcher.initSimple(fs, ft, ASTMODE.GTSPOON);
 
 		assertEquals("created", responseJSon.get("status").getAsString());
 
@@ -81,7 +82,7 @@ public class DiffServerTest {
 
 		File fs = new File("./examples/input_multiple.txt");
 
-		JsonObject jsonResponse = this.launcher.initMultiple(fs, ASTMODE.GTSPOON, new GumtreeMultipleHttpHandler());
+		JsonObject jsonResponse = this.launcher.initMultiple(fs, ASTMODE.GTSPOON);
 
 		assertEquals("created", jsonResponse.get("status").getAsString());
 

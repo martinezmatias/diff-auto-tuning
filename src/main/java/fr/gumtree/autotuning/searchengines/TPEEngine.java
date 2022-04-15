@@ -13,6 +13,7 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
@@ -40,18 +41,18 @@ public class TPEEngine implements OptimizationMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestLocal(File left, File right, ExecutionConfiguration configuration)
-			throws Exception {
+	public ResponseBestParameter computeBestLocal(File left, File right, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		launcher = new DiffServerLauncher();
+		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
 		GumtreeSingleHttpHandler handler = launcher.getHandlerSimple();
 
 		ASTMODE astmode = configuration.getAstmode();
-		JsonObject responseJSon = launcher.initSimple(left, right, astmode, handler);
+		JsonObject responseJSon = launcher.initSimple(left, right, astmode);
 
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
@@ -67,17 +68,17 @@ public class TPEEngine implements OptimizationMethod {
 	}
 
 	@Override
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ExecutionConfiguration configuration)
-			throws Exception {
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		launcher = new DiffServerLauncher();
+		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
 		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
 
-		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode(), handler);
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
 
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
@@ -92,16 +93,17 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter computeBestGlobalCache(File dataFilePairs, ExecutionConfiguration configuration)
-			throws Exception {
+	public ResponseBestParameter computeBestGlobalCache(File dataFilePairs, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler();
-		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(), handler);
+		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler(fitnessFunction, configuration.getMetric());
+		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(fitnessFunction, configuration.getMetric()),
+				handler);
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
-		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode(), handler);
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
 
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);

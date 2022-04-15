@@ -154,7 +154,8 @@ public class StructuredFolderfRunner {
 
 						continue;
 					}
-					tuningEngine.computeBestLocal(treeBuilder, previousVersion, postVersion, configuration);
+					tuningEngine.computeBestLocal(treeBuilder, previousVersion, postVersion,
+							configuration.getFitnessFunction(), configuration);
 
 				}
 			}

@@ -17,7 +17,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -30,6 +32,10 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  *
  */
 public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
+
+	public GumtreeMultipleHttpHandler(Fitness fitnessFunction, METRIC metric) {
+		super(fitnessFunction, metric);
+	}
 
 	List<Pair<Tree, Tree>> files = new ArrayList<>();
 	List<String> names = new ArrayList<>();
@@ -86,7 +92,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 		System.out.println("\n**run with params " + parameters);
 		System.out.println("--current analyzed in cache: " + this.cacheResults.size());
 
-		List<Integer> values = new ArrayList<>();
+		List<Double> values = new ArrayList<>();
 
 		// Collect values
 		for (int i = 0; i < this.files.size(); i++) {
@@ -98,13 +104,9 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			Diff diff = proxy.run(pair.first, pair.second, parameters, null); // we dont want to save here, so we pass
 																				// null to the out
 
-			if (diff != null) {
-				values.add(diff.editScript.asList().size());
+			Double fitnessOfDiff = fitnessFunction.getFitnessValue(diff, this.metric);
+			values.add(fitnessOfDiff);
 
-			} else {
-				// As the diff is null (probably an error happens) we put a large integer)
-				values.add(Integer.MAX_VALUE);
-			}
 			if (this.getOutDirectory() != null) {
 				try {
 					saver.saveUnified(this.names.get(i), parameters, diff, this.getOutDirectory());
@@ -115,7 +117,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 		}
 
-		double fitness = computeFitness(values);
+		double fitness = fitnessFunction.computeFitness(values, this.metric);
 		root.addProperty("fitness", fitness);
 		root.addProperty("values", values.size());
 		if (values.size() > 0)

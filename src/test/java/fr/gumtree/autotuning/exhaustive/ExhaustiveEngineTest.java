@@ -12,6 +12,7 @@ import java.util.Date;
 import org.junit.Test;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
@@ -42,8 +43,8 @@ public class ExhaustiveEngineTest {
 		ec.setSaveScript(true);
 		ec.setDirDiffTreeSerialOutput(outDirTemp);
 		ec.setAstmode(ASTMODE.GTSPOON);
-
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, ec);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, ec);
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
 		// bestConfig.getBest());
 		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
@@ -62,7 +63,7 @@ public class ExhaustiveEngineTest {
 	}
 
 	@Test
-	public void testExhaustive_Local_Simple_2() throws Exception {
+	public void testExhaustive_Local_Simple_2_timeout() throws Exception {
 
 		File fs = new File(
 				"./examples/1_0007d191fec7fe2d6a0c4e87594cb286a553f92c/ASTInspector/1_0007d191fec7fe2d6a0c4e87594cb286a553f92c_ASTInspector_s.java");
@@ -73,17 +74,16 @@ public class ExhaustiveEngineTest {
 
 		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setAstmode(ASTMODE.GTSPOON);
+		// TODO:
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
-		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
-		// bestConfig.getBest());
-		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMetricValue(), 0);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
+
+		assertEquals(4d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
-		// assertTrue(bestConfig.getAllBest()
-		// .contains("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height"));
 
 	}
 
@@ -100,17 +100,14 @@ public class ExhaustiveEngineTest {
 
 		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setAstmode(ASTMODE.GTSPOON);
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
 
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
-		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
-		// bestConfig.getBest());
-		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMetricValue(), 0);
+		assertEquals(3d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
-		// assertTrue(bestConfig.getAllBest()
-		// .contains("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height"));
 
 	}
 
@@ -127,43 +124,13 @@ public class ExhaustiveEngineTest {
 
 		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
 		configuration.setAstmode(ASTMODE.GTSPOON);
-
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
-		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
-		// bestConfig.getBest());
-		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
 		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
 
 		System.out.println(bestConfig.getAllBest());
-		// assertTrue(bestConfig.getAllBest()
-		// .contains("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height"));
-
-	}
-
-	@Test
-	public void testExhaustive_Local_Simple_4_serial() throws Exception {
-
-		File fs = new File(
-				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_s.java");
-		File ft = new File(
-				"./examples/megadiff-sample/1/1_203910661b72775d1a983bf98c25ddde2d2898b9/Producto/1_203910661b72775d1a983bf98c25ddde2d2898b9_Producto_t.java");
-
-		ExhaustiveEngine rp = new ExhaustiveEngine();
-
-		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
-		configuration.setAstmode(ASTMODE.GTSPOON);
-
-		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, configuration);
-		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
-		// bestConfig.getBest());
-		// assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
-		assertEquals(1d, bestConfig.getMetricValue(), 0);
-		assertTrue(bestConfig.getAllBest().size() > 0);
-
-		System.out.println(bestConfig.getAllBest());
-		// assertTrue(bestConfig.getAllBest()
-		// .contains("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height"));
 
 	}
 
@@ -177,8 +144,8 @@ public class ExhaustiveEngineTest {
 		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
 
 		configuration.setAstmode(ASTMODE.GTSPOON);
-
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, configuration);
 
 		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
@@ -200,8 +167,9 @@ public class ExhaustiveEngineTest {
 		configuration.setAstmode(ASTMODE.GTSPOON);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 		configuration.setMetric(METRIC.MEAN);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, configuration);
 
 		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
@@ -220,7 +188,8 @@ public class ExhaustiveEngineTest {
 
 		configuration.setAstmode(ASTMODE.GTSPOON);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, configuration);
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, configuration);
 
 		assertEquals(1d, bestConfig.getMetricValue(), 0);
 		assertTrue(bestConfig.getAllBest().size() > 0);
@@ -248,7 +217,9 @@ public class ExhaustiveEngineTest {
 		ec.setMetric(METRIC.MEAN);
 		ec.setSaveScript(true);
 		ec.setAstmode(ASTMODE.GTSPOON);
-		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, ec);
+
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, ec);
 
 		assertEquals(5.3d, bestConfig.getMetricValue(), 0.1);
 

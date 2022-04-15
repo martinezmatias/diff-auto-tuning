@@ -3,13 +3,13 @@ package fr.gumtree.autotuning.server;
 import java.io.File;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.List;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
+
+import fr.gumtree.autotuning.fitness.Fitness;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 
 /**
  * 
@@ -30,6 +30,15 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 	 * Stores the different calls to run
 	 */
 	JsonArray cacheResults = new JsonArray();
+
+	Fitness fitnessFunction;
+	METRIC metric;
+
+	public GumtreeAbstractHttpHandler(Fitness fitnessFunction, METRIC metric) {
+		super();
+		this.fitnessFunction = fitnessFunction;
+		this.metric = metric;
+	}
 
 	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
 
@@ -59,20 +68,6 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 
 	public void setOutDirectory(File outDirectory) {
 		this.outDirectory = outDirectory;
-	}
-
-	protected double computeFitness(List<Integer> values) {
-
-		DescriptiveStatistics stats = new DescriptiveStatistics();
-		for (int s : values) {
-			stats.addValue(s);
-		}
-
-		double mean = stats.getMean();
-		double std = stats.getStandardDeviation();
-		double median = stats.getPercentile(50);
-
-		return mean;
 	}
 
 }
