@@ -20,7 +20,7 @@ public interface Fitness {
 
 	public Double getFitnessValue(SingleDiffResult candidate, METRIC metric);
 
-	public List<?> getBests(List<ResultByConfig> all, METRIC metric);
+	public List<String> getBests(List<ResultByConfig> all, METRIC metric);
 
 	public Double computeFitness(List<Double> values, METRIC metric);
 

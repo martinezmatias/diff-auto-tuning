@@ -868,7 +868,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
 
-			ResponseBestParameter bestResult = summarizeResultsForGlobal(results, configuration.getMetric(), false);
+			ResponseBestParameter bestResult = summarizeResultsForGlobal(results, fitnessFunction,
+					configuration.getMetric(), false);
 
 			return bestResult;
 
@@ -887,8 +888,8 @@ public class ExhaustiveEngine implements OptimizationMethod {
 	 * @param results
 	 * @return
 	 */
-	public ResponseGlobalBestParameter summarizeResultsForGlobal(ResultByConfig results, METRIC metric,
-			boolean ignoreTimeout) {
+	public ResponseGlobalBestParameter summarizeResultsForGlobal(ResultByConfig results, Fitness fitnessFunction,
+			METRIC metric, boolean ignoreTimeout) {
 		// Now to summarize
 		ResponseGlobalBestParameter bestResult = new ResponseGlobalBestParameter();
 
@@ -899,6 +900,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		int nrEvaluations = 0;
 
 		int i = 0;
+		// TODO: to pass to the fitness function
 		for (String aConfigresult : results.keySet()) {
 
 			DescriptiveStatistics stats = new DescriptiveStatistics();

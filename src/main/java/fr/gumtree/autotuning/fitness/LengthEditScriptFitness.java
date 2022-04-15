@@ -31,7 +31,7 @@ public class LengthEditScriptFitness implements Fitness {
 	}
 
 	@Override
-	public List<?> getBests(List<ResultByConfig> all, METRIC metric) {
+	public List<String> getBests(List<ResultByConfig> all, METRIC metric) {
 		// TODO Auto-generated method stub
 		return null;
 	}

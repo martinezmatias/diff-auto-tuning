@@ -15,7 +15,7 @@ import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
-import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
+import fr.gumtree.autotuning.experimentrunner.OfflineResultProcessor;
 import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
@@ -158,10 +158,10 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 
 			}
 			reader.close();
-			StructuredFolderfRunner runner = new StructuredFolderfRunner();
+			OfflineResultProcessor runner = new OfflineResultProcessor();
 
-			ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(this.filesToAnalyze, METRIC.MEAN,
-					false);
+			ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(this.filesToAnalyze,
+					this.fitnessFunction, this.metric, false);
 			this.valuesPerConfig = bestFromTraining.getValuesPerConfig();
 
 		} catch (Exception e) {

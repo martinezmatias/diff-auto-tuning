@@ -10,7 +10,14 @@ import fr.gumtree.autotuning.domain.DoubleParameterDomain;
 import fr.gumtree.autotuning.domain.IntParameterDomain;
 import fr.gumtree.autotuning.domain.ParameterDomain;
 
+/**
+ * 
+ * @author Matias Martinez
+ *
+ */
 public class ParametersResolvers {
+
+	public static final String defaultConfiguration = "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
 
 	protected Map<ConfigurationOptions, ParameterDomain<?>> parametersDomain = new HashMap<>();
 

@@ -37,12 +37,12 @@ public class ExhaustiveEngineTest {
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
 
-		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		// Only for test
-		ec.setMetric(METRIC.MEAN);
 		ec.setSaveScript(true);
 		ec.setDirDiffTreeSerialOutput(outDirTemp);
-		ec.setAstmode(ASTMODE.GTSPOON);
+
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, ec);
 		// assertEquals("ClassicGumtree-bu_minsim-0.6-bu_minsize-1200-st_minprio-2-st_priocalc-height",
@@ -72,8 +72,9 @@ public class ExhaustiveEngineTest {
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
 
-		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
-		configuration.setAstmode(ASTMODE.GTSPOON);
+		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
+
 		// TODO:
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -98,8 +99,9 @@ public class ExhaustiveEngineTest {
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
 
-		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
-		configuration.setAstmode(ASTMODE.GTSPOON);
+		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
+
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
@@ -122,8 +124,9 @@ public class ExhaustiveEngineTest {
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
 
-		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration();
-		configuration.setAstmode(ASTMODE.GTSPOON);
+		ExecutionConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
+
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
@@ -141,9 +144,9 @@ public class ExhaustiveEngineTest {
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
-		configuration.setAstmode(ASTMODE.GTSPOON);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, configuration);
 
@@ -162,11 +165,11 @@ public class ExhaustiveEngineTest {
 		File fs = new File("./examples/input_multiple3.txt");
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
-		configuration.setAstmode(ASTMODE.GTSPOON);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
-		configuration.setMetric(METRIC.MEAN);
+
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, configuration);
@@ -184,9 +187,8 @@ public class ExhaustiveEngineTest {
 		File fs = new File("./examples/input_multiple3.txt");
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
-
-		configuration.setAstmode(ASTMODE.GTSPOON);
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, configuration);
@@ -212,11 +214,10 @@ public class ExhaustiveEngineTest {
 		File fs = new File("./examples/input_multiple_3_diffs.txt");
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
-		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		// Only for test
-		ec.setMetric(METRIC.MEAN);
 		ec.setSaveScript(true);
-		ec.setAstmode(ASTMODE.GTSPOON);
 
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, ec);

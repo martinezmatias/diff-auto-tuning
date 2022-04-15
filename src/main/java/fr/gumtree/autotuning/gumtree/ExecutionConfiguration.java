@@ -29,7 +29,14 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 		MEDIAN, MEAN
 	}
 
-	private METRIC metric = METRIC.MEDIAN;
+	private METRIC metric;
+
+	public ExecutionConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) {
+		super();
+		this.metric = metric;
+		this.astmode = astmode;
+		this.fitnessFunction = fitnessFunction;
+	}
 
 	private long timeOutDiffExecution = 1000;
 	TimeUnit timeUnitDiffExecution = TimeUnit.MILLISECONDS;

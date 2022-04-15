@@ -18,6 +18,7 @@ import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
@@ -41,8 +42,8 @@ public class TPEEngineTest {
 
 		TPEEngine rp = new TPEEngine();
 
-		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration();
-		configuration.setAstmode(ASTMODE.GTSPOON);
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(50);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
@@ -62,8 +63,8 @@ public class TPEEngineTest {
 
 		TPEEngine rp = new TPEEngine();
 
-		ExecutionConfiguration configuration = new ExecutionTPEConfiguration();
-		configuration.setAstmode(ASTMODE.GTSPOON);
+		ExecutionConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
@@ -113,8 +114,8 @@ public class TPEEngineTest {
 		File fs = new File("./examples/input_multiple.txt");
 		TPEEngine rp = new TPEEngine();
 
-		ExecutionTPEConfiguration config = new ExecutionTPEConfiguration();
-		config.setAstmode(ASTMODE.GTSPOON);
+		ExecutionTPEConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		config.setNumberOfAttempts(50);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);
@@ -135,7 +136,8 @@ public class TPEEngineTest {
 		assertTrue(outDirTemp.exists());
 
 		assertTrue(outDirTemp.list().length == 0);
-		ExecutionConfiguration config = new ExecutionTPEConfiguration();
+		ExecutionConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
 
@@ -171,10 +173,11 @@ public class TPEEngineTest {
 
 		assertTrue(outDirTemp.list().length == 0);
 
-		ExecutionConfiguration config = new ExecutionTPEConfiguration();
+		ExecutionConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
+				new LengthEditScriptFitness());
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
-		config.setAstmode(ASTMODE.JDT);
+
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, config);
 
@@ -193,8 +196,9 @@ public class TPEEngineTest {
 		File fs = new File("./examples/input_multiple2.txt");
 		TPEEngine rp = new TPEEngine();
 
-		ExecutionConfiguration config = new ExecutionTPEConfiguration();
-		config.setAstmode(ASTMODE.GTSPOON);
+		ExecutionConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
+
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);
 

@@ -18,6 +18,9 @@ import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
@@ -65,7 +68,8 @@ public class TimeExecutionTest {
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
 		combinations.add(properies);
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 
 		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
 				config);
@@ -111,7 +115,8 @@ public class TimeExecutionTest {
 			combinations.add(properies);
 		}
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		// config.setNumberOfThreads(2);
 		System.out.println("Serial");
 
@@ -182,7 +187,8 @@ public class TimeExecutionTest {
 			}
 		}
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 
 		System.out.println("Serial");
 		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
@@ -257,7 +263,8 @@ public class TimeExecutionTest {
 
 		System.out.println("Serial");
 		long nns = (new Date()).getTime();
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 		double timeserial = ((double) (new Date()).getTime() - nns) / 60;
 		// assertEquals(10, resultS.size());

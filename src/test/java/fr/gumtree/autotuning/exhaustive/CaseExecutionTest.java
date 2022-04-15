@@ -17,6 +17,9 @@ import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.Constants;
@@ -48,7 +51,8 @@ public class CaseExecutionTest {
 
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		CaseResult result = runner.runSingleDiffMegaDiff(treeBuilder, "./out/", rootMegadiff, megadiff_id, commitId,
@@ -74,7 +78,8 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 
@@ -101,7 +106,8 @@ public class CaseExecutionTest {
 
 		int megadiff_id = 1;
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.NONE);
 

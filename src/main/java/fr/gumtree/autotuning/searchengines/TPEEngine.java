@@ -4,9 +4,6 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.List;
-
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
@@ -16,7 +13,6 @@ import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
-import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
@@ -161,26 +157,6 @@ public class TPEEngine implements OptimizationMethod {
 		}
 		// Stop server
 		return resultGeneral;
-	}
-
-	private void computeMetric(ExecutionTPEConfiguration configuration, ResponseBestParameter result,
-			List<Integer> allv) {
-		DescriptiveStatistics stats = new DescriptiveStatistics();
-		for (int s : allv) {
-			stats.addValue(s);
-		}
-
-		double mean = stats.getMean();
-		double std = stats.getStandardDeviation();
-		double median = stats.getPercentile(50);
-
-		if (configuration.getMetric().equals(METRIC.MEAN)) {
-			result.setMetricValue(mean);
-			result.setMetricUnit(METRIC.MEAN);
-		} else {
-			result.setMetricValue(median);
-			result.setMetricUnit(METRIC.MEDIAN);
-		}
 	}
 
 	/**

@@ -22,6 +22,9 @@ import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.experimentrunner.MegadiffRunner;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
@@ -50,7 +53,8 @@ public class EngineTest {
 
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -71,7 +75,8 @@ public class EngineTest {
 		// Let's try with set 1
 		int[] megadiff_ids = new int[] { 1 };
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -95,7 +100,8 @@ public class EngineTest {
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		configuration.setNumberOfThreads(10);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.MATCHER_LEVEL);
 
@@ -109,7 +115,8 @@ public class EngineTest {
 	public void testNavigate_CompareTimeouts() throws IOException {
 
 		assertTrue(rootMegadiff.exists());
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		ExhaustiveEngine reader = new ExhaustiveEngine();
 		MegadiffRunner runner = new MegadiffRunner(reader);
 
@@ -236,7 +243,8 @@ public class EngineTest {
 		// let's simply try 1 diff per group
 		int limitDiffPerGroup = 1;
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
@@ -252,7 +260,8 @@ public class EngineTest {
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
 
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		configuration.setTimeOut(0);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.MATCHER_LEVEL);
 
@@ -272,7 +281,8 @@ public class EngineTest {
 		assertTrue(rootMegadiff.exists());
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		configuration.setTimeOut(0);
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.MATCHER_LEVEL);
 
@@ -296,7 +306,8 @@ public class EngineTest {
 				+ "/1/1_4be53ba794243204b135ea78a93ba3b5bb8afc31/CompositionScreen/1_4be53ba794243204b135ea78a93ba3b5bb8afc31_CompositionScreen_s.java");
 
 		ExhaustiveEngine reader = new ExhaustiveEngine();
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN,
+				ASTMODE.GTSPOON, new LengthEditScriptFitness());
 		configuration.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 
 		CaseResult caseResult = reader.analyzeCase(treeBuilder, "1_4be53ba794243204b135ea78a93ba3b5bb8afc31", s, t,

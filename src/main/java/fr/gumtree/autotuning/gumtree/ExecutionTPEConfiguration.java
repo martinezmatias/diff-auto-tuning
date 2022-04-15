@@ -1,5 +1,7 @@
 package fr.gumtree.autotuning.gumtree;
 
+import fr.gumtree.autotuning.fitness.Fitness;
+
 /**
  * 
  * @author Matias Martinez
@@ -15,6 +17,10 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 
 	int numberOfAttempts = 100;
 	int randomseed = 0;
+
+	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) {
+		super(metric, astmode, fitnessFunction);
+	}
 
 	public enum TYPESearch {
 		TPE, RANDOM

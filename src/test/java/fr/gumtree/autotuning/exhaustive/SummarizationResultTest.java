@@ -9,7 +9,10 @@ import java.io.IOException;
 import org.junit.Test;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
-import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
+import fr.gumtree.autotuning.experimentrunner.OfflineResultProcessor;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 
 public class SummarizationResultTest {
 
@@ -21,13 +24,9 @@ public class SummarizationResultTest {
 
 		assertTrue(fileResults.list().length > 0);
 
-		StructuredFolderfRunner runner = new StructuredFolderfRunner();
-
-		ResponseBestParameter best = runner.summarizeBestGlobal(fileResults);
-
-		// assertTrue(results.size() > 1000);
-
-		// assertEquals(2, results.values().stream().findAny().get().size());
+		OfflineResultProcessor runner = new OfflineResultProcessor();
+		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+		ResponseBestParameter best = runner.summarizeBestGlobal(fileResults, fitness, METRIC.MEAN, false);
 
 		assertTrue(best.getAllBest().size() > 1);
 
@@ -43,13 +42,10 @@ public class SummarizationResultTest {
 
 		assertTrue(fileResults.list().length > 0);
 
-		StructuredFolderfRunner runner = new StructuredFolderfRunner();
-
-		ResponseBestParameter best = runner.summarizeBestLocal(fileResults);
-
-		// assertTrue(results.size() > 1000);
-
-		// assertEquals(2, results.values().stream().findAny().get().size());
+		OfflineResultProcessor runner = new OfflineResultProcessor();
+		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+		ResponseBestParameter best = runner.summarizeBestLocal(fileResults, METRIC.MEAN,
+				ParametersResolvers.defaultConfiguration);
 
 		assertTrue(best.getAllBest().size() > 1);
 
