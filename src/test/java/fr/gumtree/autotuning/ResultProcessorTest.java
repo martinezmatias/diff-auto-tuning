@@ -36,7 +36,8 @@ import smile.validation.CrossValidation;
  */
 public class ResultProcessorTest {
 
-	private static final String results_path = "/Users/matias/develop/gt-tuning/results/resultsv2bis/";// "/Users/matias/develop/gt-tuning/results/resultsdatv2";
+	private static final String results_path = // "/Users/matias/develop/gt-tuning/results/resultsdatv3/";//
+			"/Users/matias/develop/gt-tuning/results/resultsdatv2";
 
 	final String defaultConfiguration = "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
 
@@ -63,8 +64,9 @@ public class ResultProcessorTest {
 	public void testCrossValidationGlobalSpoon() throws IOException {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
-
-		runCrossValidationExahustive(fileResults);
+		int maxPerProject = 1000;
+		METRIC metric = METRIC.MEAN;
+		runCrossValidationExahustive(fileResults, maxPerProject, metric);
 
 	}
 
@@ -73,7 +75,9 @@ public class ResultProcessorTest {
 
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
-		runCrossValidationExahustive(fileResults);
+		int maxPerProject = 100;
+		METRIC metric = METRIC.MEAN;
+		runCrossValidationExahustive(fileResults, maxPerProject, metric);
 
 	}
 
@@ -82,7 +86,8 @@ public class ResultProcessorTest {
 
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 		int maxPerProject = 100;
-		runCrossValidationTPE(fileResults, maxPerProject);
+		METRIC metric = METRIC.MEAN;
+		runCrossValidationTPE(fileResults, maxPerProject, metric);
 
 	}
 
@@ -91,7 +96,8 @@ public class ResultProcessorTest {
 
 		File fileResults = new File(results_path + "/outDAT2_Spoon_onlyresult/");
 		int maxPerProject = 100;
-		runCrossValidationTPE(fileResults, maxPerProject);
+		METRIC metric = METRIC.MEAN;
+		runCrossValidationTPE(fileResults, maxPerProject, metric);
 
 	}
 
@@ -152,7 +158,7 @@ public class ResultProcessorTest {
 		return fileWithData;
 	}
 
-	private void runCrossValidationTPE(File fileResults, int maxPerFile) throws Exception {
+	private void runCrossValidationTPE(File fileResults, int maxPerFile, METRIC metric) throws Exception {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 		List<File> collected = runner.retrievePairsToAnalyze(fileResults, maxPerFile, true);
 		System.out.println("Collected " + collected.size());
@@ -184,7 +190,6 @@ public class ResultProcessorTest {
 			System.out.println("sample (" + listTraining.size() + ")");
 			System.out.println("test (" + listTesting.size() + ")");
 
-			METRIC metric = METRIC.MEAN;
 			System.out.println("--Global TPE TRANING: ");
 			// ResponseGlobalBestParameter bestFromTraining =
 			// runner.summarizeBestGlobal(listTraining, metric, false);
@@ -217,9 +222,9 @@ public class ResultProcessorTest {
 				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
 	}
 
-	private void runCrossValidationExahustive(File fileResults) throws IOException {
+	private void runCrossValidationExahustive(File fileResults, int maxPerProject, METRIC metric) throws IOException {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
-		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, maxPerProject, true);
 		System.out.println("Collected " + collected.size());
 		int n = collected.size();
 		int k = 10;
@@ -232,6 +237,9 @@ public class ResultProcessorTest {
 		List<ResultComparisonTwoConfigurations> allBestComparison = new ArrayList<>();
 
 		System.out.println(cvresult);
+
+		List<Integer> valuesBest = new ArrayList<>();
+		List<Integer> valuesDefault = new ArrayList<>();
 
 		for (int i = 0; i < cvresult.length; i++) {
 
@@ -247,18 +255,21 @@ public class ResultProcessorTest {
 			System.out.println("sample (" + listTraining.size() + ")");
 			System.out.println("test (" + listTesting.size() + ")");
 
-			METRIC metric = METRIC.MEAN;
 			System.out.println("--Global TRANING: ");
 			ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(listTraining, metric, false);
 			System.out.println("--Global TESTING: ");
 			ResponseGlobalBestParameter bestFromTesting = runner.summarizeBestGlobal(listTesting, metric, false);
 
-			// inspectResults(best);
+			String bestConfig = bestFromTraining.getAllBest().get(0);
+			valuesBest.addAll(bestFromTesting.getValuesPerConfig().get(bestConfig));
+			valuesDefault.addAll(bestFromTesting.getValuesPerConfig().get(defaultConfiguration));
+
 			List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(bestFromTraining,
 					bestFromTesting);
 			allBestComparison.addAll(foldBestComparison);
 
 		}
+
 		System.out.println("****Final results");
 		DescriptiveStatistics statsBest = new DescriptiveStatistics();
 		DescriptiveStatistics statsWorst = new DescriptiveStatistics();
@@ -270,8 +281,25 @@ public class ResultProcessorTest {
 			statsEquals.addValue(resultComparisonTwoConfigurations.getEqualsBestPer());
 		}
 
+		storeInFile(valuesBest, "best");
+		storeInFile(valuesDefault, "default");
+		System.out.println(" " + valuesBest.size());
+		System.out.println(" " + valuesDefault.size());
 		System.out.println(
 				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
+	}
+
+	private void storeInFile(List<Integer> valuesBest, String string) throws IOException {
+		File f = new File("./out/values_" + string + ".txt");
+		FileWriter fw = new FileWriter(f);
+		for (Integer v : valuesBest) {
+			fw.write(String.valueOf(v));
+			fw.write("\n");
+		}
+
+		fw.flush();
+		fw.close();
+		System.out.println("Store " + f.getAbsolutePath());
 	}
 
 	@Test
@@ -288,6 +316,7 @@ public class ResultProcessorTest {
 	}
 
 	@Test
+	@Deprecated // Use cross validation instead
 	public void testExhaustiveGlobalSpoon() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 
@@ -301,6 +330,7 @@ public class ResultProcessorTest {
 	}
 
 	@Test
+	@Deprecated // Use cross validation instead
 	public void testExhaustiveLocalSpoon() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 
@@ -330,14 +360,70 @@ public class ResultProcessorTest {
 	public void testExhaustiveLocalJDT() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
+		analyzeLocal(fileResults);
+	}
+
+	@Test
+	public void testExhaustiveLocalJDTComparisonGlobalForPaper() throws IOException {
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		int maxPerProject = 1000;
+		analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject);
+	}
+
+	@Test
+	public void testExhaustiveLocalSpoonComparisonGlobalForPaper() throws IOException {
+		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
+		int maxPerProject = 1000;
+		analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject);
+	}
+
+	private void analyzeLocal(File fileResults) throws IOException {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner();
 		boolean checkEDsize = true;
-		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 1000, checkEDsize);
+		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, checkEDsize);
 
 		ResponseLocalBestParameter best = runner.summarizeBestLocal(collected, METRIC.MEAN, defaultConfiguration);
 
 		// inspectResults(best);
 		analyzeBestWithLocal(best);
+	}
+
+	/**
+	 * This allows us to create Table from paper
+	 * 
+	 * @param fileResults
+	 * @throws IOException
+	 */
+	private void analyzeLocalAndCompareWithGlobal(File fileResults, int maxPerProject) throws IOException {
+		StructuredFolderfRunner runner = new StructuredFolderfRunner();
+		boolean checkEDsize = true;
+		List<File> collectedToAnalyze = runner.retrievePairsToAnalyze(fileResults, maxPerProject, checkEDsize);
+
+		//
+		METRIC metric = METRIC.MEAN;
+		System.out.println("--Global TRANING: ");
+		ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(collectedToAnalyze, metric, false);
+
+		System.out.println("--Local vs Default: ");
+		ResponseLocalBestParameter bestVsDefault = runner.summarizeBestLocal(collectedToAnalyze, METRIC.MEAN,
+				defaultConfiguration);
+		// inspectResults(best);
+		analyzeBestWithLocal(bestVsDefault);
+
+		System.out.println("--Local vs Best Global: ");
+		List<String> bestGlobal = bestFromTraining.getAllBest();
+		System.out.println("Total best (" + bestGlobal.size() + ")" + bestGlobal);
+
+		int i = 1;
+		for (String oneBest : bestGlobal) {
+			System.out.println("\nanalyzing one best " + i + " " + oneBest);
+			ResponseLocalBestParameter bestVsOneLocal = runner.summarizeBestLocal(collectedToAnalyze, METRIC.MEAN,
+					oneBest);
+			// inspectResults(best);
+			analyzeBestWithLocal(bestVsOneLocal);
+			i++;
+		}
+
 	}
 
 	public class ResultComparisonTwoConfigurations {
@@ -414,7 +500,8 @@ public class ResultProcessorTest {
 		int total = 0;
 		for (BestOfFile oneBestConfig : best.getResultPerFile().values()) {
 			total++;
-			System.out.println(oneBestConfig.getMinBest() + " " + oneBestConfig.getMinDefault());
+			// System.out.println("compare "+ oneBestConfig.getMinBest() + " " +
+			// oneBestConfig.getMinDefault());
 			if (oneBestConfig.getMinBest() < oneBestConfig.getMinDefault())
 				casesImprovement++;
 
