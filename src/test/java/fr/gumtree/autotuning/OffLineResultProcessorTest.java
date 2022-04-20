@@ -35,7 +35,7 @@ public class OffLineResultProcessorTest {
 	OfflineResultProcessor processor = new OfflineResultProcessor();
 
 	private static final String results_path = // "/Users/matias/develop/gt-tuning/results/resultsdatv3/";//
-			"/Users/matias/develop/gt-tuning/results/resultsdatv2";
+			"/Users/matias/develop/gt-tuning/results/resultsv4/";
 
 	final String defaultConfiguration = "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
 
@@ -60,9 +60,9 @@ public class OffLineResultProcessorTest {
 	public void testCrossValidationGlobalSpoon() throws IOException {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
-		int maxPerProject = 100;
-		METRIC metric = METRIC.MEAN;
-		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric);
+		int maxPerProject = 5000;
+		METRIC metric = METRIC.MEDIAN;
+		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaSpoon_" + maxPerProject + "_");
 
 	}
 
@@ -71,9 +71,9 @@ public class OffLineResultProcessorTest {
 
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
-		int maxPerProject = 100;
+		int maxPerProject = 1000000;
 		METRIC metric = METRIC.MEAN;
-		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric);
+		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaJDT");
 
 	}
 
@@ -226,7 +226,7 @@ public class OffLineResultProcessorTest {
 	@Test
 	public void testExhaustiveLocalJDTComparisonGlobalForPaper() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		int maxPerProject = 1000;
+		int maxPerProject = 100;
 		processor.analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject, METRIC.MEAN);
 	}
 

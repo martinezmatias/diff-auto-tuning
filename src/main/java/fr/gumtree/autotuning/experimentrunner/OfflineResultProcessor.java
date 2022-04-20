@@ -7,9 +7,12 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
@@ -24,6 +27,7 @@ import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
+import fr.gumtree.autotuning.searchengines.MapList;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
 import smile.math.MathEx;
@@ -39,13 +43,21 @@ public class OfflineResultProcessor {
 
 	ExhaustiveEngine tuningEngine = new ExhaustiveEngine();
 
+	String outFolder = Long.toString((new Date()).getTime());
+
+	String outDir = "./out/" + outFolder + File.separator;
+
+	Map<File, ResultByConfig> cacheResultsByConfigs = new HashMap<>();
+
 	public OfflineResultProcessor(ExhaustiveEngine tuningEngine) {
 		super();
+		new File(outDir).mkdirs();
 		this.tuningEngine = tuningEngine;
 	}
 
 	public OfflineResultProcessor() {
 		super();
+		new File(outDir).mkdirs();
 		this.tuningEngine = new ExhaustiveEngine();
 	}
 
@@ -168,10 +180,12 @@ public class OfflineResultProcessor {
 	public ResponseLocalBestParameter summarizeBestLocal(List<File> toProcess, METRIC metric, String target)
 			throws IOException {
 
-		System.out.println("Amount of data " + toProcess.size());
+		// System.out.println("Amount of data " + toProcess.size());
 		// Counter of number of times the config is the best (the shortest)
 
 		ResponseLocalBestParameter resultAllFiles = new ResponseLocalBestParameter();
+
+		resultAllFiles.setTargetConfig(target);
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
 
@@ -185,7 +199,16 @@ public class OfflineResultProcessor {
 
 			ResultByConfig resultDiff = new ResultByConfig();
 
-			outputengine.readZipAndAdd(resultDiff, filesFromDiff);
+			if (cacheResultsByConfigs.containsKey(filesFromDiff)) {
+
+				resultDiff = cacheResultsByConfigs.get(filesFromDiff);
+
+			} else {
+
+				resultDiff = new ResultByConfig();
+				outputengine.readZipAndAdd(resultDiff, filesFromDiff);
+				cacheResultsByConfigs.put(filesFromDiff, resultDiff);
+			}
 
 			BestOfFile bestdata = exa.analyzeLocalResult(resultDiff, target);
 
@@ -378,6 +401,7 @@ public class OfflineResultProcessor {
 	 * @param fileResults
 	 * @throws IOException
 	 */
+	@Deprecated // We integrate it with Global exaustive analysis
 	public void analyzeLocalAndCompareWithGlobal(File fileResults, int maxPerProject, METRIC metric)
 			throws IOException {
 		OfflineResultProcessor runner = new OfflineResultProcessor();
@@ -386,26 +410,26 @@ public class OfflineResultProcessor {
 
 		Fitness fitnessFunction = new LengthEditScriptFitness();
 
-		System.out.println("--Global TRANING: ");
+		System.out.println("\n--Global TRANING: ");
 		ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(collectedToAnalyze, fitnessFunction,
 				metric, false);
 
-		System.out.println("--Local vs Default: ");
+		System.out.println("\n--Local vs Default: ");
 		ResponseLocalBestParameter bestVsDefault = runner.summarizeBestLocal(collectedToAnalyze, metric,
 				ParametersResolvers.defaultConfiguration);
-		// inspectResults(best);
+
 		analyzeBestWithLocal(bestVsDefault);
 
-		System.out.println("--Local vs Best Global: ");
+		System.out.println("\n--Local vs Best Global: ");
 		List<String> bestGlobal = bestFromTraining.getAllBest();
 		System.out.println("Total best (" + bestGlobal.size() + ")" + bestGlobal);
-
 		int i = 1;
 		for (String oneBest : bestGlobal) {
 			System.out.println("\nanalyzing one best " + i + " " + oneBest);
-			ResponseLocalBestParameter bestVsOneLocal = runner.summarizeBestLocal(collectedToAnalyze, metric, oneBest);
+			ResponseLocalBestParameter bestLocalvsOneBestGlobal = runner.summarizeBestLocal(collectedToAnalyze, metric,
+					oneBest);
 			// inspectResults(best);
-			analyzeBestWithLocal(bestVsOneLocal);
+			analyzeBestWithLocal(bestLocalvsOneBestGlobal);
 			i++;
 		}
 
@@ -419,6 +443,8 @@ public class OfflineResultProcessor {
 		public long total = 0;
 		public String oneBestConfig;
 		public String defaultConfig;
+
+		public String detailsRun = "";
 
 		public ResultComparisonTwoConfigurations(String oneBestConfig, String defaultConfig, long betterBest,
 				long worstBest, long equalsB, long total) {
@@ -475,9 +501,17 @@ public class OfflineResultProcessor {
 			this.total = total;
 		}
 
+		public String getDetailsRun() {
+			return detailsRun;
+		}
+
+		public void setDetailsRun(String detailsRun) {
+			this.detailsRun = detailsRun;
+		}
+
 	}
 
-	public void analyzeBestWithLocal(ResponseLocalBestParameter best) {
+	public ResultComparisonTwoConfigurations analyzeBestWithLocal(ResponseLocalBestParameter best) {
 
 		int casesImprovement = 0;
 		int casesWorst = 0;
@@ -485,8 +519,7 @@ public class OfflineResultProcessor {
 		int total = 0;
 		for (BestOfFile oneBestConfig : best.getResultPerFile().values()) {
 			total++;
-			// System.out.println("compare "+ oneBestConfig.getMinBest() + " " +
-			// oneBestConfig.getMinDefault());
+
 			if (oneBestConfig.getMinBest() < oneBestConfig.getMinDefault())
 				casesImprovement++;
 
@@ -504,6 +537,16 @@ public class OfflineResultProcessor {
 		// be
 		// zero
 		System.out.println("Cases  equals " + casesAllEquals + " " + ((double) casesAllEquals / (double) total));
+
+		ResultComparisonTwoConfigurations comparisons = new ResultComparisonTwoConfigurations("local",
+				best.getTargetConfig(), casesImprovement, casesWorst, casesAllEquals, total);
+		return comparisons;
+
+		// fw.write(String.format("%i,%s,%d,%d,%d,%d,%f,%f,%f\n", i, oneBest,
+		// casesImprovement, casesWorst, casesAllEquals,
+		// (total), ((double) casesImprovement / (double) total), ((double) casesWorst /
+		// (double) total),
+		// ((double) casesAllEquals / (double) total)));
 
 	}
 
@@ -542,6 +585,7 @@ public class OfflineResultProcessor {
 			}
 
 		}
+
 		System.out.println(perBest);
 
 		System.out.println("Cases a Best produces more improvement " + casesImprovement);
@@ -605,7 +649,8 @@ public class OfflineResultProcessor {
 		return outBestComparison;
 	}
 
-	public void runCrossValidationExahustive(File fileResults, int maxPerProject, METRIC metric) throws IOException {
+	public void runCrossValidationExahustive(File fileResults, int maxPerProject, METRIC metric, String outputKey)
+			throws IOException {
 
 		OfflineResultProcessor runner = new OfflineResultProcessor();
 
@@ -619,7 +664,9 @@ public class OfflineResultProcessor {
 
 		smile.validation.Bag[] cvresult = CrossValidation.of(n, k);
 
-		List<ResultComparisonTwoConfigurations> allBestComparison = new ArrayList<>();
+		List<ResultComparisonTwoConfigurations> allBestGlobalComparison = new ArrayList<>();
+		List<ResultComparisonTwoConfigurations> allLocalVsBestGlobalComparison = new ArrayList<>();
+		List<ResultComparisonTwoConfigurations> allLocalVsDefaultComparison = new ArrayList<>();
 
 		System.out.println(cvresult);
 
@@ -628,6 +675,15 @@ public class OfflineResultProcessor {
 
 		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
 
+		File fouttraining = new File(outDir + outputKey + "_info_training_best.csv");
+		FileWriter fwTraining = new FileWriter(fouttraining);
+
+		File foutTesting = new File(outDir + outputKey + "_info_testing_best.csv");
+		FileWriter fwTesting = new FileWriter(foutTesting);
+
+		MapList<String, Double> bestAllFolds = new MapList<>();
+
+		// For each fold
 		for (int i = 0; i < cvresult.length; i++) {
 
 			System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
@@ -639,6 +695,9 @@ public class OfflineResultProcessor {
 			List<File> listTraining = Arrays.asList(training);
 			List<File> listTesting = Arrays.asList(testing);
 
+			storesFiles(listTraining, i, "training", outputKey);
+			storesFiles(listTesting, i, "testing", outputKey);
+
 			System.out.println("sample (" + listTraining.size() + ")");
 			System.out.println("test (" + listTesting.size() + ")");
 
@@ -649,33 +708,177 @@ public class OfflineResultProcessor {
 			ResponseGlobalBestParameter bestFromTesting = runner.summarizeBestGlobal(listTesting, fitness, metric,
 					false);
 
+			// Just the values of one of the best to compute the pvalue
 			String bestConfig = bestFromTraining.getAllBest().get(0);
 			valuesBest.addAll(bestFromTesting.getValuesPerConfig().get(bestConfig));
 			valuesDefault.addAll(bestFromTesting.getValuesPerConfig().get(ParametersResolvers.defaultConfiguration));
 
+			// For each of the best from Training, save data
+			int posInTraining = 0;
+			int posInTrain = 0;
+			for (String oneBest : bestFromTraining.getAllBest()) {
+				String summary = createLineSummary(i, bestFromTraining, posInTraining, oneBest);
+				fwTraining.write(summary);
+
+				summary = createLineSummary(i, bestFromTraining, posInTrain, oneBest);
+				fwTesting.write(summary);
+
+				// We put the value from testing
+				bestAllFolds.add(oneBest, bestFromTesting.getMetricValueByConfiguration().get(oneBest));
+				posInTraining++;
+				posInTrain++;
+			}
+
+			fwTraining.flush();
+			fwTesting.flush();
+
+			// Now, compute performance of Best on training
+
 			List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(bestFromTraining,
 					bestFromTesting);
-			allBestComparison.addAll(foldBestComparison);
+			for (ResultComparisonTwoConfigurations rc : foldBestComparison) {
+				rc.setDetailsRun("Fold_" + i);
+				allBestGlobalComparison.add(rc);
+			}
+
+			/// Now local analysis
+
+			/// Comparing best local Vs default
+			System.out.println("\n--Local vs Default: (on testing)");
+			ResponseLocalBestParameter bestVsDefault = runner.summarizeBestLocal(listTesting, metric,
+					ParametersResolvers.defaultConfiguration);
+
+			ResultComparisonTwoConfigurations comparisonLocalDefault = analyzeBestWithLocal(bestVsDefault);
+			comparisonLocalDefault.setDetailsRun("Fold_" + i);
+			allLocalVsDefaultComparison.add(comparisonLocalDefault);
+
+			/// Comparing best local Vs default
+
+			System.out.println("\n--Local vs Best Global: ");
+			List<String> bestGlobal = bestFromTraining.getAllBest();
+			System.out.println("Total best from Global (" + bestGlobal.size() + ")" + bestGlobal);
+			int ibestLocal = 1;
+			for (String oneBestGlobal : bestGlobal) {
+				System.out.println(
+						"\n" + ibestLocal + "/" + bestGlobal.size() + ") analyzing one best " + " " + oneBestGlobal);
+				ResponseLocalBestParameter bestVsOneLocal = runner.summarizeBestLocal(listTesting, metric,
+						oneBestGlobal);
+				ResultComparisonTwoConfigurations resultLocalComparison = analyzeBestWithLocal(bestVsOneLocal);
+				resultLocalComparison.setDetailsRun("Fold_" + i);
+				ibestLocal++;
+
+				allLocalVsBestGlobalComparison.add(resultLocalComparison);
+
+			}
+			// To avoid heap explosion
+			this.cacheResultsByConfigs.clear();
 
 		}
 
+		fwTraining.close();
+		fwTesting.close();
+
 		System.out.println("****Final results");
+
+		/// Saving locals
+		File fcomparison = new File(outDir + outputKey + "_comparison_global_best_default_testing.csv");
+		FileWriter fwcomp = new FileWriter(fcomparison);
+
+		File fsum = new File(outDir + outputKey + "_summary_global_best_default_testing.csv");
+		FileWriter fwSum = new FileWriter(fsum);
+
+		saveMeasuresOnFile(allBestGlobalComparison, fwcomp, fwSum);
+
+		fwSum.close();
+		fwcomp.close();
+
+		File fLocalVsBest = new File(outDir + outputKey + "comparison_local_vs_best_testing.csv");
+		FileWriter fwLocalVsBest = new FileWriter(fLocalVsBest);
+
+		File fsuml = new File(outDir + outputKey + "_summary_local_vs_best_testing.csv");
+		FileWriter fwSuml = new FileWriter(fsuml);
+
+		saveMeasuresOnFile(allLocalVsBestGlobalComparison, fwLocalVsBest, fwSuml);
+
+		fwLocalVsBest.close();
+		fwSuml.close();
+
+		File fLocalVsDefault = new File(outDir + outputKey + "comparison_local_vs_defaul_testing.csv");
+		FileWriter fwLocalVsDefault = new FileWriter(fLocalVsDefault);
+
+		File fsumld = new File(outDir + outputKey + "_summary_local_vs_default_testing.csv");
+		FileWriter fwSumld = new FileWriter(fsumld);
+
+		saveMeasuresOnFile(allLocalVsBestGlobalComparison, fwLocalVsDefault, fwSumld);
+
+		fwLocalVsDefault.close();
+		fwSumld.close();
+
+		storeInFile(valuesBest, "best", outputKey);
+		storeInFile(valuesDefault, "default", outputKey);
+		System.out.println(" " + valuesBest.size());
+		System.out.println(" " + valuesDefault.size());
+
+		int maxBest = bestAllFolds.keySet().stream().map(e -> bestAllFolds.get(e).size()).distinct()
+				.max(Comparator.comparing(Integer::valueOf)).get();
+
+		List<String> mostRecurrentBest = bestAllFolds.keySet().stream()
+				.filter(e -> bestAllFolds.get(e).size() == maxBest).collect(Collectors.toList());
+		System.out.println("Config with max number best " + maxBest);
+
+		System.out.println(mostRecurrentBest.size() + " " + mostRecurrentBest);
+		storeBestFromAllTraining(mostRecurrentBest, outputKey);
+
+	}
+
+	private void saveMeasuresOnFile(List<ResultComparisonTwoConfigurations> allBestGlobalComparison, FileWriter fwcomp,
+			FileWriter fwSum) throws IOException {
 		DescriptiveStatistics statsBest = new DescriptiveStatistics();
 		DescriptiveStatistics statsWorst = new DescriptiveStatistics();
 		DescriptiveStatistics statsEquals = new DescriptiveStatistics();
 
-		for (ResultComparisonTwoConfigurations resultComparisonTwoConfigurations : allBestComparison) {
+		// For each of the best from Global, save data
+		for (ResultComparisonTwoConfigurations resultComparisonTwoConfigurations : allBestGlobalComparison) {
 			statsBest.addValue(resultComparisonTwoConfigurations.getBetterBestPer());
 			statsWorst.addValue(resultComparisonTwoConfigurations.getWorstBestPer());
 			statsEquals.addValue(resultComparisonTwoConfigurations.getEqualsBestPer());
+
+			fwcomp.write(String.format("%s,%s,%s,%d,%d,%d,%f,%f,%f,\n",
+					resultComparisonTwoConfigurations.getDetailsRun(), resultComparisonTwoConfigurations.defaultConfig,
+					resultComparisonTwoConfigurations.oneBestConfig, resultComparisonTwoConfigurations.getBetterBest(),
+					resultComparisonTwoConfigurations.getEqualsB(), resultComparisonTwoConfigurations.getWorstBest(),
+					resultComparisonTwoConfigurations.getBetterBestPer(),
+					resultComparisonTwoConfigurations.getEqualsBestPer(),
+					resultComparisonTwoConfigurations.getWorstBestPer()));
 		}
 
-		storeInFile(valuesBest, "best");
-		storeInFile(valuesDefault, "default");
-		System.out.println(" " + valuesBest.size());
-		System.out.println(" " + valuesDefault.size());
-		System.out.println(
-				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
+		System.out.println("All Best comparisons " + allBestGlobalComparison.size());
+
+		String sumLine = "Mean Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals "
+				+ statsEquals.getMean() + "Total  Mean"
+				+ (statsBest.getMean() + statsWorst.getMean() + statsEquals.getMean()) + "\n";
+
+		String sumLine2 = "Median Best " + statsBest.getPercentile(50) + " Worst " + statsWorst.getPercentile(50)
+				+ " Equals " + statsEquals.getPercentile(50) + "\n";
+
+		String sumLine3 = "Stdev Best " + statsBest.getStandardDeviation() + " Worst "
+				+ statsWorst.getStandardDeviation() + " Equals " + statsEquals.getStandardDeviation() + "\n";
+
+		System.out.println(sumLine);
+
+		// Storing summary:
+		fwSum.write(sumLine);
+		fwSum.write(sumLine2);
+		fwSum.write(sumLine3);
+	}
+
+	private String createLineSummary(int i, ResponseGlobalBestParameter bestFromTraining, int posInTraining,
+			String oneBest) {
+		String summary = String.format("%d,%d,%f,%s,%s\n", i, posInTraining,
+				bestFromTraining.getMetricValueByConfiguration().get(oneBest).doubleValue(), oneBest,
+				bestFromTraining.getValuesPerConfig().get(oneBest).stream().map(e -> (e != Double.MAX_VALUE) ? e : 9988)
+						.map(d -> d.toString()).collect(Collectors.joining(",")));
+		return summary;
 	}
 
 	public ResultComparisonTwoConfigurations compareConfigs(ResultByConfig values, List<Double> perBest,
@@ -719,8 +922,21 @@ public class OfflineResultProcessor {
 		return result;
 	}
 
-	private void storeInFile(List<Double> valuesBest, String string) throws IOException {
-		File f = new File("./out/values_" + string + ".txt");
+	private void storeBestFromAllTraining(List<String> valuesBest, String outputKey) throws IOException {
+		File f = new File(outDir + outputKey + "_bestConfigs_" + ".txt");
+		FileWriter fw = new FileWriter(f);
+		for (String v : valuesBest) {
+			fw.write(String.valueOf(v));
+			fw.write("\n");
+		}
+
+		fw.flush();
+		fw.close();
+		System.out.println("Store " + f.getAbsolutePath());
+	}
+
+	private void storeInFile(List<Double> valuesBest, String string, String outputKey) throws IOException {
+		File f = new File(outDir + outputKey + "_values_" + string + ".txt");
 		FileWriter fw = new FileWriter(f);
 		for (Double v : valuesBest) {
 			fw.write(String.valueOf(v));
@@ -730,6 +946,20 @@ public class OfflineResultProcessor {
 		fw.flush();
 		fw.close();
 		System.out.println("Store " + f.getAbsolutePath());
+	}
+
+	private void storesFiles(List<File> listTraining, int i, String string, String outputKey) throws IOException {
+		File f = new File(outDir + outputKey + "_files_" + string + i + ".txt");
+		FileWriter fw = new FileWriter(f);
+		for (File v : listTraining) {
+			fw.write(v.getAbsolutePath());
+			fw.write("\n");
+		}
+
+		fw.flush();
+		fw.close();
+		System.out.println("Store  " + f.getAbsolutePath());
+
 	}
 
 }
