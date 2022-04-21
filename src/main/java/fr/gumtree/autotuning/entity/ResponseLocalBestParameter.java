@@ -1,8 +1,5 @@
 package fr.gumtree.autotuning.entity;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * 
  * @author Matias Martinez
@@ -15,14 +12,14 @@ public class ResponseLocalBestParameter extends ResponseBestParameter {
 
 	// store the most frequent
 
-	private Map<String, Integer> countBestByConfigurations = new HashMap<String, Integer>();
+	public String targetConfig;
 
-	public Map<String, Integer> getCountBestByConfigurations() {
-		return countBestByConfigurations;
+	public String getTargetConfig() {
+		return targetConfig;
 	}
 
-	public void setCountBestByConfigurations(Map<String, Integer> countBestByConfigurations) {
-		this.countBestByConfigurations = countBestByConfigurations;
+	public void setTargetConfig(String targetConfig) {
+		this.targetConfig = targetConfig;
 	}
 
 }

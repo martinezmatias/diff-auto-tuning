@@ -39,6 +39,7 @@ import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.fitness.Fitness;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.DiffProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
@@ -911,7 +912,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			for (Double aSize : allSizesOfConfigs) {
 
-				if (!ignoreTimeout || aSize != Integer.MAX_VALUE)
+				if (!ignoreTimeout || aSize != Double.MAX_VALUE) // aSize != Integer.MAX_VALUE
 					stats.addValue(aSize);
 				else {
 					timeoutsConfig++;
@@ -920,8 +921,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 			double median = 0;
 			if (metric.equals(METRIC.MEDIAN))
-				median = stats.getPercentile(50);
-
+				median = LengthEditScriptFitness.median(allSizesOfConfigs);// stats.getPercentile(50);
 			else if (metric.equals(METRIC.MEAN))
 				median = stats.getMean();
 
@@ -934,11 +934,21 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			// long nrTimeout = allSizesOfConfigs.stream().filter(e -> e ==
 			// Integer.MAX_VALUE).count();
 
+			if (!ignoreTimeout && stats.getValues().length != allSizesOfConfigs.size()) {
+				System.out.println("Error size of stats");
+
+			}
+
 		}
 		final Double minValuemedian = minMedian;
 		// Choose the config with best median
 
 		System.out.println("Min " + metric.toString() + ": " + +minValuemedian);
+
+		// for (String cand : metricValueByConfiguration.keySet()) {
+		// System.out.println(cand + " -metric value: " +
+		// metricValueByConfiguration.get(cand));
+		// }
 
 		List<String> bests = metricValueByConfiguration.keySet().stream()
 				.filter(e -> minValuemedian.equals(metricValueByConfiguration.get(e))).collect(Collectors.toList());
@@ -950,60 +960,23 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		bestResult.setMetricValue(minValuemedian);
 		bestResult.setMetricUnit(metric);
 		bestResult.setNumberOfEvaluatedPairs(nrEvaluations);
-		bestResult.setAllConfigs(metricValueByConfiguration.keySet());
+		// bestResult.setAllConfigs(metricValueByConfiguration.keySet());
 		bestResult.setMetricValueByConfiguration(metricValueByConfiguration);
 		bestResult.setBest(bests);
 		bestResult.setValuesPerConfig(results);
 		return bestResult;
 	}
 
-	public List<String> findTheBestLocal(ResponseLocalBestParameter localResults) {
-		// Find the best local according with the number of times is the best
-
-		List<String> bestMinConfig = new ArrayList<>();
-		int mostNumberOfBest = Integer.MIN_VALUE;
-
-		// For each config
-		for (String aConfig : localResults.getCountBestByConfigurations().keySet()) {
-
-			// times that the config is the best (shortest)
-			int timesThatIsTheBest = localResults.getCountBestByConfigurations().get(aConfig);
-
-			if (timesThatIsTheBest >= mostNumberOfBest) {
-
-				// it's a new highest, we remove others
-				if (timesThatIsTheBest > mostNumberOfBest) {
-					bestMinConfig.clear();
-				}
-
-				bestMinConfig.add(aConfig);
-				mostNumberOfBest = timesThatIsTheBest;
-
-			}
-
-		}
-
-		return bestMinConfig;
-	}
-
 	public class BestOfFile {
-		List<String> currentMinConfigs = new ArrayList<>();
+
 		double minBest;
 		double minDefault;
 
-		public BestOfFile(List<String> currentMinConfigs, double minBest, double minDefault) {
+		public BestOfFile(double minBest, double minDefault) {
 			super();
-			this.currentMinConfigs = currentMinConfigs;
+
 			this.minBest = minBest;
 			this.minDefault = minDefault;
-		}
-
-		public List<String> getCurrentMinConfigs() {
-			return currentMinConfigs;
-		}
-
-		public void setCurrentMinConfigs(List<String> currentMinConfigs) {
-			this.currentMinConfigs = currentMinConfigs;
 		}
 
 		public double getMinBest() {
@@ -1024,9 +997,54 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		@Override
 		public String toString() {
-			return "BestOfFile [currentMinConfigs=" + currentMinConfigs + ", minBest=" + minBest + ", minDefault="
-					+ minDefault + "]";
+			return "BestOfFile [minBest=" + minBest + ", minDefault=" + minDefault + "]";
 		}
+	}
+
+	public List<String> analyzeLocalResult(File filesFromDiff, ResultByConfig resultByConfig,
+			List<ResponseLocalBestParameter> targets) {
+		double min = Double.MAX_VALUE;
+		List<String> currentMinConfigs = new ArrayList<>();
+
+		for (String aCondif : resultByConfig.keySet()) {
+
+			// By definition we have only one pair to analyze (as it's local search)
+
+			List<Double> evaluations = resultByConfig.get(aCondif);
+			// System.out.println("size " + evaluations.size());
+
+			if (evaluations.size() != 1) {
+				System.err.println("A result has multiples pairs");
+				throw new IllegalArgumentException("ìnvalid data");
+			}
+			// pick the first
+			double sizeConfig = evaluations.get(0);
+
+			if (sizeConfig <= min) {
+
+				// it's a new min, we remove others
+				if (sizeConfig < min) {
+					currentMinConfigs.clear();
+				}
+
+				currentMinConfigs.add(aCondif);
+				min = sizeConfig;
+
+			}
+
+		}
+
+		for (ResponseLocalBestParameter target : targets) {
+			List<Double> evaluations = resultByConfig.get(target.getTargetConfig());
+			double minTarget = evaluations.get(0);
+
+			BestOfFile besti = new BestOfFile(min, minTarget);
+			target.getResultPerFile().put(filesFromDiff, besti);
+
+		}
+
+		return currentMinConfigs;
+
 	}
 
 	public BestOfFile analyzeLocalResult(ResultByConfig resultByConfig, String targetConfing) {
@@ -1068,7 +1086,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 				minTarget = sizeConfig;
 			}
 		}
-		return new BestOfFile(currentMinConfigs, min, minTarget);
+		return new BestOfFile(min, minTarget);
 
 	}
 

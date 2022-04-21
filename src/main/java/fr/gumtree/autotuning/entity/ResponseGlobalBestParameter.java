@@ -1,7 +1,6 @@
 package fr.gumtree.autotuning.entity;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -16,7 +15,7 @@ import fr.gumtree.autotuning.searchengines.ResultByConfig;
 public class ResponseGlobalBestParameter extends ResponseBestParameter {
 
 	ResultByConfig valuesPerConfig;
-	private Collection<String> allConfigs;
+	// private Collection<String> allConfigs;
 	private Map<String, Double> metricValueByConfiguration = new HashMap<>();
 
 	public String getBest() {
@@ -45,14 +44,6 @@ public class ResponseGlobalBestParameter extends ResponseBestParameter {
 
 	public void setBest(List<String> best) {
 		this.bests = best;
-	}
-
-	public Collection<String> getAllConfigs() {
-		return allConfigs;
-	}
-
-	public void setAllConfigs(Collection<String> allConfigs) {
-		this.allConfigs = allConfigs;
 	}
 
 	@Override

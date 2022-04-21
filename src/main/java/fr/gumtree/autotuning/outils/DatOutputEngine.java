@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -330,8 +331,23 @@ public class DatOutputEngine {
 
 	}
 
-	public boolean isEmpty(File zip) throws IOException {
-		String outJson = unzipFolder(zip.toPath());
+	public void readJSon(ResultByConfig results, File jsonfile) throws IOException {
+
+		String outJson = new String(Files.readAllBytes(jsonfile.toPath()));
+		JsonElement jsonElement = new JsonParser().parse(outJson);
+
+		readResultByConfig(results, jsonElement);
+
+	}
+
+	public boolean isEmpty(File fileToRead) throws IOException {
+
+		String outJson = unzipFolder(fileToRead.toPath());
+
+		if (fileToRead.getName().endsWith(".zip"))
+			outJson = unzipFolder(fileToRead.toPath());
+		else
+			outJson = new String(Files.readAllBytes(fileToRead.toPath()));
 
 		JsonElement jsonElement = new JsonParser().parse(outJson);
 

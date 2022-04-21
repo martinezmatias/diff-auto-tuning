@@ -72,7 +72,7 @@ public class OffLineResultProcessorTest {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
 		int maxPerProject = 1000000;
-		METRIC metric = METRIC.MEAN;
+		METRIC metric = METRIC.MEDIAN;
 		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaJDT");
 
 	}
@@ -190,7 +190,7 @@ public class OffLineResultProcessorTest {
 	private void inspectResults(ResponseGlobalBestParameter best) {
 		System.out.println("Best " + best);
 
-		boolean configDefaultIsAnalyzed = best.getAllConfigs().contains(defaultConfiguration);
+		boolean configDefaultIsAnalyzed = best.getMetricValueByConfiguration().keySet().contains(defaultConfiguration);
 		System.out.println("Best is analyzed " + configDefaultIsAnalyzed + " best value: " + best.getMetricValue());
 		assertTrue(configDefaultIsAnalyzed);
 

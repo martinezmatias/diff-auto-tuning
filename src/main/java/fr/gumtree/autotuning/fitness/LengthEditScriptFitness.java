@@ -1,5 +1,7 @@
 package fr.gumtree.autotuning.fitness;
 
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
@@ -46,7 +48,7 @@ public class LengthEditScriptFitness implements Fitness {
 			return stats.getMean();
 
 		else if (metric.equals(METRIC.MEDIAN))
-			return stats.getPercentile(50);
+			return median(values);// stats.getPercentile(50);
 
 		System.err.println("Unknown metric: " + metric);
 		return Double.MAX_VALUE;
@@ -62,6 +64,21 @@ public class LengthEditScriptFitness implements Fitness {
 		int size = diff.editScript.asList().size();
 
 		return new Double(size);
+	}
+
+	public static double median(List<Double> valuesOriginal) {
+
+		List<Double> values = new ArrayList<>(valuesOriginal);
+		Collections.sort(values);
+
+		if (values.size() % 2 == 1)
+			return values.get((values.size() + 1) / 2 - 1);
+		else {
+			double lower = values.get(values.size() / 2 - 1);
+			double upper = values.get(values.size() / 2);
+
+			return (lower + upper) / 2.0;
+		}
 	}
 
 }
