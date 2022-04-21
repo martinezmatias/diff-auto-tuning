@@ -224,11 +224,12 @@ public class OfflineResultProcessor {
 	}
 
 	public List<ResponseLocalBestParameter> summarizeBestLocal(List<File> toProcess, METRIC metric,
-			List<String> targets, Map<String, Integer> countBestLocalByConfigurations) throws IOException {
+			List<String> targets, Map<String, Integer> countBestLocalByConfigurations,
+			MapList<String, String> bestLocalPerFile) throws IOException {
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
 		DatOutputEngine outputengine = new DatOutputEngine(null);
-		// System.out.println("Amount of data " + toProcess.size());
+
 		// Counter of number of times the config is the best (the shortest)
 
 		List<ResponseLocalBestParameter> allResults = new ArrayList<>();
@@ -246,6 +247,9 @@ public class OfflineResultProcessor {
 
 		for (File filesFromDiff : toProcess) {
 
+			String id = filesFromDiff.getAbsolutePath().replace("/Users/matias/develop/gt-tuning/results/resultsv4/",
+					"");
+
 			if (totalFilesAnalyzed % 500 == 0)
 				System.out.println(totalFilesAnalyzed + "/" + toProcess.size());
 
@@ -257,6 +261,18 @@ public class OfflineResultProcessor {
 			outputengine.readJSon(resultDiff, filesFromDiff);
 
 			List<String> bestLocals = exa.analyzeLocalResult(filesFromDiff, resultDiff, allResults);
+
+			System.out.println("# best " + " " + bestLocals.size() + " sample: " + bestLocals.get(0));
+
+			for (String bestLocal : bestLocals) {
+
+				if (!(bestLocalPerFile.containsKey(bestLocal) && bestLocalPerFile.get(bestLocal).contains(id))) {
+
+					bestLocalPerFile.add(bestLocal, id);
+
+				}
+
+			}
 
 			updateGeneralResults(countBestLocalByConfigurations, bestLocals);
 
@@ -331,9 +347,6 @@ public class OfflineResultProcessor {
 			}
 		}
 
-		// ResponseBestParameter best = exa.findTheBestLocal(totalAnalyzed, freqBest);
-		// List<String> bests = exa.findTheBestLocal(resultAllFiles);
-		// resultAllFiles.setBests(bests);
 		resultAllFiles.setNumberOfEvaluatedPairs(totalAnalyzed);
 		resultAllFiles.setResultPerFile(resultPerFile);
 
@@ -721,13 +734,12 @@ public class OfflineResultProcessor {
 
 		MapList<String, Double> bestAllFolds = new MapList<>();
 
+		MapList<String, String> bestLocalPerFile = new MapList<String, String>();
+
 		MapList<String, Double> fitnessAllConfigsInTraining = new MapList<>();
 
 		// For each fold
 		for (int i = 0; i < cvresult.length; i++) {
-
-			// if (i != 4)
-			// continue;
 
 			System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
 			Bag bag = cvresult[i];
@@ -826,7 +838,7 @@ public class OfflineResultProcessor {
 			System.out.println("\n------Local vs Default: (on testing) summarizing results ");
 
 			List<ResponseLocalBestParameter> bestVsDefaultList = runner.summarizeBestLocal(listTesting, metric,
-					allTarget, countBestLocalByConfigurations);
+					allTarget, countBestLocalByConfigurations, bestLocalPerFile);
 
 			// We retrieve the first one (default config)
 
@@ -938,6 +950,9 @@ public class OfflineResultProcessor {
 
 		saveMostFrequent(countBestGlobalByConfigurations, fbestGlobal);
 
+		File frequentLocal = new File(outDir + outputKey + "_detailled_most_frequent_best_local.csv");
+		saveMostFrequentList(bestLocalPerFile, frequentLocal);
+
 	}
 
 	private void saveMostFrequent(Map<String, Integer> countBestLocalByConfigurations, File fbestLocal)
@@ -951,6 +966,22 @@ public class OfflineResultProcessor {
 		fbwestLocal.write(String.format("%s,%s\n", "Frequent_config", "count"));
 		for (String key : keys) {
 			fbwestLocal.write(String.format("%s,%d\n", key, countBestLocalByConfigurations.get(key)));
+		}
+		fbwestLocal.close();
+	}
+
+	private void saveMostFrequentList(MapList<String, String> countBestLocalByConfigurations, File fbestLocal)
+			throws IOException {
+		List<String> keys = new ArrayList<>(countBestLocalByConfigurations.keySet());
+
+		keys.sort((e, p) -> Integer.compare(countBestLocalByConfigurations.get(p).size(),
+				countBestLocalByConfigurations.get(e).size()));
+
+		FileWriter fbwestLocal = new FileWriter(fbestLocal);
+		fbwestLocal.write(String.format("%s,%s\n", "Frequent_config", "count"));
+		for (String key : keys) {
+			fbwestLocal.write(String.format("%s,%d,%s\n", key, countBestLocalByConfigurations.get(key).size(),
+					countBestLocalByConfigurations.get(key).stream().collect(Collectors.joining(","))));
 		}
 		fbwestLocal.close();
 	}

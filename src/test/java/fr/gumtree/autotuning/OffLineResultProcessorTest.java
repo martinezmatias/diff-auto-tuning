@@ -60,7 +60,7 @@ public class OffLineResultProcessorTest {
 	public void testCrossValidationGlobalSpoon() throws IOException {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
-		int maxPerProject = 5000;
+		int maxPerProject = 100;
 		METRIC metric = METRIC.MEDIAN;
 		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaSpoon_" + maxPerProject + "_");
 
