@@ -229,7 +229,7 @@ public class OfflineResultProcessor {
 
 	public List<ResponseLocalBestParameter> summarizeBestLocal(List<File> toProcess, METRIC metric,
 			List<String> targets, Map<String, Integer> countBestLocalByConfigurations,
-			MapList<String, String> bestLocalPerFile) throws IOException {
+			MapList<String, String> bestLocalPerFile, List<Double> valuesLocalTesting) throws IOException {
 
 		ExhaustiveEngine exa = new ExhaustiveEngine();
 		DatOutputEngine outputengine = new DatOutputEngine(null);
@@ -267,6 +267,15 @@ public class OfflineResultProcessor {
 			List<String> bestLocals = exa.analyzeLocalResult(filesFromDiff, resultDiff, allResults);
 
 			System.out.println("# best " + " " + bestLocals.size() + " sample: " + bestLocals.get(0));
+
+			// Let's return the fitness of one of the best (all have the same)
+			if (bestLocals.size() > 0) {
+
+				List<Double> evaluations = resultDiff.get(bestLocals.get(0));
+				double sizeConfig = evaluations.get(0);
+				valuesLocalTesting.add(sizeConfig);
+
+			}
 
 			for (String bestLocal : bestLocals) {
 
@@ -808,6 +817,9 @@ public class OfflineResultProcessor {
 		return diff;
 	}
 
+	String[] targets = new String[] { "ClassicGumtree-bu_minsim-0.2-bu_minsize-600-st_minprio-1-st_priocalc-size",
+			"HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-size" };
+
 	public void runCrossValidationExahustive(File fileResults, int maxPerProject, METRIC metric, String outputKey)
 			throws IOException {
 
@@ -821,8 +833,10 @@ public class OfflineResultProcessor {
 		File[] array = new File[collected.size()];
 		collected.toArray(array);
 
+		// Stores the times a config is best locally
 		Map<String, Integer> countBestLocalByConfigurations = new HashMap<String, Integer>();
 
+		// Store the times a config is best globally (at most one per fold)
 		Map<String, Integer> countBestGlobalByConfigurations = new HashMap<String, Integer>();
 
 		smile.validation.Bag[] cvresult = CrossValidation.of(n, k);
@@ -833,8 +847,19 @@ public class OfflineResultProcessor {
 
 		System.out.println(cvresult);
 
-		List<Double> valuesBest = new ArrayList<>();
-		List<Double> valuesDefault = new ArrayList<>();
+		// Saving the values for the hypothesis test
+		MapList<String, Double> valueBestTestingTarget = new MapList<String, Double>();
+		// List<Double> valuesBestTesting = new ArrayList<>();
+		// List<Double> valuesDefaultTesting = new ArrayList<>();
+		// List<Double> valuesLocalTesting = new ArrayList<>();
+
+		// Init:
+		valueBestTestingTarget.put(ParametersResolvers.defaultConfiguration, new ArrayList<>());
+		valueBestTestingTarget.put("best", new ArrayList<>());
+		valueBestTestingTarget.put("local", new ArrayList<>());
+		for (String target : targets) {
+			valueBestTestingTarget.put(target, new ArrayList<>());
+		}
 
 		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
 
@@ -901,8 +926,14 @@ public class OfflineResultProcessor {
 
 			// Just the values of one of the best to compute the pvalue
 			String bestConfig = allBestFromTraining.get(0);
-			valuesBest.addAll(bestFromTesting.getValuesPerConfig().get(bestConfig));
-			valuesDefault.addAll(bestFromTesting.getValuesPerConfig().get(ParametersResolvers.defaultConfiguration));
+			valueBestTestingTarget.get("best").addAll(bestFromTesting.getValuesPerConfig().get(bestConfig));
+			valueBestTestingTarget.get(ParametersResolvers.defaultConfiguration)
+					.addAll(bestFromTesting.getValuesPerConfig().get(ParametersResolvers.defaultConfiguration));
+
+			for (String target : targets) {
+
+				valueBestTestingTarget.get(target).addAll(bestFromTesting.getValuesPerConfig().get(bestConfig));
+			}
 
 			updateGeneralResults(countBestGlobalByConfigurations, allBestFromTraining);
 
@@ -950,7 +981,7 @@ public class OfflineResultProcessor {
 			System.out.println("\n------Local vs Default: (on testing) summarizing results ");
 
 			List<ResponseLocalBestParameter> bestVsDefaultList = runner.summarizeBestLocal(listTesting, metric,
-					allTarget, countBestLocalByConfigurations, bestLocalPerFile);
+					allTarget, countBestLocalByConfigurations, bestLocalPerFile, valueBestTestingTarget.get("local"));
 
 			// We retrieve the first one (default config)
 
@@ -1039,10 +1070,11 @@ public class OfflineResultProcessor {
 
 		fwmeasureTraining.close();
 
-		storeInFile(valuesBest, "best", outputKey);
-		storeInFile(valuesDefault, "default", outputKey);
-		System.out.println(" " + valuesBest.size());
-		System.out.println(" " + valuesDefault.size());
+		for (String target : valueBestTestingTarget.keySet()) {
+			storeInFile(valueBestTestingTarget.get(target), target, outputKey);
+		}
+		// storeInFile(valuesBestTesting, "best", outputKey);
+		// storeInFile(valuesDefaultTesting, "default", outputKey);
 
 		int maxBest = bestAllFolds.keySet().stream().map(e -> bestAllFolds.get(e).size()).distinct()
 				.max(Comparator.comparing(Integer::valueOf)).get();
@@ -1209,7 +1241,7 @@ public class OfflineResultProcessor {
 		File f = new File(outDir + outputKey + "_values_" + string + ".txt");
 		FileWriter fw = new FileWriter(f);
 		for (Double v : valuesBest) {
-			fw.write(String.valueOf(v));
+			fw.write(String.valueOf(v).replace(".0", ""));
 			fw.write("\n");
 		}
 

@@ -57,7 +57,7 @@ public class OffLineResultProcessorTest {
 	}
 
 	@Test
-	public void testCrossValidationGlobalSpoon() throws IOException {
+	public void testCrossValidationGlobalBoth() throws IOException {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 5000;
@@ -67,6 +67,16 @@ public class OffLineResultProcessorTest {
 		fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 
 		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaJDT_" + maxPerProject + "_");
+
+	}
+
+	@Test
+	public void testCrossValidationGlobalSpoon() throws IOException {
+
+		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
+		int maxPerProject = 100;
+		METRIC metric = METRIC.MEDIAN;
+		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaSpoon_" + maxPerProject + "_");
 
 	}
 
