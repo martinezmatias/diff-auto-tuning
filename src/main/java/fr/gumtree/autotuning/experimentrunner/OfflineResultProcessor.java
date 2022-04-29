@@ -16,6 +16,10 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
+import com.google.gson.JsonArray;
+import com.google.gson.JsonElement;
+import com.google.gson.JsonParser;
+
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
@@ -694,6 +698,114 @@ public class OfflineResultProcessor {
 		System.out.println("Cases perfect balance " + casesBalance);
 
 		return outBestComparison;
+	}
+
+	public class Difference {
+
+		public String id;
+
+		public Difference(String id, int lengthC1, int lengthC2) {
+			super();
+			this.id = id;
+			this.lengthC1 = lengthC1;
+			this.lengthC2 = lengthC2;
+		}
+
+		public int lengthC1;
+		public int lengthC2;
+
+		/**
+		 * If C1 is larger than C2, then Improvement will be positive. if C2 is larger
+		 * (worse), improvement is negative
+		 * 
+		 * @return
+		 */
+		public int getImprovementC2() {
+
+			return lengthC1 - lengthC2;
+		}
+
+		public double getImprovementC2Per() {
+			return (double) getImprovementC2() / (double) Math.max(lengthC2, lengthC1);
+		}
+
+		public String getId() {
+			return id;
+		}
+
+		public void setId(String id) {
+			this.id = id;
+		}
+
+		public int getLengthC1() {
+			return lengthC1;
+		}
+
+		public void setLengthC1(int lengthC1) {
+			this.lengthC1 = lengthC1;
+		}
+
+		public int getLengthC2() {
+			return lengthC2;
+		}
+
+		public void setLengthC2(int lengthC2) {
+			this.lengthC2 = lengthC2;
+		}
+
+		@Override
+		public String toString() {
+			return "Difference [Improvement C2:  " + this.getImprovementC2() + " Perc Improve c2: "
+					+ this.getImprovementC2Per() + ", lengthC1=" + lengthC1 + ", lengthC2=" + lengthC2 + "  id=" + id
+					+ "]";
+		}
+
+	}
+
+	public List<Difference> findDifferences(String config1, String config2, File resultsRoots) throws IOException {
+
+		List<File> all = this.retrievePairsToAnalyze(resultsRoots, 100);
+
+		List<Difference> diffs = new ArrayList<>();
+
+		for (File aCase : all) {
+			Difference diff = findDifference(aCase, config1, config2);
+			diffs.add(diff);
+
+		}
+		return diffs;
+
+	}
+
+	private Difference findDifference(File aCase, String config1, String config2) throws IOException {
+		String outJson = new String(Files.readAllBytes(aCase.toPath()));
+		JsonElement jsonElement = new JsonParser().parse(outJson);
+
+		JsonArray arry = jsonElement.getAsJsonArray();
+
+		int l1 = Integer.MAX_VALUE;
+
+		int l2 = Integer.MAX_VALUE;
+
+		for (JsonElement config : arry) {
+
+			String key = config.getAsJsonObject().get(DatOutputEngine.CONFIGURATION).getAsString();
+			JsonArray values = config.getAsJsonObject().get(DatOutputEngine.ED_SIZE).getAsJsonArray();
+
+			if (key.equals(config1)) {
+
+				l1 = values.get(0).getAsInt();
+
+			}
+			if (key.equals(config2)) {
+
+				l2 = values.get(0).getAsInt();
+
+			}
+		}
+
+		Difference diff = new Difference(aCase.getAbsolutePath(), l1, l2);
+		return diff;
 	}
 
 	public void runCrossValidationExahustive(File fileResults, int maxPerProject, METRIC metric, String outputKey)
