@@ -7,7 +7,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 
 import org.junit.Test;
 
@@ -32,8 +34,6 @@ import smile.validation.CrossValidation;
  */
 public class OffLineResultProcessorTest {
 
-	OfflineResultProcessor processor = new OfflineResultProcessor();
-
 	private static final String results_path = // "/Users/matias/develop/gt-tuning/results/resultsdatv3/";//
 			"/Users/matias/develop/gt-tuning/results/resultsv4/";
 
@@ -57,11 +57,12 @@ public class OffLineResultProcessorTest {
 	}
 
 	@Test
-	public void testCrossValidationGlobalBoth() throws IOException {
+	public void testCrossValidationGlobalBoth() throws Exception {
 
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 5000;
 		METRIC metric = METRIC.MEDIAN;
+		OfflineResultProcessor processor = new OfflineResultProcessor("cross_validation_global_both");
 		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaSpoon_" + maxPerProject + "_");
 
 		fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
@@ -71,8 +72,8 @@ public class OffLineResultProcessorTest {
 	}
 
 	@Test
-	public void testCrossValidationGlobalSpoon() throws IOException {
-
+	public void testCrossValidationGlobalSpoon() throws Exception {
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 100;
 		METRIC metric = METRIC.MEDIAN;
@@ -81,9 +82,41 @@ public class OffLineResultProcessorTest {
 	}
 
 	@Test
-	public void testCrossValidationGlobalJDT() throws IOException {
+	public void testCrossValidationGlobalJDTTPE() throws Exception {
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("tpe_analysis_jdt");
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		int maxPerProject = 5000;
+		METRIC metric = METRIC.MEDIAN;
+		int totalLimit = 1000;
+
+		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		if (collected.size() > totalLimit) {
+
+			collected = collected.subList(0, totalLimit);
+		}
+
+		System.out.println("Considered " + collected.size());
+
+		Collections.shuffle(collected, new Random(10));
+
+		// int numberOfAttempts = 100;
+		Integer[] allAttempts = new Integer[] { 10, 50, 100, 500, 1000 };
+		for (int numberOfAttempts : allAttempts) {
+			processor.runCrossValidationExahustiveVsTPE(fileResults, collected, metric,
+					"ExaJDT_" + maxPerProject + "_evals_" + numberOfAttempts + "_datasize_" + totalLimit + "_",
+					totalLimit, numberOfAttempts);
+		}
+
+	}
+
+	@Test
+	public void testCrossValidationGlobalJDT() throws Exception {
 
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		int maxPerProject = 1000000;
 		METRIC metric = METRIC.MEDIAN;
@@ -94,19 +127,22 @@ public class OffLineResultProcessorTest {
 	@Test
 	public void testTPECrossValidationGlobalJDT() throws Exception {
 
+		OfflineResultProcessor processor = new OfflineResultProcessor();
+
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 		int maxPerProject = 100;
-		METRIC metric = METRIC.MEAN;
+		METRIC metric = METRIC.MEDIAN;
 		processor.runCrossValidationTPE(fileResults, maxPerProject, metric, new LengthEditScriptFitness());
 
 	}
 
 	@Test
 	public void testTPECrossValidationGlobalSpoon() throws Exception {
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		File fileResults = new File(results_path + "/outDAT2_Spoon_onlyresult/");
 		int maxPerProject = 100;
-		METRIC metric = METRIC.MEAN;
+		METRIC metric = METRIC.MEDIAN;
 		processor.runCrossValidationTPE(fileResults, maxPerProject, metric, new LengthEditScriptFitness());
 
 	}
@@ -115,6 +151,7 @@ public class OffLineResultProcessorTest {
 	public void testTPEJDTGlobal() throws Exception {
 
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		OfflineResultProcessor runner = new OfflineResultProcessor();
 		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
@@ -143,6 +180,7 @@ public class OffLineResultProcessorTest {
 		OfflineResultProcessor runner = new OfflineResultProcessor();
 		int maxPerProject = 100;
 		List<File> collected = runner.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		Path fileWithData = processor.createFileWithDataToAnalyze(collected);
 
@@ -178,10 +216,10 @@ public class OffLineResultProcessorTest {
 	public void testExhaustiveGlobalSpoon() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		Fitness fitnessFunction = new LengthEditScriptFitness();
-		OfflineResultProcessor runner = new OfflineResultProcessor();
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		boolean ignoreTimeout = true;
-		ResponseGlobalBestParameter best = runner.summarizeBestGlobal(fileResults, fitnessFunction, METRIC.MEAN,
+		ResponseGlobalBestParameter best = processor.summarizeBestGlobal(fileResults, fitnessFunction, METRIC.MEAN,
 				ignoreTimeout);
 
 		inspectResults(best);
@@ -192,6 +230,7 @@ public class OffLineResultProcessorTest {
 	@Deprecated // Use cross validation instead
 	public void testExhaustiveLocalSpoon() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		OfflineResultProcessor runner = new OfflineResultProcessor();
 
@@ -225,13 +264,14 @@ public class OffLineResultProcessorTest {
 				ignoreTimeout);
 
 		inspectResults(best);
-		processor.analyzeBestWithGlobal(best);
+		runner.analyzeBestWithGlobal(best);
 
 	}
 
 	@Test
 	public void testExhaustiveLocalJDT() throws IOException {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		OfflineResultProcessor processor = new OfflineResultProcessor();
 
 		int maxPerProject = 100;
 		processor.analyzeLocal(fileResults, maxPerProject, METRIC.MEAN);
@@ -239,6 +279,8 @@ public class OffLineResultProcessorTest {
 
 	@Test
 	public void testExhaustiveLocalJDTComparisonGlobalForPaper() throws IOException {
+		OfflineResultProcessor processor = new OfflineResultProcessor();
+
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 		int maxPerProject = 100;
 		processor.analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject, METRIC.MEAN);
@@ -246,6 +288,8 @@ public class OffLineResultProcessorTest {
 
 	@Test
 	public void testExhaustiveLocalSpoonComparisonGlobalForPaper() throws IOException {
+		OfflineResultProcessor processor = new OfflineResultProcessor();
+
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 1000;
 		processor.analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject, METRIC.MEAN);
