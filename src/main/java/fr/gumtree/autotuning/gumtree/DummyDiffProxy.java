@@ -10,7 +10,7 @@ public class DummyDiffProxy implements DiffProxy {
 
 	@Override
 	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
-		SingleDiffResult resultDiff = new SingleDiffResult();
+		SingleDiffResult resultDiff = new SingleDiffResult(matcher.getClass().getSimpleName());
 		return null;
 	}
 

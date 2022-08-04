@@ -13,7 +13,9 @@ import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
@@ -26,6 +28,10 @@ import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
  *
  */
 public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
+
+	public GumtreeSingleHttpHandler(Fitness fitnessFunction, METRIC metric) {
+		super(fitnessFunction, metric);
+	}
 
 	int a = 0;
 	String param = "";
@@ -92,18 +98,12 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				System.out.println("Computed GumTree actions " + diff.editScript.asList().size());
 
-				JsonArray actions = new JsonArray();
-				root.add("actions", actions);
+				root.addProperty("fitness", diff.editScript.asList().size());
+				root.addProperty("values", 1);
 
 				root.addProperty("parameters", parameters);
 
 				System.out.println("run with params " + parameters);
-
-				JsonObject config = new JsonObject();
-				config.addProperty("file", this.nameLeft);
-				config.addProperty("nractions", diff.editScript.asList().size());
-				//
-				actions.add(config);
 
 				root.addProperty("status", "ok");
 

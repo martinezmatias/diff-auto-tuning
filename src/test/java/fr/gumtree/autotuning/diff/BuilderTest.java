@@ -195,7 +195,7 @@ public class BuilderTest {
 		tl = builder.build(new File(fl));
 		tr = builder.build(new File(fr));
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
@@ -225,7 +225,7 @@ public class BuilderTest {
 		tl = builder.build(new File(fl));
 		tr = builder.build(new File(fr));
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
@@ -255,7 +255,7 @@ public class BuilderTest {
 		tl = builder.build(new File(fl));
 		tr = builder.build(new File(fr));
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
@@ -283,7 +283,7 @@ public class BuilderTest {
 		tl = builder.build(new File(fl));
 		tr = builder.build(new File(fr));
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
@@ -311,7 +311,7 @@ public class BuilderTest {
 		tl = builder.build(new File(fl));
 		tr = builder.build(new File(fr));
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
@@ -418,7 +418,7 @@ public class BuilderTest {
 		tl = builder.build(new File(fl));
 		tr = builder.build(new File(fr));
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
@@ -455,7 +455,7 @@ public class BuilderTest {
 		System.out.println("\nLeft: " + tl.toTreeString());
 		System.out.println("\nRight: " + tr.toTreeString());
 
-		CompositeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatcher matcher = new CompositeMatchers.ClassicGumtree();
 		SimplifiedChawatheScriptGenerator edGenerator = new SimplifiedChawatheScriptGenerator();
 
 		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript

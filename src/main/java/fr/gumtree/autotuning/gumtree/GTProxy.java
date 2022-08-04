@@ -121,15 +121,16 @@ public class GTProxy implements DiffProxy {
 
 		if (algoName.equals("SimpleGumtree"))
 			return new CompositeMatchers.SimpleGumtree();
-		//
+
 		if (algoName.equals("ClassicGumtree"))
 			return new CompositeMatchers.ClassicGumtree();
-		//
-		if (algoName.equals("CompleteGumtreeMatcher"))
-			return new CompositeMatchers.CompleteGumtreeMatcher();
+
+		if (algoName.equals("HybridGumtree"))
+			return new CompositeMatchers.HybridGumtree();
 
 		if (algoName.equals("ChangeDistiller"))
 			return new CompositeMatchers.ChangeDistiller();
+
 		if (algoName.equals("XyMatcher"))
 			return new CompositeMatchers.XyMatcher();
 
@@ -148,7 +149,7 @@ public class GTProxy implements DiffProxy {
 	public SingleDiffResult runDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties aGumtreeProperties) {
 		long initSingleDiff = new Date().getTime();
 		try {
-			SingleDiffResult resultDiff = new SingleDiffResult();
+			SingleDiffResult resultDiff = new SingleDiffResult(matcher.getClass().getSimpleName());
 
 			// Calling directly to GT.core
 			Diff diff = computeDiff(tl, tr, matcher, aGumtreeProperties);
@@ -218,7 +219,9 @@ public class GTProxy implements DiffProxy {
 	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
 			String maattcher, String key) {
 
-		String fileKey = plainProperties(jso, maattcher, gttp);
+		String fileKey = plainProperties(maattcher, gttp);
+
+		plainProperties(jso, maattcher, gttp);
 
 		System.out.println(fileKey);
 
@@ -239,8 +242,39 @@ public class GTProxy implements DiffProxy {
 		}
 	}
 
-	public static String plainProperties(JsonObject jso, String maattcher, GumtreeProperties gttp) {
+	public static String plainProperties(String matcher, GumtreeProperties gttp) {
+		return plainProperties(matcher, new ArrayList(), gttp);
+	}
+
+	public static String plainProperties(String matcher, List<String> toIgnore, GumtreeProperties gttp) {
 		String fileKey = "";
+
+		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
+
+		List<String> sorted = new ArrayList<>(propertiesMap.keySet());
+
+		Collections.sort(sorted);
+
+		for (String pKey : sorted) {
+
+			if (toIgnore.contains(pKey))
+				continue;
+
+			String value = propertiesMap.get(pKey).toString();
+
+			String separator = "-";
+			if (!fileKey.isEmpty())
+				fileKey += separator;
+			else {
+				fileKey += matcher + separator;
+			}
+			fileKey += pKey + separator + value;
+
+		}
+		return fileKey;
+	}
+
+	public static void plainProperties(JsonObject jso, String maattcher, GumtreeProperties gttp) {
 
 		Map<String, Object> propertiesMap = toGumtreePropertyToMap(gttp);
 
@@ -253,16 +287,8 @@ public class GTProxy implements DiffProxy {
 			String value = propertiesMap.get(pKey).toString();
 			jso.addProperty(pKey, value);
 
-			String separator = "-";
-			if (!fileKey.isEmpty())
-				fileKey += separator;
-			else {
-				fileKey += maattcher + separator;
-			}
-			fileKey += pKey + separator + value;
-
 		}
-		return fileKey;
+
 	}
 
 	public static Map<String, Object> toGumtreePropertyToMap(GumtreeProperties properties) {

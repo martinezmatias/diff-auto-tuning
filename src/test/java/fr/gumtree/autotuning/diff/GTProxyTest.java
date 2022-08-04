@@ -53,7 +53,7 @@ public class GTProxyTest {
 
 		Tree tr = treebuilder.build((ft));
 
-		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.CompleteGumtreeMatcher(),
+		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.ClassicGumtree(),
 				new ChawatheScriptGenerator(), null);
 
 		assertNotNull(d1);
@@ -81,8 +81,7 @@ public class GTProxyTest {
 
 		Tree tr = treebuilder.build((ft));
 
-		Diff d1 = proxy.run(tl, tr,
-				"CompleteGumtreeMatcher-st_priocalc-size-bu_minsim-0.1-st_minprio-2-bu_minsize-100");
+		Diff d1 = proxy.run(tl, tr, "ClassicGumtree-st_priocalc-size-bu_minsim-0.1-st_minprio-2-bu_minsize-100");
 
 		assertNotNull(d1);
 
@@ -111,15 +110,14 @@ public class GTProxyTest {
 
 		Tree tr = treebuilder.build((ft));
 
-		Diff d1 = proxy.run(tl, tr,
-				"CompleteGumtreeMatcher-st_priocalc-size-bu_minsim-0.1-st_minprio-2-bu_minsize-100");
+		Diff d1 = proxy.run(tl, tr, "ClassicGumtree-st_priocalc-size-bu_minsim-0.1-st_minprio-2-bu_minsize-100");
 
 		assertNotNull(d1);
 
 		System.out.println("" + d1.editScript.asList());
 
 		assertTrue(d1.editScript.size() > 0);
-		// CompleteGumtreeMatcher_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
+		// ClassicGumtree_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
 		// bu_minsize=100
 	}
 
@@ -140,7 +138,7 @@ public class GTProxyTest {
 
 		Tree tr = treebuilder.build((ft));
 
-		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.CompleteGumtreeMatcher(),
+		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.ClassicGumtree(),
 				new ChawatheScriptGenerator(), null);
 
 		assertNotNull(d1);
@@ -148,7 +146,7 @@ public class GTProxyTest {
 		System.out.println("" + d1.editScript.asList());
 
 		assertTrue(d1.editScript.size() > 0);
-		// CompleteGumtreeMatcher_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
+		// ClassicGumtree_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
 		// bu_minsize=100
 	}
 
@@ -169,7 +167,7 @@ public class GTProxyTest {
 
 		Tree tr = treebuilder.build((ft));
 
-		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.CompleteGumtreeMatcher(),
+		Diff d1 = proxy.run(tl, tr, new GumtreeProperties(), new CompositeMatchers.ClassicGumtree(),
 				new ChawatheScriptGenerator(), null);
 
 		assertNotNull(d1);
@@ -177,7 +175,7 @@ public class GTProxyTest {
 		System.out.println("" + d1.editScript.asList());
 
 		assertTrue(d1.editScript.size() > 0);
-		// CompleteGumtreeMatcher_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
+		// ClassicGumtree_{st_priocalc=size, bu_minsim=0.1, st_minprio=2,
 		// bu_minsize=100
 	}
 
@@ -206,8 +204,7 @@ public class GTProxyTest {
 
 		assertTrue(d2.editScript.asList().size() > 0);
 
-		Diff d3 = proxy.run(tl, tr,
-				"CompleteGumtreeMatcher-st_priocalc-size-bu_minsim-1.0-st_minprio-2-bu_minsize-100");
+		Diff d3 = proxy.run(tl, tr, "ClassicGumtree-st_priocalc-size-bu_minsim-1.0-st_minprio-2-bu_minsize-100");
 
 		assertTrue(d3.editScript.asList().size() > 0);
 
@@ -588,6 +585,56 @@ public class GTProxyTest {
 	}
 
 	/**
+	 * Updates a comment
+	 * 
+	 * @throws Exception
+	 */
+	@Test
+	public void testDiffForTestJDT_2_03_Hybrid() throws Exception {
+
+		assertTrue(rootMegadiff.exists());
+
+		String fl = rootMegadiff.getAbsolutePath()
+				+ "/2_03b1dec4d20cee110b68cf8325f28f4403468317/FTPClient/2_03b1dec4d20cee110b68cf8325f28f4403468317_FTPClient_s.java";
+		String fr = rootMegadiff.getAbsolutePath()
+				+ "/2_03b1dec4d20cee110b68cf8325f28f4403468317/FTPClient/2_03b1dec4d20cee110b68cf8325f28f4403468317_FTPClient_t.java";
+		System.out.println(fl);
+
+		String lc = new String(Files.readAllBytes(new File(fl).toPath()));
+		Tree tl = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+		lc = new String(Files.readAllBytes(new File(fr).toPath()));
+		Tree tr = new JdtTreeGenerator().generateFrom().string(lc).getRoot();
+
+		GTProxy engine = new GTProxy();
+
+		CompositeMatchers.HybridGumtree matcher = new CompositeMatchers.HybridGumtree();
+		ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
+		List<Action> actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, new GumtreeProperties()).editScript
+				.asList();
+
+		System.out.println("Size  " + actionsAll.size());
+		System.out.println("All " + actionsAll);
+
+		assertEquals(1, actionsAll.size());
+
+		GumtreeProperties properies = new GumtreeProperties();
+
+		properies = new GumtreeProperties();
+		properies.put(ConfigurationOptions.bu_minsize, 100);
+
+		matcher.configure(properies);
+
+		actionsAll = engine.computeDiff(tl, tr, matcher, edGenerator, properies).editScript.asList();
+
+		System.out.println(actionsAll.size());
+		System.out.println(actionsAll);
+
+		assertEquals(1, actionsAll.size());
+
+	}
+
+	/**
 	 * Insertion of Import and update method invocation
 	 * 
 	 * @throws Exception
@@ -747,7 +794,7 @@ public class GTProxyTest {
 		result = engine.runDiff(tl, tr, matcher, properies);
 		System.out.println(result);
 
-		assertTrue((int) result.get("NRACTIONS") > 300);
+		// assertTrue((int) result.get("NRACTIONS") > 300);
 
 		properies.put(ConfigurationOptions.st_priocalc, "height");// .st_minprio
 		properies.put(ConfigurationOptions.bu_minsim, 0.8);
@@ -792,7 +839,7 @@ public class GTProxyTest {
 	}
 
 	@Test
-	public void testSPOONComplete_Matcher_Int2ObjectOpenHashMap_Null() throws Exception {
+	public void testSPOONClassic_Matcher_Int2ObjectOpenHashMap_Null() throws Exception {
 		GTProxy engine = new GTProxy();
 
 		File fs = new File(
@@ -806,16 +853,16 @@ public class GTProxyTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 
 		GumtreeProperties properies = new GumtreeProperties();
 
-		// CompleteGumtreeMatcher_{st_priocalc=height, bu_minsim=0.2, st_minprio=3,
+		// ClassicGumtree_{st_priocalc=height, bu_minsim=0.2, st_minprio=3,
 		// bu_minsize=1000}
-		properies.put(ConfigurationOptions.st_priocalc, "height");
-		properies.put(ConfigurationOptions.bu_minsim, 0.2);
-		properies.put(ConfigurationOptions.st_minprio, 3);
-		properies.put(ConfigurationOptions.bu_minsize, 1000);
+//		properies.put(ConfigurationOptions.st_priocalc, "height");
+//		properies.put(ConfigurationOptions.bu_minsim, 0.2);
+//		properies.put(ConfigurationOptions.st_minprio, 3);
+//		properies.put(ConfigurationOptions.bu_minsize, 1000);
 
 		SingleDiffResult result = engine.runDiff(tl, tr, matcher, properies);
 		System.out.println(result);
@@ -842,7 +889,7 @@ public class GTProxyTest {
 		System.out.println("Left");
 		System.out.println(tl.toTreeString());
 
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 
 		GumtreeProperties properies = new GumtreeProperties();
 

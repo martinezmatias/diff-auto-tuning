@@ -5,23 +5,23 @@ import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
-import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
-
 import com.google.gson.Gson;
 import com.google.gson.JsonArray;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
+import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
 import fr.gumtree.autotuning.server.GumtreeAbstractHttpHandler;
+import fr.gumtree.autotuning.server.GumtreeCacheHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeMultipleHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
 
 /**
+ * Implementation of TPE
  * 
  * @author Matias Martinez
  *
@@ -33,25 +33,24 @@ public class TPEEngine implements OptimizationMethod {
 	DiffServerLauncher launcher;
 
 	public TPEEngine() {
+
 	}
 
-	public ResponseBestParameter computeBestLocal(File left, File right) throws Exception {
-		return computeBestLocal(left, right, ASTMODE.GTSPOON, new ExecutionTPEConfiguration());
-	}
-
-	public ResponseBestParameter computeBestLocal(File left, File right, ASTMODE astmode,
+	@Override
+	public ResponseBestParameter computeBestLocal(File left, File right, Fitness fitnessFunction,
 			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		launcher = new DiffServerLauncher();
+		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
 		GumtreeSingleHttpHandler handler = launcher.getHandlerSimple();
 
-		JsonObject responseJSon = launcher.initSimple(left, right, astmode, handler);
+		ASTMODE astmode = configuration.getAstmode();
+		JsonObject responseJSon = launcher.initSimple(left, right, astmode);
 
-		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
@@ -64,23 +63,20 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs) throws Exception {
-		return computeBestGlobal(dataFilePairs, ASTMODE.GTSPOON, new ExecutionTPEConfiguration());
-	}
-
-	public ResponseBestParameter computeBestGlobal(File dataFilePairs, ASTMODE astmode,
+	@Override
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
 			ExecutionConfiguration configuration) throws Exception {
 
 		System.out.println("Starting server");
-		launcher = new DiffServerLauncher();
+		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
 		launcher.start();
 		ResponseBestParameter resultGeneral = null;
 
 		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
 
-		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, astmode, handler);
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
 
-		resultGeneral = processResponseFromServer(resultGeneral, handler, responseJSon,
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
 		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
@@ -93,7 +89,33 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter processResponseFromServer(ResponseBestParameter resultGeneral,
+	public ResponseBestParameter computeBestGlobalCache(File dataFilePairs, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception {
+
+		System.out.println("Starting server");
+		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler(fitnessFunction, configuration.getMetric());
+		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(fitnessFunction, configuration.getMetric()),
+				handler);
+		launcher.start();
+		ResponseBestParameter resultGeneral = null;
+
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
+
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
+				(ExecutionTPEConfiguration) configuration);
+
+		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
+		// MM temp
+		// if (resultGeneral != null)
+		// resultGeneral.setInfoEvaluations(infoEvaluations);
+
+		launcher.stop();
+		System.out.println("End Multiple");
+
+		return resultGeneral;
+	}
+
+	public ResponseBestParameter computeBestCallingTPE(ResponseBestParameter resultGeneral,
 			GumtreeAbstractHttpHandler handler, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
 			throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
@@ -102,36 +124,29 @@ public class TPEEngine implements OptimizationMethod {
 
 		if ("created".equals(status)) {
 
+			// TPE always returns only one
 			String best = queryBestConfigOnServer(handler, configuration);
+
 			if (best != null) {
 
 				System.out.println("Checking obtaining Best: ");
-				JsonObject responseBest = launcher.callWithHandle(best, handler);
+				JsonObject responseBest = launcher.callRunWithHandle(best, handler);
 				System.out.println(responseBest);
 
 				JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);
 
 				String checkedBestParameters = responseJSonFromBest.get("parameters").getAsString();
 
-				JsonArray actionsArray = responseJSonFromBest.get("actions").getAsJsonArray();
+				Double fitness = responseJSonFromBest.get("fitness").getAsDouble();
+				Integer values = responseJSonFromBest.get("values").getAsInt();
 
-				int nrActions = actionsArray.size();
-
+				//
+				// Retrieve values for the default an create a ResultsByConfig
 				ResponseBestParameter result = new ResponseBestParameter();
 				result.setBest(checkedBestParameters);
-				result.setNumberOfEvaluatedPairs(nrActions);
-
-				DescriptiveStatistics stats = new DescriptiveStatistics();
-
-				for (JsonElement action : actionsArray) {
-					int nractions = action.getAsJsonObject().get("nractions").getAsInt();
-					stats.addValue(nractions);
-				}
-
-				double mean = stats.getMean();
-				double std = stats.getStandardDeviation();
-				double median = stats.getPercentile(50);
-				result.setMedian(median);
+				// result.setNumberOfEvaluatedPairs(nrActions);
+				result.setMetricValue(fitness);
+				result.setNumberOfEvaluatedPairs(values);
 
 				resultGeneral = result;
 
@@ -158,7 +173,10 @@ public class TPEEngine implements OptimizationMethod {
 		// Create command
 		String[] commandAndArguments = { configuration.getPythonpath(), configuration.getScriptpath(),
 				configuration.getClasspath(), configuration.getJavahome(), handler.getHost(),
-				Integer.toString(handler.getPort()), handler.getPath(), HEADER_RESPONSE_PYTHON };
+				Integer.toString(handler.getPort()), handler.getPath(), HEADER_RESPONSE_PYTHON,
+				configuration.getSearchType().name().toLowerCase(),
+				Integer.toString(configuration.getNumberOfAttempts()),
+				Integer.toString(configuration.getRandomseed()) };
 		try {
 			Process p = rt.exec(commandAndArguments);
 			String response = readProcessOutput(p);

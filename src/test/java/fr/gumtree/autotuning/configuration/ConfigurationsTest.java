@@ -5,11 +5,15 @@ import static org.junit.Assert.assertEquals;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Set;
 
 import org.junit.Test;
 
+import com.github.gumtreediff.matchers.CompositeMatchers.ClassicGumtree;
+import com.github.gumtreediff.matchers.CompositeMatchers.HybridGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
+import com.github.gumtreediff.matchers.Matcher;
 
 import fr.gumtree.autotuning.domain.CategoricalParameterDomain;
 import fr.gumtree.autotuning.domain.DoubleParameterDomain;
@@ -88,8 +92,8 @@ public class ConfigurationsTest {
 
 	@Test
 	public void testCategoricalTest() {
-		ParameterDomain<String> option = (ParameterDomain<String>) ParametersResolvers.parametersDomain
-				.get(ConfigurationOptions.st_priocalc);
+		ParameterDomain<String> option = (ParameterDomain<String>) ParametersResolvers.defaultDomain
+				.getParametersDomain().get(ConfigurationOptions.st_priocalc);
 
 		assertEquals(2, option.getInterval().length);
 		assertEquals("size", option.getInterval()[0]);
@@ -146,6 +150,19 @@ public class ConfigurationsTest {
 		// last one
 		assertEquals("many", combinations.get(29).get(ConfigurationOptions.cd_labsim));
 		assertEquals(1d, (double) combinations.get(29).get(ConfigurationOptions.bu_minsim), 0.01);
+
+	}
+
+	@Test
+	public void testHybridProperties() {
+
+		Matcher m = new HybridGumtree();
+
+		Set<?> optionsHybrid = (m.getApplicableOptions());
+		assertEquals(3, optionsHybrid.size());
+
+		m = new ClassicGumtree();
+		assertEquals(4, m.getApplicableOptions().size());
 
 	}
 }

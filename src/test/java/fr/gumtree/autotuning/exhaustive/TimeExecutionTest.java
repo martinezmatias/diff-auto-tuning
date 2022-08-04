@@ -18,6 +18,9 @@ import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
 
 import fr.gumtree.autotuning.entity.SingleDiffResult;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
@@ -51,7 +54,7 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 
 		GumtreeProperties properies = new GumtreeProperties();
 
@@ -65,16 +68,17 @@ public class TimeExecutionTest {
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
 		combinations.add(properies);
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
+				config);
 
 		assertEquals(1, resultParalel.size());
 
 		assertEquals(400d, new Double(resultParalel.get(0).get(Constants.TIME).toString()), 150);
 
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 
 		assertEquals(1, resultS.size());
 
@@ -83,7 +87,7 @@ public class TimeExecutionTest {
 	}
 
 	@Test
-	public void testManyConfigs_CompleteGumtreeMatcher1() throws Exception {
+	public void testManyConfigs_ClassicGumtreeMatcher1() throws Exception {
 
 		ExhaustiveEngine engine = new ExhaustiveEngine();
 		File fs = new File(
@@ -97,15 +101,13 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		CompositeMatchers.CompleteGumtreeMatcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		CompositeMatchers.ClassicGumtree matcher = new CompositeMatchers.ClassicGumtree();
 
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
 		for (int i = 1000; i < 2000; i = i + 100) {
 			GumtreeProperties properies = new GumtreeProperties();
 
-			// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
-			// bu_minsize=1200}
 			properies.put(ConfigurationOptions.st_priocalc, "height");
 			properies.put(ConfigurationOptions.bu_minsim, 0.9);
 			properies.put(ConfigurationOptions.st_minprio, 2);
@@ -113,24 +115,31 @@ public class TimeExecutionTest {
 			combinations.add(properies);
 		}
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
-
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
+		// config.setNumberOfThreads(2);
 		System.out.println("Serial");
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+
+		long init = (new Date()).getTime();
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 
 		assertEquals(10, resultS.size());
 
 		for (SingleDiffResult singleDiffResult : resultS) {
 			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
 			System.out.println(serial);
-			assertTrue(serial > 200 && serial < 700);
+			assertTrue(serial > 200 && serial < 1000);
 
 		}
 
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
+
 		System.out.println("Paralell");
 
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+		init = (new Date()).getTime();
+
+		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
+				config);
 
 		assertEquals(10, resultParalel.size());
 
@@ -140,6 +149,9 @@ public class TimeExecutionTest {
 			assertTrue(serial > 900 && serial < 2500);
 
 		}
+
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
+
 	}
 
 	@Test
@@ -157,6 +169,7 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
+		long init = (new Date()).getTime();
 		CompositeMatchers.SimpleGumtree matcher = new CompositeMatchers.SimpleGumtree();
 
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
@@ -174,10 +187,11 @@ public class TimeExecutionTest {
 			}
 		}
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
 
 		System.out.println("Serial");
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 
 		// assertEquals(10, resultS.size());
 
@@ -185,15 +199,18 @@ public class TimeExecutionTest {
 		for (SingleDiffResult singleDiffResult : resultS) {
 			Double serial = new Double(singleDiffResult.get(Constants.TIME).toString());
 			System.out.println(serial);
-			assertTrue(serial > 0 && serial < 50);
+			assertTrue(serial > 0 && serial < 200);
 			statsS.addValue(serial);
 
 		}
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
 
 		System.out.println("Paralell");
 
-		List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher, combinations,
-				config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+		init = (new Date()).getTime();
+
+		List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher, combinations,
+				config);
 
 		// assertEquals(10, resultParalel.size());
 		DescriptiveStatistics statsP = new DescriptiveStatistics();
@@ -209,6 +226,9 @@ public class TimeExecutionTest {
 
 		System.out.println("Stat Paralell");
 		System.out.println(statsP);
+
+		System.out.println("Total time sec " + ((new Date()).getTime() - init) / 1000);
+
 	}
 
 	@Test
@@ -226,15 +246,13 @@ public class TimeExecutionTest {
 		tl = builder.build(fs);
 		tr = builder.build(ft);
 
-		Matcher matcher = new CompositeMatchers.CompleteGumtreeMatcher();
+		Matcher matcher = new CompositeMatchers.ClassicGumtree();
 
 		List<GumtreeProperties> combinations = new ArrayList<GumtreeProperties>();
 
 		for (int i = 1000; i < 2000; i = i + 100) {
 			GumtreeProperties properies = new GumtreeProperties();
 			for (int mi = 1; mi <= 5; mi = mi + 1) {
-				// CompleteGumtreeMatcher {st_priocalc=height, bu_minsim=0.9, st_minprio=2,
-				// bu_minsize=1200}
 				properies.put(ConfigurationOptions.st_priocalc, "height");
 				properies.put(ConfigurationOptions.bu_minsim, 0.9);
 				properies.put(ConfigurationOptions.st_minprio, mi);
@@ -245,7 +263,9 @@ public class TimeExecutionTest {
 
 		System.out.println("Serial");
 		long nns = (new Date()).getTime();
-		List<SingleDiffResult> resultS = engine.runInSerialMultipleConfiguration(tl, tr, matcher, combinations);
+		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness());
+		List<SingleDiffResult> resultS = engine.runSingleMatcherSerial(tl, tr, matcher, config, combinations);
 		double timeserial = ((double) (new Date()).getTime() - nns) / 60;
 		// assertEquals(10, resultS.size());
 
@@ -260,7 +280,8 @@ public class TimeExecutionTest {
 
 		System.out.println("Paralell");
 
-		ExecutionExhaustiveConfiguration config = new ExecutionExhaustiveConfiguration();
+		// ExecutionExhaustiveConfiguration config = new
+		// ExecutionExhaustiveConfiguration();
 
 		List<Double> means = new ArrayList<>();
 		List<Double> times = new ArrayList<>();
@@ -268,8 +289,8 @@ public class TimeExecutionTest {
 
 			config.setNumberOfThreads(i);
 			long nn = (new Date()).getTime();
-			List<SingleDiffResult> resultParalel = engine.runInParallelMultipleConfigurations(tl, tr, matcher,
-					combinations, config.getTimeOut(), config.getTimeUnit(), config.getNumberOfThreads());
+			List<SingleDiffResult> resultParalel = engine.runSingleMatcherMultipleParameters(tl, tr, matcher,
+					combinations, config);
 			times.add(((double) (new Date()).getTime() - nn) / 60);
 			// assertEquals(10, resultParalel.size());
 			DescriptiveStatistics statsP = new DescriptiveStatistics();

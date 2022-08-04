@@ -4,6 +4,8 @@ import java.io.File;
 import java.util.HashMap;
 import java.util.concurrent.TimeUnit;
 
+import fr.gumtree.autotuning.fitness.Fitness;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 
 /**
@@ -16,7 +18,6 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	private PARALLEL_EXECUTION paralelisationMode = PARALLEL_EXECUTION.NONE;
 	private int numberOfThreads = 16;
-	private long timeOut = 60 * 60; // 60 min
 
 	private boolean saveScript = true;
 
@@ -28,9 +29,24 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 		MEDIAN, MEAN
 	}
 
-	private METRIC metric = METRIC.MEDIAN;
+	private METRIC metric;
 
-	TimeUnit timeUnit = TimeUnit.SECONDS;
+	public ExecutionConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) {
+		super();
+		this.metric = metric;
+		this.astmode = astmode;
+		this.fitnessFunction = fitnessFunction;
+	}
+
+	private long timeOutDiffExecution = 1000;
+	TimeUnit timeUnitDiffExecution = TimeUnit.MILLISECONDS;
+
+	private long timeOutD = 60; // 60 min
+	TimeUnit timeUnit = TimeUnit.MINUTES;
+
+	private ASTMODE astmode;
+
+	Fitness fitnessFunction = new LengthEditScriptFitness();
 
 	public PARALLEL_EXECUTION getParalelisationMode() {
 		return paralelisationMode;
@@ -49,11 +65,11 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 	}
 
 	public long getTimeOut() {
-		return timeOut;
+		return timeOutDiffExecution;
 	}
 
 	public void setTimeOut(long timeOutSeconds) {
-		this.timeOut = timeOutSeconds;
+		this.timeOutDiffExecution = timeOutSeconds;
 	}
 
 	public TimeUnit getTimeUnit() {
@@ -94,5 +110,44 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
 	public void setOverwriteResults(boolean overwriteResults) {
 		this.overwriteResults = overwriteResults;
+	}
+
+	public ASTMODE getAstmode() {
+		return astmode;
+	}
+
+	public void setAstmode(ASTMODE astmode) {
+		this.astmode = astmode;
+	}
+
+	@Override
+	public String toString() {
+		return "ExecutionConfiguration [astmode=" + astmode + ", paralelisationMode=" + paralelisationMode
+				+ ", numberOfThreads=" + numberOfThreads + ", metric=" + metric + ", timeOut=" + timeOutDiffExecution
+				+ ", timeUnit=" + timeUnit + "]";
+	}
+
+	public long getTimeOutDiffExecution() {
+		return timeOutDiffExecution;
+	}
+
+	public void setTimeOutDiffExecution(long timeOutDiffExecution) {
+		this.timeOutDiffExecution = timeOutDiffExecution;
+	}
+
+	public TimeUnit getTimeUnitDiffExecution() {
+		return timeUnitDiffExecution;
+	}
+
+	public void setTimeUnitDiffExecution(TimeUnit timeUnitDiffExecution) {
+		this.timeUnitDiffExecution = timeUnitDiffExecution;
+	}
+
+	public Fitness getFitnessFunction() {
+		return fitnessFunction;
+	}
+
+	public void setFitnessFunction(Fitness fitnessFunction) {
+		this.fitnessFunction = fitnessFunction;
 	}
 }

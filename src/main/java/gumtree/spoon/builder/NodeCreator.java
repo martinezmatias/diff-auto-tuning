@@ -55,7 +55,6 @@ public class NodeCreator extends CtInheritanceScanner {
 		});
 		modifiers1.addAll(m.getModifiers());
 
-		System.out.println(modifiers1);
 		for (ModifierKind kind : modifiers1) {
 			// TODO: I added the kind of the modifier in the type
 			// Tree modifier = builder.createNode("Modifier_" + kind.toString(),
@@ -63,8 +62,6 @@ public class NodeCreator extends CtInheritanceScanner {
 			Tree modifier = builder.createNode("Modifier", kind.toString());
 
 			// modifiers.addChild(modifier);
-
-			System.out.println(modifier);
 
 			// New:
 			if (!kind.equals(ModifierKind.PRIVATE))

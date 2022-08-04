@@ -7,7 +7,9 @@ import java.util.concurrent.Callable;
 
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
+import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
@@ -129,14 +131,15 @@ public class Main implements Callable<Integer> {
 		StructuredFolderfRunner runner = new StructuredFolderfRunner(engine);
 
 		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
-
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration();
+		ASTMODE model = ASTMODE.valueOf(this.astmodel);
+		// TODO
+		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN, model,
+				new LengthEditScriptFitness());
 		configuration.setNumberOfThreads(nrthreads);
 		configuration.setTimeOut(timeout);
 		configuration.setParalelisationMode(execution);
 		configuration.setOverwriteResults(overwriteresults);
 
-		ASTMODE model = ASTMODE.valueOf(this.astmodel);
 		ITreeBuilder treebuilder = null;
 		if (ASTMODE.GTSPOON.equals(model)) {
 			treebuilder = new SpoonTreeBuilder();

@@ -10,36 +10,31 @@ import java.util.List;
 import org.springframework.util.MultiValueMap;
 import org.springframework.web.util.UriComponentsBuilder;
 
-import com.github.gumtreediff.actions.Diff;
-import com.github.gumtreediff.tree.Tree;
-import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonObject;
 import com.sun.net.httpserver.HttpExchange;
 
+import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
+import fr.gumtree.autotuning.experimentrunner.OfflineResultProcessor;
 import fr.gumtree.autotuning.fitness.Fitness;
-import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
-import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
-import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
-import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
-import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
+import fr.gumtree.autotuning.searchengines.ResultByConfig;
 
 /**
  * 
  * @author Matias Martinez
  *
  */
-public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
+public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 
-	public GumtreeMultipleHttpHandler(Fitness fitnessFunction, METRIC metric) {
+	public GumtreeCacheHttpHandler(Fitness fitnessFunction, METRIC metric) {
 		super(fitnessFunction, metric);
 	}
 
-	List<Pair<Tree, Tree>> files = new ArrayList<>();
-	List<String> names = new ArrayList<>();
+	ResultByConfig valuesPerConfig;
 
+	List<File> filesToAnalyze = new ArrayList<>();
 	String host = "localhost";
 	int port = 8001;
 	String path = "multiple";
@@ -48,7 +43,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 	@Override
 	public void handle(HttpExchange httpExchange) throws IOException {
 
-		System.out.println("Multiple: ");
+		System.out.println("\n\n--Receiviing Multiple: ");
 
 		if ("GET".equals(httpExchange.getRequestMethod())) {
 
@@ -63,10 +58,10 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			if (httpExchange.getRequestURI().getPath().equals("/multiple")) {
 
 				if (queryParams.get("action").contains("load")) {
-					loadTree(httpExchange, queryParams);
+					retrieveFilesToAnalyze(httpExchange, queryParams);
 
 				} else if (queryParams.get("action").contains("run")) {
-					runDiff(httpExchange, queryParams);
+					retrieveCacheDiff(httpExchange, queryParams);
 
 				} else if (queryParams.get("action").contains("info")) {
 
@@ -83,43 +78,32 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	}
 
-	public void runDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
+	public void retrieveCacheDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams)
+			throws IOException {
 		JsonObject root = new JsonObject();
 
 		String parameters = queryParams.get("parameters").get(0);
 		root.addProperty("parameters", parameters);
 
-		System.out.println("\n**run with params " + parameters);
-		System.out.println("--current analyzed in cache: " + this.cacheResults.size());
+		System.out.println("\run Cache Mode  with params " + parameters);
+		// System.out.println("--current analyzed in cache: " +
+		// this.cacheResults.size());
 
-		List<Double> values = new ArrayList<>();
+		List<Double> values = this.valuesPerConfig.get(parameters);
 
-		// Collect values
-		for (int i = 0; i < this.files.size(); i++) {
-			// System.out.println("running " + (i + 1) + "/" + this.files.size());
-			Pair<Tree, Tree> pair = files.get(i);
-
-			GTProxy proxy = new GTProxy();
-
-			Diff diff = proxy.run(pair.first, pair.second, parameters, null); // we dont want to save here, so we pass
-																				// null to the out
-
-			Double fitnessOfDiff = fitnessFunction.getFitnessValue(diff, this.metric);
-			values.add(fitnessOfDiff);
-
-			if (this.getOutDirectory() != null) {
-				try {
-					saver.saveUnified(this.names.get(i), parameters, diff, this.getOutDirectory());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
-
+		if (values == null) {
+			System.out.println(" no values for " + parameters);
 		}
 
-		double fitness = fitnessFunction.computeFitness(values, this.metric);
+		if (values.size() != this.filesToAnalyze.size()) {
+			System.err.println("Error! Different sizes!");
+		}
+
+		System.out.println("Values " + values.size());
+		Double fitness = fitnessFunction.computeFitness(values, this.metric);
 		root.addProperty("fitness", fitness);
 		root.addProperty("values", values.size());
+
 		if (values.size() > 0)
 			root.addProperty("status", "ok");
 		else
@@ -127,32 +111,23 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 		cacheResults.add(root);
 		System.out.println("Output for parameter after " + values.size() + " evaluations " + root.toString());
+
 		handleResponse(httpExchange, root.toString());
 	}
 
-	public void loadTree(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
+	public void retrieveFilesToAnalyze(HttpExchange httpExchange, MultiValueMap<String, String> queryParams)
+			throws IOException {
 		System.out.println("Load");
 
-		String model = queryParams.get("model").get(0);
 		String file = queryParams.get("file").get(0);
-
-		System.out.println(model + " " + file);
-
-		ITreeBuilder treebuilder = null;
-		if (ASTMODE.GTSPOON.name().equals(model)) {
-			treebuilder = new SpoonTreeBuilder();
-		} else if (ASTMODE.JDT.name().equals(model)) {
-			treebuilder = new JDTTreeBuilder();
-		} else {
-			System.err.println("Mode not configured " + model);
-		}
 
 		try {
 			System.out.println("Creating multiples trees: ");
 			cacheResults = new JsonArray();
-			createMultipleTrees(httpExchange, treebuilder, file);
+			createRepresention(httpExchange, file);
 
-			handleResponse(httpExchange, "{status=created, operation=multiplecreate, pairs=" + this.files.size() + "}");
+			handleResponse(httpExchange,
+					"{status=created, operation=multiplecreate, pairs=" + this.filesToAnalyze.size() + "}");
 
 		} catch (Exception e) {
 			System.out.println("Error loading trees");
@@ -162,38 +137,38 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 		}
 	}
 
-	public void createMultipleTrees(HttpExchange httpExchange, ITreeBuilder treebuilder, String path)
-			throws IOException {
-		this.files.clear();
-		this.names.clear();
+	public void createRepresention(HttpExchange httpExchange, String path) throws IOException {
+		filesToAnalyze.clear();
 		BufferedReader reader;
 		try {
 			reader = new BufferedReader(new FileReader(path));
 			String line = reader.readLine();
 			while (line != null) {
-				System.out.println(line);
 
-				System.out.println("Line " + line);
+				File nFile = new File(line.trim());
 
-				String[] sp = line.split(" ");
-
-				Tree tl = treebuilder.build(new File(sp[0]));
-
-				Tree tr = treebuilder.build(new File(sp[1]));
-
-				this.files.add(new Pair<Tree, Tree>(tl, tr));
-				this.names.add(sp[0]);
+				if (nFile.exists()) {
+					filesToAnalyze.add(nFile);
+				} else {
+					System.out.println("Could not find file " + line);
+				}
 
 				// Next line
 				line = reader.readLine();
 
 			}
 			reader.close();
+			OfflineResultProcessor runner = new OfflineResultProcessor();
+
+			ResponseGlobalBestParameter bestFromTraining = runner.summarizeBestGlobal(this.filesToAnalyze,
+					this.fitnessFunction, this.metric, false);
+			this.valuesPerConfig = bestFromTraining.getValuesPerConfig();
 
 		} catch (Exception e) {
 			handleResponse(httpExchange, "error");
 			e.printStackTrace();
 		}
+
 	}
 
 	public String getHost() {

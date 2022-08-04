@@ -22,8 +22,8 @@ import com.github.gumtreediff.client.diff.webdiff.VanillaDiffHtmlBuilder;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffView;
 import com.github.gumtreediff.matchers.CompositeMatchers;
 import com.github.gumtreediff.matchers.CompositeMatchers.ClassicGumtree;
-import com.github.gumtreediff.matchers.CompositeMatchers.CompleteGumtreeMatcher;
 import com.github.gumtreediff.matchers.CompositeMatchers.CompositeMatcher;
+import com.github.gumtreediff.matchers.CompositeMatchers.HybridGumtree;
 import com.github.gumtreediff.matchers.CompositeMatchers.SimpleGumtree;
 import com.github.gumtreediff.matchers.ConfigurationOptions;
 import com.github.gumtreediff.matchers.GumtreeProperties;
@@ -36,11 +36,14 @@ import com.google.gson.GsonBuilder;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 public class ResultVisualizer {
+
+	public static final String CONFIG_SEPARATOR = "-"; // "@";
 
 	public boolean saveVisualizationRow(String row, String pathMegadiff, String pathOut, boolean isJDTModel)
 			throws Exception {
@@ -61,22 +64,40 @@ public class ResultVisualizer {
 		String patch = File.separator + groupId + File.separator + groupId + "_" + hash + File.separator + filename
 				+ File.separator + groupId + "_" + hash + "_" + filename;
 
-		String fl = rootMegadiff.getAbsolutePath() + patch + "_s.java";
-		String fr = rootMegadiff.getAbsolutePath() + patch + "_t.java";
+		String bestConfig = split[6];
+		String defaultConfig = split[7];
+
 		// System.out.println(fl);
+		// Commented in v2
+		// computeDiff(filename, diffId, bestConfig, defaultConfig, fl, fr, isJDTModel,
+		// pathOut);
+
+		return true;
+	}
+
+	public void computeDiff(String filename, String diffId, String bestConfig, String defaultConfig, boolean isJDTModel,
+			String pathOut) throws IOException, Exception, IllegalAccessError, DiffException {
+
+		String fl = filename + "_s.java";
+		String fr = filename + "_t.java";
+
+		File fileo = new File(pathOut);
+		if (!fileo.exists()) {
+			fileo.mkdirs();
+		}
 
 		File fileLeftt = new File(fl);
 		File fileRight = new File(fr);
 
 		if (!fileLeftt.exists() || !fileRight.exists()) {
 			System.out.println("Error " + fileLeftt.getAbsolutePath() + " does not exist");
-			return false;
+			throw new IllegalAccessError("Error " + fileLeftt.getAbsolutePath() + " does not exist");
 		}
 		String lcontent = new String(Files.readAllBytes(fileLeftt.toPath()));
 
 		String rcontent = new String(Files.readAllBytes(fileRight.toPath()));
 
-		TreeBuilder builder = null;
+		ITreeBuilder builder = null;
 		if (isJDTModel) {
 			builder = new JDTTreeBuilder();
 		} else {
@@ -87,22 +108,28 @@ public class ResultVisualizer {
 
 		File fout = new File(pathOut);
 
-		String bestConfig = split[6];
 		System.out.println("--Running for best: " + bestConfig);
 		GumtreeProperties propertiesBest = createProperties(bestConfig);
 		Matcher matcherBest = createMatcher(bestConfig);
-		System.out.println(propertiesBest.getProperties());
+
+		if (matcherBest == null) {
+			throw new IllegalAccessError("Matcher not known " + bestConfig);
+		}
+
 		String nameBest = "best_" + bestConfig;
 
 		saveVisualization(fileLeftt, tl, fileRight, tr, propertiesBest, matcherBest, fout, diffId, nameBest);
+
 		System.out.println("End best");
 
-		String defaultConfig = split[7];
 		GumtreeProperties propertiesDefault = createProperties(defaultConfig);
 		Matcher matcherDefault = createMatcher(defaultConfig);
+		if (matcherDefault == null) {
+			throw new IllegalAccessError("Matcher not known " + defaultConfig);
+		}
 
 		System.out.println("--Running for default: " + defaultConfig);
-		System.out.println(propertiesDefault.getProperties());
+		// System.out.println(propertiesDefault.getProperties());
 		String nameDefault = "default_" + defaultConfig;
 		saveVisualization(fileLeftt, tl, fileRight, tr, propertiesDefault, matcherDefault, fout, diffId, nameDefault);
 		System.out.println("End default");
@@ -113,24 +140,25 @@ public class ResultVisualizer {
 				nameDefaultNoparam);
 		System.out.println("End default");
 
-		File fileLoriginal = new File(
-				fout.getAbsoluteFile() + File.separator + diffId + File.separator + filename + "_left.java");
-		FileWriter fwleft = new FileWriter(fileLoriginal);
-		fwleft.write(lcontent);
-		fwleft.close();
-
-		File fileRoriginal = new File(
-				fout.getAbsoluteFile() + File.separator + diffId + File.separator + filename + "_right.java");
-		FileWriter fwright = new FileWriter(fileRoriginal);
-		fwright.write(rcontent);
-		fwright.close();
+//		File fileLoriginal = new File(
+//				fout.getAbsoluteFile() + File.separator + diffId + File.separator + filename + "_left.java");
+//		FileWriter fwleft = new FileWriter(fileLoriginal);
+//		fwleft.write(lcontent);
+//		fwleft.close();
+//
+//		File fileRoriginal = new File(
+//				fout.getAbsoluteFile() + File.separator + diffId + File.separator + filename + "_right.java");
+//		FileWriter fwright = new FileWriter(fileRoriginal);
+//		fwright.write(rcontent);
+//		fwright.close();
 
 		///
 		// exportMergely(diffId, fout, fileLoriginal, fileRoriginal);
 
-		exportUnifiedDiff(diffId, fout, fileLoriginal, fileRoriginal);
+		// exportUnifiedDiff(diffId, fout, fileLoriginal, fileRoriginal);
 
-		return true;
+		exportUnifiedDiff(diffId, fout, fileLeftt, fileRight);
+
 	}
 
 	public void exportUnifiedDiff(String diffId, File fout, File fileLoriginal, File fileRoriginal)
@@ -169,7 +197,7 @@ public class ResultVisualizer {
 	}
 
 	public void exportMergely(String diffId, File fout, File fileLoriginal, File fileRoriginal) throws IOException {
-		Renderable view2 = new MergelyDiffView2(0, fileLoriginal.getName(), fileRoriginal.getName());
+		Renderable view2 = null;// new MergelyDiffView(0, fileLoriginal.getName(), fileRoriginal.getName());
 		HtmlCanvas html = new HtmlCanvas();
 		view2.renderOn(html);
 
@@ -188,22 +216,22 @@ public class ResultVisualizer {
 	}
 
 	private Matcher createMatcher(String bestConfig) {
-		String props = bestConfig.split("@")[0];
+		String props = bestConfig.split(CONFIG_SEPARATOR)[0];
 
 		if (props.toLowerCase().equals(SimpleGumtree.class.getSimpleName().toLowerCase()))
 			return new CompositeMatchers.SimpleGumtree();
 
-		if (props.toLowerCase().equals(CompleteGumtreeMatcher.class.getSimpleName().toLowerCase()))
-			return new CompositeMatchers.CompleteGumtreeMatcher();
-
 		if (props.toLowerCase().equals(ClassicGumtree.class.getSimpleName().toLowerCase()))
 			return new CompositeMatchers.ClassicGumtree();
+
+		if (props.toLowerCase().equals(HybridGumtree.class.getSimpleName().toLowerCase()))
+			return new CompositeMatchers.HybridGumtree();
 
 		return null;
 	}
 
 	private GumtreeProperties createProperties(String bestConfig) {
-		String[] props = bestConfig.split("@");
+		String[] props = bestConfig.split(CONFIG_SEPARATOR);
 		GumtreeProperties properies = new GumtreeProperties();
 		for (int i = 1; i < props.length; i = i + 2) {
 			properies.put(ConfigurationOptions.valueOf(props[i]), props[i + 1]);
@@ -215,9 +243,10 @@ public class ResultVisualizer {
 	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, GumtreeProperties properies,
 			Matcher matcher, File fout, String diffId, String configId) throws IOException {
 
-		MappingStore mappings = matcher.match(tl, tr);
 		CompositeMatcher cm = (CompositeMatcher) matcher;
 		cm.configure(properies);
+
+		MappingStore mappings = matcher.match(tl, tr);
 
 		EditScript editScript = new ChawatheScriptGenerator().computeActions(mappings);
 
@@ -242,7 +271,9 @@ public class ResultVisualizer {
 		//
 
 		// VanillaDiffView
-		Renderable view = new VanillaDiffView(fileLeftt, fileRight, (com.github.gumtreediff.actions.Diff) diffgtt);
+		boolean dump = true;// TODO check value
+		Renderable view = new VanillaDiffView(fileLeftt, fileRight, (com.github.gumtreediff.actions.Diff) diffgtt,
+				dump);
 		saveRenderable(parentDiff, diffId, configId, view, "vanillaDiffView");
 
 		// Text
@@ -294,7 +325,10 @@ public class ResultVisualizer {
 
 		String html2 = html.toHtml();
 		// html2 = html2.replace("/dist/vanilla.css", "../dist/vanilla.css");
-		html2 = html2.replace("/dist/", "../../libs/dist/");
+
+		// mm commented v2
+		// html2 = html2.replace("/dist/", "../../libs/dist/");
+
 		// html2 = html2.replace("/monaco/", "../monaco/");
 
 		File htmlFile = new File(parentDiff.getAbsolutePath() + File.separator + name + "_" + configId + ".html");

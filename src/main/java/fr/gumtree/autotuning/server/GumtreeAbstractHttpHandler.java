@@ -8,6 +8,9 @@ import com.google.gson.JsonArray;
 import com.sun.net.httpserver.HttpExchange;
 import com.sun.net.httpserver.HttpHandler;
 
+import fr.gumtree.autotuning.fitness.Fitness;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+
 /**
  * 
  * @author Matias Martinez
@@ -27,6 +30,15 @@ public abstract class GumtreeAbstractHttpHandler implements HttpHandler {
 	 * Stores the different calls to run
 	 */
 	JsonArray cacheResults = new JsonArray();
+
+	Fitness fitnessFunction;
+	METRIC metric;
+
+	public GumtreeAbstractHttpHandler(Fitness fitnessFunction, METRIC metric) {
+		super();
+		this.fitnessFunction = fitnessFunction;
+		this.metric = metric;
+	}
 
 	public void handleResponse(HttpExchange httpExchange, String reponse) throws IOException {
 

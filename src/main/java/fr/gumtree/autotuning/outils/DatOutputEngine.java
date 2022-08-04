@@ -7,6 +7,7 @@ import java.io.FileWriter;
 import java.io.IOException;
 import java.math.BigInteger;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -75,16 +76,20 @@ public class DatOutputEngine {
 	public void saveUnifiedNotDuplicated(String diffId, String plainProperties,
 			com.github.gumtreediff.actions.Diff diffgtt, File parentDiff) throws IOException, NoSuchAlgorithmException {
 
-		String key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + diffgtt.editScript.size();
+		String jsonContent = "";
+		String key = "";
+		if (diffgtt != null && diffgtt.editScript != null) {
+			key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + diffgtt.editScript.size();
+			TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
+			JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
+			Gson gson = new GsonBuilder().setPrettyPrinting().create();
+			jsonContent = gson.toJson(jsonunif);
 
-		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
-		JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
+		} else {
+			key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + "no_ed";
+		}
 
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(jsonunif);
-
-		String hashJson = toHexString(getSHA(json));
+		String hashJson = toHexString(getSHA(jsonContent));
 
 		File caseFolder = new File(
 				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
@@ -107,12 +112,12 @@ public class DatOutputEngine {
 				ZipOutputStream zipOut = new ZipOutputStream(fos);
 				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
 				zipOut.putNextEntry(zipEntry);
-				zipOut.write(json.getBytes());
+				zipOut.write(jsonContent.getBytes());
 				zipOut.close();
 			} else {
 
 				FileWriter fw = new FileWriter(uniflFile);
-				fw.write(json);
+				fw.write(jsonContent);
 				fw.close();
 
 			}
@@ -202,7 +207,7 @@ public class DatOutputEngine {
 			JsonObject resultConfig = new JsonObject();
 			resultConfig.addProperty(CONFIGURATION, key);
 			JsonArray arry = new JsonArray();
-			for (Integer i : result.get(key))
+			for (Double i : result.get(key))
 				arry.add(i);
 
 			resultConfig.add(ED_SIZE, arry);
@@ -295,7 +300,6 @@ public class DatOutputEngine {
 			zis.closeEntry();
 
 		}
-		System.out.println(out);
 		return out;
 	}
 
@@ -317,7 +321,7 @@ public class DatOutputEngine {
 		return normalizePath;
 	}
 
-	public void readAndAdd(ResultByConfig results, File zip) throws IOException {
+	public void readZipAndAdd(ResultByConfig results, File zip) throws IOException {
 
 		String outJson = unzipFolder(zip.toPath());
 
@@ -325,6 +329,41 @@ public class DatOutputEngine {
 
 		readResultByConfig(results, jsonElement);
 
+	}
+
+	public void readJSon(ResultByConfig results, File jsonfile) throws IOException {
+
+		String outJson = new String(Files.readAllBytes(jsonfile.toPath()));
+		JsonElement jsonElement = new JsonParser().parse(outJson);
+
+		readResultByConfig(results, jsonElement);
+
+	}
+
+	public boolean isEmpty(File fileToRead) throws IOException {
+
+		String outJson = unzipFolder(fileToRead.toPath());
+
+		if (fileToRead.getName().endsWith(".zip"))
+			outJson = unzipFolder(fileToRead.toPath());
+		else
+			outJson = new String(Files.readAllBytes(fileToRead.toPath()));
+
+		JsonElement jsonElement = new JsonParser().parse(outJson);
+
+		JsonArray arry = jsonElement.getAsJsonArray();
+
+		for (JsonElement config : arry) {
+
+			JsonArray values = config.getAsJsonObject().get(DatOutputEngine.ED_SIZE).getAsJsonArray();
+
+			for (JsonElement v : values) {
+				if (v.getAsInt() > 0 && v.getAsInt() < Integer.MAX_VALUE) {
+					return false;
+				}
+			}
+		}
+		return true;
 	}
 
 	public void readResultByConfig(ResultByConfig results, JsonElement result) {
@@ -337,7 +376,12 @@ public class DatOutputEngine {
 			JsonArray values = config.getAsJsonObject().get(DatOutputEngine.ED_SIZE).getAsJsonArray();
 
 			for (JsonElement v : values) {
-				results.add(key, v.getAsInt());
+
+				int valueInt = v.getAsInt();
+
+				double valueD = (valueInt == Integer.MAX_VALUE) ? Double.MAX_VALUE : v.getAsDouble();
+
+				results.add(key, valueD);
 			}
 		}
 
