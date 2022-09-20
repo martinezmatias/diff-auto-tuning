@@ -16,6 +16,28 @@ import fr.gumtree.autotuning.outils.ResultVisualizer;
 public class NewVisTest {
 
 	@Test
+	public void testCase1a04d92() throws IllegalAccessError, IOException, DiffException, Exception {
+
+		ResultVisualizer rv = new ResultVisualizer();
+
+		String hash = "a04d92895d21ab99e1d79481b11f5c8cb6fe09c1";
+		String fname = "Interpreter";
+
+		String filename = "/Users/matias/develop/gt-tuning/data-cvs-vintage/git-log4j/" + hash + "/" + fname + "/"
+				+ hash + "_" + fname;
+		String diffId = hash + "/" + fname;
+
+		String bestConfig = "HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-size";// "ClassicGumtree-bu_minsim-0.2-bu_minsize-600-st_minprio-1-st_priocalc-size";
+		// String defaultConfig =
+		// "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
+		boolean isJDTModel = true;
+		String pathOut = "./outVisTemp/";
+
+		rv.computeDiff(filename, diffId, bestConfig, ParametersResolvers.defaultConfiguration, isJDTModel, pathOut);
+
+	}
+
+	@Test
 	public void testVis() throws IllegalAccessError, IOException, DiffException, Exception {
 
 		ResultVisualizer rv = new ResultVisualizer();

@@ -7,9 +7,7 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
-import java.util.Random;
 
 import org.junit.Test;
 
@@ -88,27 +86,76 @@ public class OffLineResultProcessorTest {
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 		int maxPerProject = 5000;
 		METRIC metric = METRIC.MEDIAN;
-		int totalLimit = 1000;
+		int totalLimit = 700;// 1000000;
 
 		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
 		System.out.println("Collected " + collected.size());
 
-		if (collected.size() > totalLimit) {
-
-			collected = collected.subList(0, totalLimit);
-		}
-
 		System.out.println("Considered " + collected.size());
 
-		Collections.shuffle(collected, new Random(10));
-
-		// int numberOfAttempts = 100;
-		Integer[] allAttempts = new Integer[] { 10, 50, 100, 500, 1000 };
+		int k = 10;
+		Integer[] allAttempts = new Integer[] { 10, 25, 50, 100, 2210 };
 		for (int numberOfAttempts : allAttempts) {
 			processor.runCrossValidationExahustiveVsTPE(fileResults, collected, metric,
 					"ExaJDT_" + maxPerProject + "_evals_" + numberOfAttempts + "_datasize_" + totalLimit + "_",
-					totalLimit, numberOfAttempts);
+					numberOfAttempts, k);
 		}
+
+	}
+
+	@Test
+	public void testSeedCrossValidationGlobalJDTTPE() throws Exception {
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("tpe_analysis_jdt");
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		int maxPerProject = 5000;
+		METRIC metric = METRIC.MEDIAN;
+		// int totalLimit = 100;// 1000000;
+
+		Integer[] totalLimits = new Integer[] { 100, 500, 1000 };
+
+		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		for (int totalLimit : totalLimits) {
+
+			System.out.println("total Limit " + totalLimit);
+
+			int k = 10;
+			int nrseeds = 10;
+			Integer[] allAttempts = new Integer[] { 10, 25, 50, 100, 2210 };
+			for (int numberOfAttempts : allAttempts) {
+				processor
+						.runSeededCrossValidationExahustiveVsTPE(
+								fileResults, collected, metric, "ExaJDT_seeded" + maxPerProject + "_evals_"
+										+ numberOfAttempts + "_datasize_" + totalLimit + "_",
+								numberOfAttempts, k, nrseeds, totalLimit);
+			}
+		}
+	}
+
+	@Test
+	public void testSeedSingleCrossValidationGlobalJDTTPE() throws Exception {
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("tpe_analysis_jdt");
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		int maxPerProject = 5000;
+		METRIC metric = METRIC.MEDIAN;
+		int totalLimit = 2000;// 1000000;
+
+		// Integer[] totalLimits = new Integer[] { 100, 500, 1000 };
+
+		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		System.out.println("total Limit " + totalLimit);
+
+		int k = 10;
+		int nrseeds = 5;
+		int numberOfAttempts = 2210;
+		processor.runSeededCrossValidationExahustiveVsTPE(fileResults, collected, metric,
+				"ExaJDT_seeded" + maxPerProject + "_evals_" + numberOfAttempts + "_datasize_" + totalLimit + "_",
+				numberOfAttempts, k, nrseeds, totalLimit);
 
 	}
 
