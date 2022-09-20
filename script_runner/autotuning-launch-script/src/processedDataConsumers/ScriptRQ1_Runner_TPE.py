@@ -9,10 +9,9 @@ def main(runTPE = True, onlyTest = False):
 	for folderToAnalyze in [NAME_FOLDER_ASTSPOON,
 							NAME_FOLDER_ASTJDT
 							]:
-		for algorithm in ["Gumtree", "ChangeDistiller",
-						  "XyMatcher"]:
+		for algorithm in ["Gumtree"]:
 
-			for iseed in range(0, SEEDS_TO_EXECUTE):
+			for iseed in range(0, 5):
 					print("\nanalyzing {}".format(folderToAnalyze))
 					runHyperOpts(pathResults="{}/editscript_size_per_diff_{}_{}.csv".format(RESULTS_PROCESSED_LOCATION, folderToAnalyze, algorithm), dataset = folderToAnalyze, runTpe=runTPE, algo=algorithm, seed=iseed)
 
@@ -56,6 +55,6 @@ def runHyperOpts(pathResults ="../../../../plots/data/editscript_size_per_diff.c
 def is_grid5k():
     return os.path.exists("/usr/bin/oarsub")
 
-main(runTPE = False, onlyTest=False)
 main(runTPE = True, onlyTest=False)
+#main(runTPE = False, onlyTest=False)
 print("END")
