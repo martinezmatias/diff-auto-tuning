@@ -54,6 +54,7 @@ public class OffLineResultProcessorTest {
 
 	}
 
+	/// USED IN PAPER
 	@Test
 	public void testCrossValidationGlobalBoth() throws Exception {
 
@@ -134,6 +135,7 @@ public class OffLineResultProcessorTest {
 		}
 	}
 
+	/// USED IN PAPER
 	@Test
 	public void testSeedSingleCrossValidationGlobalJDTTPE() throws Exception {
 

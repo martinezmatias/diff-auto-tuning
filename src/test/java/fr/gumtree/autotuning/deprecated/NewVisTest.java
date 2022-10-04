@@ -15,6 +15,14 @@ import fr.gumtree.autotuning.outils.ResultVisualizer;
 
 public class NewVisTest {
 
+	/**
+	 * Case one of the paper
+	 * 
+	 * @throws IllegalAccessError
+	 * @throws IOException
+	 * @throws DiffException
+	 * @throws Exception
+	 */
 	@Test
 	public void testCase1a04d92() throws IllegalAccessError, IOException, DiffException, Exception {
 
@@ -34,6 +42,83 @@ public class NewVisTest {
 		String pathOut = "./outVisTemp/";
 
 		rv.computeDiff(filename, diffId, bestConfig, ParametersResolvers.defaultConfiguration, isJDTModel, pathOut);
+
+	}
+
+	/**
+	 * Case one of the paper
+	 * 
+	 * @throws IllegalAccessError
+	 * @throws IOException
+	 * @throws DiffException
+	 * @throws Exception
+	 */
+	@Test
+	public void testCase3_6867bd1e() throws IllegalAccessError, IOException, DiffException, Exception {
+
+		ResultVisualizer rv = new ResultVisualizer();
+
+		// 6867bd1e49b49b7469b7a1d5de54af177a95fbfc/PanelWindowContainer/vanillaDiffView_default_ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height.html
+
+		String hash = "6867bd1e49b49b7469b7a1d5de54af177a95fbfc";
+		String fname = "PanelWindowContainer";
+
+		String filename = "/Users/matias/develop/gt-tuning/data-cvs-vintage/git-jEdit/" + hash + "/" + fname + "/"
+		// Note that we modified the file name, we minimized the diff
+				+ "c2_" + hash + "_" + fname;
+		String diffId = hash + "/" + fname;
+
+		System.out.println("Source " + filename);
+		// The best using size maps on the ST, so dont need the BU.
+		// "HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-size
+		// But, if we force to fail the ST (using -st_priocalc-height), the hybrid match
+		// in the simpleLastChanceMatch phase.
+		// The classic, using
+		// ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height,
+		// does not arrive to match in ST and it does not enter to the last phase
+		String bestConfig = "HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-height";
+
+		// "ClassicGumtree-bu_minsim-0.2-bu_minsize-600-st_minprio-1-st_priocalc-size";
+		// String defaultConfig =
+		// "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
+		boolean isJDTModel = true;
+		String pathOut = "./outVisTemp/";
+
+		rv.computeDiff(filename, diffId, bestConfig,
+				"ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height"// ParametersResolvers.defaultConfiguration
+				, isJDTModel, pathOut);
+
+	}
+
+	@Test
+	public void testCase2_b06e0b() throws IllegalAccessError, IOException, DiffException, Exception {
+
+		ResultVisualizer rv = new ResultVisualizer();
+
+		// 6867bd1e49b49b7469b7a1d5de54af177a95fbfc/PanelWindowContainer/vanillaDiffView_default_ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height.html
+
+		String hash = "b06e0b92da9ad1737600d996fc6f46e25cfd291b";
+		String fname = "TagAttributeInfo";
+
+		String filename = "/Users/matias/develop/gt-tuning/data-cvs-vintage/git-tomcat/" + hash + "/" + fname + "/"
+				+ "c3_" + hash + "_" + fname;
+		String diffId = hash + "/" + fname;
+
+		System.out.println("Source " + filename);
+
+		// The hibrid Optimize in the ricovery solves the updates, the move remains
+
+		String bestConfig = "HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-height";
+
+		// "ClassicGumtree-bu_minsim-0.2-bu_minsize-600-st_minprio-1-st_priocalc-size";
+		// String defaultConfig =
+		// "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
+		boolean isJDTModel = true;
+		String pathOut = "./outVisTemp/";
+
+		rv.computeDiff(filename, diffId, bestConfig,
+				// ParametersResolvers.defaultConfiguration,
+				"ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height", isJDTModel, pathOut);
 
 	}
 
