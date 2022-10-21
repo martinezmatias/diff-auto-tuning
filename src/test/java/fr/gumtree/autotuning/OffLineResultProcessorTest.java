@@ -4,11 +4,13 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.List;
 
+import org.apache.commons.io.FileUtils;
 import org.junit.Test;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
@@ -20,7 +22,7 @@ import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
-import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TYPESearch;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TPESearch;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
 import smile.validation.Bag;
 import smile.validation.CrossValidation;
@@ -33,7 +35,7 @@ import smile.validation.CrossValidation;
 public class OffLineResultProcessorTest {
 
 	private static final String results_path = // "/Users/matias/develop/gt-tuning/results/resultsdatv3/";//
-			"/Users/matias/develop/gt-tuning/results/resultsv4/";
+			"/Users/matias/develop/gt-tuning/git-dat-results/resultsv4/";
 
 	final String defaultConfiguration = "ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height";
 
@@ -54,66 +56,58 @@ public class OffLineResultProcessorTest {
 
 	}
 
-	/// USED IN PAPER
+	/// USED IN PAPER RQ new Local-Global
 	@Test
-	public void testCrossValidationGlobalBoth() throws Exception {
+	public void testLocalGlobalBoth() throws Exception {
 
-		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 5000;
+		int k = 10;
 		METRIC metric = METRIC.MEDIAN;
-		OfflineResultProcessor processor = new OfflineResultProcessor("cross_validation_global_both");
-		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaSpoon_" + maxPerProject + "_");
+		OfflineResultProcessor processor = new OfflineResultProcessor("cross_validation_global_both_new");
+
+		File fileResults = null;
 
 		fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
+				"ExaJDT_" + maxPerProject + "_", k);
 
-		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaJDT_" + maxPerProject + "_");
+		fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
+		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
+				"ExaSpoon_" + maxPerProject + "_", k);
 
 	}
 
 	@Test
-	public void testCrossValidationGlobalSpoon() throws Exception {
+	public void testLocalGlobalSpoon() throws Exception {
 		OfflineResultProcessor processor = new OfflineResultProcessor();
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 100;
 		METRIC metric = METRIC.MEDIAN;
-		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaSpoon_" + maxPerProject + "_");
-
-	}
-
-	@Test
-	public void testCrossValidationGlobalJDTTPE() throws Exception {
-
-		OfflineResultProcessor processor = new OfflineResultProcessor("tpe_analysis_jdt");
-		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		int maxPerProject = 5000;
-		METRIC metric = METRIC.MEDIAN;
-		int totalLimit = 700;// 1000000;
-
-		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
-		System.out.println("Collected " + collected.size());
-
-		System.out.println("Considered " + collected.size());
-
 		int k = 10;
-		Integer[] allAttempts = new Integer[] { 10, 25, 50, 100, 2210 };
-		for (int numberOfAttempts : allAttempts) {
-			processor.runCrossValidationExahustiveVsTPE(fileResults, collected, metric,
-					"ExaJDT_" + maxPerProject + "_evals_" + numberOfAttempts + "_datasize_" + totalLimit + "_",
-					numberOfAttempts, k);
-		}
+		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
+				"ExaSpoon_" + maxPerProject + "_", k);
 
 	}
 
+	/**
+	 * This method should produce the RQ 2 e.g., comparison TPE Grid with budgets.
+	 * But, it produces a heap exception. So, I run each case, one by one using
+	 * testSeedSingleCrossValidationGlobalJDTTPE.
+	 * 
+	 * @throws Exception
+	 */
+	@Deprecated
 	@Test
 	public void testSeedCrossValidationGlobalJDTTPE() throws Exception {
 
-		OfflineResultProcessor processor = new OfflineResultProcessor("tpe_analysis_jdt");
+		TPESearch search = TPESearch.TPE;
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("RQ2new_" + search + "_analysis_jdt_1000");
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 		int maxPerProject = 5000;
 		METRIC metric = METRIC.MEDIAN;
-		// int totalLimit = 100;// 1000000;
 
-		Integer[] totalLimits = new Integer[] { 100, 500, 1000 };
+		Integer[] totalLimits = new Integer[] { 1000 };
 
 		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
 		System.out.println("Collected " + collected.size());
@@ -124,40 +118,88 @@ public class OffLineResultProcessorTest {
 
 			int k = 10;
 			int nrseeds = 10;
-			Integer[] allAttempts = new Integer[] { 10, 25, 50, 100, 2210 };
-			for (int numberOfAttempts : allAttempts) {
-				processor
-						.runSeededCrossValidationExahustiveVsTPE(
-								fileResults, collected, metric, "ExaJDT_seeded" + maxPerProject + "_evals_"
-										+ numberOfAttempts + "_datasize_" + totalLimit + "_",
-								numberOfAttempts, k, nrseeds, totalLimit);
+			Integer[] allAttempts = new Integer[] { 10, 25, 50, 100 }; // { 10, 25, 50, 100, 2210 };
+
+			for (int numberOfAttemptsTPE : allAttempts) {
+				processor.runSeededCrossValidationExahustiveVsTPE(fileResults, collected, metric,
+						"results_" + search.name() + "_seeds_" + nrseeds + "_maxProj_" + maxPerProject + "_evals_"
+								+ numberOfAttemptsTPE + "_datasize_" + totalLimit + "_",
+						numberOfAttemptsTPE, k, nrseeds, totalLimit, search);
+
+				// processor
+				// .runSeededCrossValidationExahustiveVsTPE(
+				// fileResults, collected, metric, "ExaJDT_seeded" + maxPerProject + "_evals_"
+				// + numberOfAttempts + "_datasize_" + totalLimit + "_",
+				// numberOfAttempts, k, nrseeds, totalLimit, search);
 			}
 		}
 	}
 
-	/// USED IN PAPER
+	/// USED IN PAPER for the new RQ2: TPE and Grid with multiples size of data
 	@Test
 	public void testSeedSingleCrossValidationGlobalJDTTPE() throws Exception {
 
-		OfflineResultProcessor processor = new OfflineResultProcessor("tpe_analysis_jdt");
-		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		int maxPerProject = 5000;
-		METRIC metric = METRIC.MEDIAN;
-		int totalLimit = 2000;// 1000000;
+		TPESearch search = TPESearch.TPE;
 
-		// Integer[] totalLimits = new Integer[] { 100, 500, 1000 };
+		System.out.println("Search " + search);
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("RQ2new_" + search + "_analysis_jdt_all");
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		final int maxPerProject = 5000; // Do not change
+		METRIC metric = METRIC.MEDIAN;
+		// TO VARY
+		int totalLimit = 100000000;
+		// TO VARY
+		int numberOfAttemptsTPE = 100;
 
 		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
 		System.out.println("Collected " + collected.size());
 
 		System.out.println("total Limit " + totalLimit);
 
-		int k = 10;
-		int nrseeds = 5;
-		int numberOfAttempts = 2210;
+		final int k = 10; // Do not change
+		final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+
 		processor.runSeededCrossValidationExahustiveVsTPE(fileResults, collected, metric,
-				"ExaJDT_seeded" + maxPerProject + "_evals_" + numberOfAttempts + "_datasize_" + totalLimit + "_",
-				numberOfAttempts, k, nrseeds, totalLimit);
+				"results_" + search.name() + "_seeds_" + nrseeds + "_maxProj_" + maxPerProject + "_evals_"
+						+ numberOfAttemptsTPE + "_datasize_" + totalLimit + "_",
+				numberOfAttemptsTPE, k, nrseeds, totalLimit, search);
+
+	}
+
+	@Test
+	public void testRetrieveTimes() throws Exception {
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("Times");
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		final int maxPerProject = 5000; // Do not change
+
+		List<File> collected = processor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		System.out.println("Size " + collected.size());
+
+		FileWriter fw = new FileWriter(results_path + "/times_" + System.currentTimeMillis() + ".txt");
+
+		for (int i = 0; i < collected.size(); i++) {
+			System.out.println(collected.get(i).getAbsolutePath());
+			File times = new File(collected.get(i).getParentFile().getAbsolutePath().replace(
+					"/Users/matias/develop/gt-tuning/git-dat-results/resultsv4/outDAT2_JDT_onlyresult/",
+					"/Users/matias/develop/gt-tuning/dat-row-data/outDAT2_JDT/") + File.separatorChar + "listTime.txt");
+
+			if (times.exists()) {
+
+				System.out.println("Exists" + times.getPath());
+
+				// FileReader fr = new FileReader(times);
+
+				String data = FileUtils.readFileToString(times, "UTF-8");
+				fw.write(data);
+
+			}
+
+			// System.out.println(i);
+			// break;
+		}
+		fw.close();
 
 	}
 
@@ -169,7 +211,8 @@ public class OffLineResultProcessorTest {
 
 		int maxPerProject = 1000000;
 		METRIC metric = METRIC.MEDIAN;
-		processor.runCrossValidationExahustive(fileResults, maxPerProject, metric, "ExaJDT");
+		int k = 10;
+		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric, "ExaJDT", k);
 
 	}
 
@@ -212,7 +255,7 @@ public class OffLineResultProcessorTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
 				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(98);
-		configuration.setSearchType(TYPESearch.TPE);
+		configuration.setSearchType(TPESearch.TPE);
 
 		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
 		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);
@@ -238,7 +281,7 @@ public class OffLineResultProcessorTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
 				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(98);
-		configuration.setSearchType(TYPESearch.RANDOM);
+		configuration.setSearchType(TPESearch.RANDOM);
 		configuration.setRandomseed(12);
 		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
 		ResponseBestParameter bestRandomTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);
@@ -324,24 +367,6 @@ public class OffLineResultProcessorTest {
 
 		int maxPerProject = 100;
 		processor.analyzeLocal(fileResults, maxPerProject, METRIC.MEAN);
-	}
-
-	@Test
-	public void testExhaustiveLocalJDTComparisonGlobalForPaper() throws IOException {
-		OfflineResultProcessor processor = new OfflineResultProcessor();
-
-		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		int maxPerProject = 100;
-		processor.analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject, METRIC.MEAN);
-	}
-
-	@Test
-	public void testExhaustiveLocalSpoonComparisonGlobalForPaper() throws IOException {
-		OfflineResultProcessor processor = new OfflineResultProcessor();
-
-		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
-		int maxPerProject = 1000;
-		processor.analyzeLocalAndCompareWithGlobal(fileResults, maxPerProject, METRIC.MEAN);
 	}
 
 }

@@ -83,17 +83,19 @@ public class DiffServerLauncher {
 		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
 				+ "?action=run&parameters=" + param + "&out=./out");
 
-		System.out.println(create);
+		// System.out.println(create);
 
 		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
 		HttpResponse<String> responseRequest = client.send(request, BodyHandlers.ofString());
 
 		String res = responseRequest.body();
-		System.out.println(res);
+
+		// System.out.println(res);
+
 		JsonObject convertedObject = new Gson().fromJson(res, JsonObject.class);
 
-		// System.out.println("-->" + res);
-		System.out.println(convertedObject);
+		//// System.out.println("-->" + res);
+		// System.out.println(convertedObject);
 		return convertedObject;
 
 	}
@@ -169,7 +171,7 @@ public class DiffServerLauncher {
 		URI create = URI.create("http://" + handle.getHost() + ":" + handle.getPort() + "/" + handle.getPath()
 				+ "?action=load&model=" + astomode + "&file=" + fs.getAbsolutePath());
 
-		System.out.println(create);
+		System.out.println("TO call" + create);
 
 		HttpRequest request = HttpRequest.newBuilder().uri(create).build();
 		HttpResponse<String> d = client.send(request, BodyHandlers.ofString());

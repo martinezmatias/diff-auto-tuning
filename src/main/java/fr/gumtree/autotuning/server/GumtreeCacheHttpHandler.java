@@ -124,6 +124,7 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 		try {
 			System.out.println("Creating multiples trees: ");
 			cacheResults = new JsonArray();
+
 			createRepresention(httpExchange, file);
 
 			handleResponse(httpExchange,
@@ -137,6 +138,14 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 		}
 	}
 
+	/**
+	 * In the cache mode, we dont create the trees, we simply read the results and
+	 * stores the results from the jsons
+	 * 
+	 * @param httpExchange
+	 * @param path
+	 * @throws IOException
+	 */
 	public void createRepresention(HttpExchange httpExchange, String path) throws IOException {
 		filesToAnalyze.clear();
 		BufferedReader reader;

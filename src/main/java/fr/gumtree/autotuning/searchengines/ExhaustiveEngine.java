@@ -32,11 +32,11 @@ import com.github.gumtreediff.utils.Pair;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.domain.ParameterDomain;
+import fr.gumtree.autotuning.entity.BestOfFile;
 import fr.gumtree.autotuning.entity.CaseResult;
 import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
-import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
@@ -967,42 +967,35 @@ public class ExhaustiveEngine implements OptimizationMethod {
 		return bestResult;
 	}
 
-	public class BestOfFile {
+	public class ResultLocal {
+		double min = Double.MAX_VALUE;
+		List<String> currentMinConfigs = new ArrayList<>();
 
-		double minBest;
-		double minDefault;
-
-		public BestOfFile(double minBest, double minDefault) {
+		public ResultLocal(double min, List<String> currentMinConfigs) {
 			super();
-
-			this.minBest = minBest;
-			this.minDefault = minDefault;
+			this.min = min;
+			this.currentMinConfigs = currentMinConfigs;
 		}
 
-		public double getMinBest() {
-			return minBest;
+		public double getMin() {
+			return min;
 		}
 
-		public void setMinBest(double minBest) {
-			this.minBest = minBest;
+		public void setMin(double min) {
+			this.min = min;
 		}
 
-		public double getMinDefault() {
-			return minDefault;
+		public List<String> getCurrentMinConfigs() {
+			return currentMinConfigs;
 		}
 
-		public void setMinDefault(double minDefault) {
-			this.minDefault = minDefault;
+		public void setCurrentMinConfigs(List<String> currentMinConfigs) {
+			this.currentMinConfigs = currentMinConfigs;
 		}
 
-		@Override
-		public String toString() {
-			return "BestOfFile [minBest=" + minBest + ", minDefault=" + minDefault + "]";
-		}
 	}
 
-	public List<String> analyzeLocalResult(File filesFromDiff, ResultByConfig resultByConfig,
-			List<ResponseLocalBestParameter> targets) {
+	public ResultLocal analyzeLocalResult(File filesFromDiff, ResultByConfig resultByConfig) {
 		double min = Double.MAX_VALUE;
 		List<String> currentMinConfigs = new ArrayList<>();
 
@@ -1034,16 +1027,9 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		}
 
-		for (ResponseLocalBestParameter target : targets) {
-			List<Double> evaluations = resultByConfig.get(target.getTargetConfig());
-			double minTarget = evaluations.get(0);
+		// updateComparisonWithTarget(filesFromDiff, resultByConfig, targets, min);
 
-			BestOfFile besti = new BestOfFile(min, minTarget);
-			target.getResultPerFile().put(filesFromDiff, besti);
-
-		}
-
-		return currentMinConfigs;
+		return new ResultLocal(min, currentMinConfigs);
 
 	}
 

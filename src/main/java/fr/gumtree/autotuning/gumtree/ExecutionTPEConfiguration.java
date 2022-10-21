@@ -22,11 +22,11 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 		super(metric, astmode, fitnessFunction);
 	}
 
-	public enum TYPESearch {
+	public enum TPESearch {
 		TPE, RANDOM
 	}
 
-	TYPESearch searchType = TYPESearch.TPE;
+	TPESearch searchType = TPESearch.TPE;
 
 	public String getPythonpath() {
 		return pythonpath;
@@ -68,11 +68,11 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 		this.numberOfAttempts = numberOfAttempts;
 	}
 
-	public TYPESearch getSearchType() {
+	public TPESearch getSearchType() {
 		return searchType;
 	}
 
-	public void setSearchType(TYPESearch searchType) {
+	public void setSearchType(TPESearch searchType) {
 		this.searchType = searchType;
 	}
 

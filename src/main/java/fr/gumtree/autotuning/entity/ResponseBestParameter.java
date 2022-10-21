@@ -9,7 +9,6 @@ import java.util.Map;
 import com.google.gson.JsonArray;
 
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
-import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.BestOfFile;
 
 /**
  * 

@@ -90,8 +90,9 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			System.out.println("run with params " + parameters);
 			GTProxy proxy = new GTProxy();
+			long start = System.currentTimeMillis();
 			Diff diff = proxy.run(tl, tr, parameters, null); // we dont want to save here, so we pass null to the out
-
+			long end = System.currentTimeMillis();
 			/////////
 			JsonObject root = new JsonObject();
 			if (diff != null) {
@@ -106,6 +107,8 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 				System.out.println("run with params " + parameters);
 
 				root.addProperty("status", "ok");
+
+				root.addProperty("time", (end - start));
 
 				if (outDirectory != null) {
 					//

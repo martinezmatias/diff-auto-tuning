@@ -63,6 +63,7 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
+	@Deprecated // not used, only in test?
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
 			ExecutionConfiguration configuration) throws Exception {
@@ -97,40 +98,66 @@ public class TPEEngine implements OptimizationMethod {
 		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(fitnessFunction, configuration.getMetric()),
 				handler);
 		launcher.start();
-		ResponseBestParameter resultGeneral = null;
+
+		ResponseBestParameter resultGeneral = new ResponseBestParameter();
 
 		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
 
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
-		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
-		// MM temp
-		// if (resultGeneral != null)
-		// resultGeneral.setInfoEvaluations(infoEvaluations);
+		// JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
+		//// MM temp code ignored:
+		//// if (resultGeneral != null)
+		//// resultGeneral.setInfoEvaluations(infoEvaluations);
 
 		launcher.stop();
-		System.out.println("End Multiple");
+		System.out.println("End server");
 
 		return resultGeneral;
 	}
 
+	/**
+	 * New
+	 * 
+	 * @param dataFilePairs
+	 * @param fitnessFunction
+	 * @param configuration
+	 * @return
+	 * @throws Exception
+	 */
+	public ResponseBestParameter computeLocalGlobalCache(File dataFilePairs, ExecutionConfiguration configuration,
+			GumtreeCacheHttpHandler handler, DiffServerLauncher launcher) throws Exception {
+
+		ResponseBestParameter resultGeneral = new ResponseBestParameter();
+
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
+
+		this.launcher = launcher;
+
+		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
+				(ExecutionTPEConfiguration) configuration);
+
+		//
+		return resultGeneral;
+	}
+
 	public ResponseBestParameter computeBestCallingTPE(ResponseBestParameter resultGeneral,
-			GumtreeAbstractHttpHandler handler, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
+			GumtreeAbstractHttpHandler handlerP, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
 			throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
 
-		handler.setOutDirectory(configuration.getDirDiffTreeSerialOutput());
+		handlerP.setOutDirectory(configuration.getDirDiffTreeSerialOutput());
 
 		if ("created".equals(status)) {
 
 			// TPE always returns only one
-			String best = queryBestConfigOnServer(handler, configuration);
+			String best = queryBestConfigOnServer(handlerP, configuration);
 
 			if (best != null) {
 
 				System.out.println("Checking obtaining Best: ");
-				JsonObject responseBest = launcher.callRunWithHandle(best, handler);
+				JsonObject responseBest = launcher.callRunWithHandle(best, handlerP);
 				System.out.println(responseBest);
 
 				JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);
@@ -209,7 +236,7 @@ public class TPEEngine implements OptimizationMethod {
 			last = line;
 		}
 		reader.close();
-		System.out.println(response);
+		// System.out.println(response);
 		return last;
 	}
 

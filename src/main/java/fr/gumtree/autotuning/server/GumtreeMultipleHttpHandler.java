@@ -94,6 +94,8 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 		List<Double> values = new ArrayList<>();
 
+		JsonArray timesArray = new JsonArray();
+
 		// Collect values
 		for (int i = 0; i < this.files.size(); i++) {
 			// System.out.println("running " + (i + 1) + "/" + this.files.size());
@@ -101,11 +103,16 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			GTProxy proxy = new GTProxy();
 
+			long start = System.currentTimeMillis();
 			Diff diff = proxy.run(pair.first, pair.second, parameters, null); // we dont want to save here, so we pass
-																				// null to the out
+			// null to the out
+
+			long end = System.currentTimeMillis();
 
 			Double fitnessOfDiff = fitnessFunction.getFitnessValue(diff, this.metric);
 			values.add(fitnessOfDiff);
+
+			timesArray.add((end - start));
 
 			if (this.getOutDirectory() != null) {
 				try {
@@ -120,6 +127,8 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 		double fitness = fitnessFunction.computeFitness(values, this.metric);
 		root.addProperty("fitness", fitness);
 		root.addProperty("values", values.size());
+		root.add("times", timesArray);
+
 		if (values.size() > 0)
 			root.addProperty("status", "ok");
 		else
