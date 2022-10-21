@@ -1,10 +1,29 @@
 # DAT: Diff-Auto-Tuning
 
+Repository of tool DAT presented in the following paper:
+
+```
+@misc{dat,
+  author = {Martinez, Matias and Falleri, Jean-Rémy and Monperrus, Martin},
+  
+  title = {Hyperparameter Optimization for AST Differencing},
+  
+  publisher = {arXiv},
+  
+  year = {2020},
+  
+  doi = {10.48550/ARXIV.2011.10268},
+  
+  url = {https://arxiv.org/abs/2011.10268},
+   
+  keywords = {Software Engineering (cs.SE), FOS: Computer and information sciences, FOS: Computer and information sciences},
+}
+
+```
 
 ## Usage
 
 
-## Architecture
 
 
 ### Optimization scope
@@ -33,10 +52,9 @@ On the contrary, the `local` optimization is done on a single file pair and has 
 ### Optimization Method
 
 The interface `OptimizationMethod` should be implemented by particular optimization methods.
-The current version of DAT provides 3 optimization methods:
+The current version of DAT provides two optimization methods:
 1) Exhaustive search
 2) TPE 
-3) Random search
 
 Other optimization methods, not included in the current version of DAT, can be included in DAT by implementing this interface.
 
@@ -73,8 +91,6 @@ XyMatcher-st_minprio-1-st_priocalc-size-xy_minsim-0.1
 
 
 
-
-
 All methods from `OptimizationMethod` returns a `ResponseBestParameter`  which contains a list of best hyperparameters: DAT can find several sets of hyperparameters that produces the same output.
 
 
@@ -85,57 +101,6 @@ Similarly, the file `result_size_per_config__<pair_identifier>` stores the edit 
 Second, it saves the edit script generated for each particular hyperparameter optimization (i.e., each point in the space of hyperconfigurations).
 DAT saves only distinct edit scripts to save storage space.
 
-
-
-
-
-
-## Configuration
-
-### Configuration GumTree 3 
-
-GumTree 3 is not currently available on github. 
-In this doc, we explain how to generate the Jar to be included in the doc.
-
-
-
-To generate GumTree 3 jar:
-
-From core and jdt build.
-
-
-description = 'GumTree core module.'
-
-dependencies {
-	compile 'com.github.mpkorstanje:simmetrics-core:3.2.3'
-	compile 'net.sf.trove4j:trove4j:3.0.3'
-	compile 'com.google.code.gson:gson:2.8.2'
-	compile 'org.jgrapht:jgrapht-core:1.0.1'
-}
-
-allprojects {
-	gradle.projectsEvaluated {
-		tasks.withType(JavaCompile) {
-			options.compilerArgs << "-Xlint:unchecked" << "-Xlint:deprecation"
-		}
-	}
-
-}
-
-task fatJar(type: Jar) {
-   // manifest {
-    //    attributes 'Implementation-Title': 'Gradle Jar File Example',
-   //             'Implementation-Version': "vmm"
-   // }
-    baseName = project.name + '-all'
-    from { configurations.compile.collect { it.isDirectory() ? it : zipTree(it) } }
-    with jar
-}
-
-//Get dependencies from Maven central repository
-repositories {
-    mavenCentral()
-}
 
 
 
