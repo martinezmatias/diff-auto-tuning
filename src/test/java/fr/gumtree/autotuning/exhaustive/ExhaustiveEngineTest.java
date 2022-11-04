@@ -214,8 +214,11 @@ public class ExhaustiveEngineTest {
 		File fs = new File("./examples/input_multiple_3_diffs.txt");
 
 		ExhaustiveEngine rp = new ExhaustiveEngine();
+
 		ExecutionExhaustiveConfiguration ec = new ExecutionExhaustiveConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
 				new LengthEditScriptFitness());
+
+		// ec.setParalelisationMode(PARALLEL_EXECUTION.PROPERTY_LEVEL);
 		// Only for test
 		ec.setSaveScript(true);
 

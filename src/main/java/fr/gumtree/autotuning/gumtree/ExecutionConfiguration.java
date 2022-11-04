@@ -16,12 +16,12 @@ import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
  */
 public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 
-	private PARALLEL_EXECUTION paralelisationMode = PARALLEL_EXECUTION.NONE;
+	private PARALLEL_EXECUTION paralelisationMode = PARALLEL_EXECUTION.PROPERTY_LEVEL;
 	private int numberOfThreads = 16;
 
 	private boolean saveScript = true;
 
-	private boolean overwriteResults = false;
+	private boolean overwriteResults = true;
 
 	private File dirDiffTreeSerialOutput = new File("./out/");
 

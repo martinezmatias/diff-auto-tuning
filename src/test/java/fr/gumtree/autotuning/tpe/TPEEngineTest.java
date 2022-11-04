@@ -45,6 +45,8 @@ public class TPEEngineTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
 				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(50);
+		configuration.setPythonpath(
+				"/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python");
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
 

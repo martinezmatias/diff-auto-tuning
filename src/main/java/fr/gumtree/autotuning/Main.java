@@ -2,20 +2,20 @@ package fr.gumtree.autotuning;
 
 import java.io.File;
 import java.util.Arrays;
-import java.util.List;
 import java.util.concurrent.Callable;
 
-import fr.gumtree.autotuning.entity.CaseResult;
-import fr.gumtree.autotuning.experimentrunner.StructuredFolderfRunner;
+import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
+import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TPESearch;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
-import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
-import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
-import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
+import fr.gumtree.autotuning.searchengines.OptimizationMethod;
+import fr.gumtree.autotuning.searchengines.TPEEngine;
 import picocli.CommandLine;
 import picocli.CommandLine.Option;
 
@@ -26,24 +26,24 @@ import picocli.CommandLine.Option;
  */
 public class Main implements Callable<Integer> {
 
-	@Option(names = "-out", required = true)
+	@Option(names = "-out", required = false)
 	String out;
-	@Option(names = "-path", required = true)
-	File pathMegadiff;
-	@Option(names = "-subset", required = true)
-	String[] subsets;
-	@Option(names = "-begin")
-	int begin;
-	@Option(names = "-stop", defaultValue = "10000000")
-	int stop;
 	@Option(names = "-astmodel", required = false, defaultValue = "GTSPOON")
 	String astmodel;
-	@Option(names = "-paralleltype", defaultValue = "NONE")
+	@Option(names = "-paralleltype", defaultValue = "PROPERTY_LEVEL")
 	String paralleltype;
+
+	@Option(names = "-mode", defaultValue = "exahustive")
+	String mode;
+
+	@Option(names = "-scope", defaultValue = "local")
+	String scope;
+
+	@Option(names = "-nrAttempts", defaultValue = "25")
+	int nrAttempts;
 
 	@Option(names = "-nrthreads", defaultValue = "10")
 	int nrthreads;
-
 	// in seconds
 	@Option(names = "-timeout", defaultValue = "3000", descriptionKey = "timeout for a matcher (all config) in seconds")
 	long timeout;
@@ -52,7 +52,118 @@ public class Main implements Callable<Integer> {
 	@Option(names = "-overwriteresults", defaultValue = "true", required = false)
 	boolean overwriteresults;
 
-	List<CaseResult> resultsExecution;
+	// Inputs for local
+	@Option(names = "-left", required = false)
+	String left;
+
+	@Option(names = "-right", required = false)
+	String right;
+
+	// Inout for global
+	@Option(names = "-listpairs", required = false)
+	String listpairs;
+
+	enum DAT_METHOD {
+		EXHAUSTIVE, TPE;
+	}
+
+	enum SCOPE {
+		GLOBAL, LOCAL;
+	}
+
+	public OptimizationMethod getMethod() {
+
+		OptimizationMethod engine = null;
+		if (mode.toLowerCase().equals(DAT_METHOD.EXHAUSTIVE.toString().toLowerCase())) {
+			engine = new ExhaustiveEngine();
+		} else if (mode.toLowerCase().equals(DAT_METHOD.TPE.toString().toLowerCase())) {
+			engine = new TPEEngine();
+		}
+		return engine;
+
+	}
+
+	public ExecutionConfiguration getConfiguration() throws Exception {
+
+		METRIC mean = METRIC.MEAN;
+
+		if (mode.toLowerCase().equals(DAT_METHOD.EXHAUSTIVE.toString().toLowerCase())) {
+
+			ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(mean, getMetamodel(),
+					getFitness());
+			configuration.setNumberOfThreads(nrthreads);
+			configuration.setTimeOut(timeout);
+			PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
+
+			configuration.setParalelisationMode(execution);
+			configuration.setOverwriteResults(overwriteresults);
+			return configuration;
+
+		} else if (mode.toLowerCase().equals(DAT_METHOD.TPE.toString().toLowerCase())) {
+
+			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(mean, getMetamodel(), getFitness());
+			configuration.setNumberOfAttempts(nrAttempts);
+			configuration.setSearchType(TPESearch.TPE);
+
+			return configuration;
+		}
+		return null;
+
+	}
+
+	private LengthEditScriptFitness getFitness() {
+		return new LengthEditScriptFitness();
+	}
+
+	@Override
+	public Integer call() throws Exception {
+
+		ExecutionConfiguration configuration = getConfiguration();
+		OptimizationMethod method = getMethod();
+		LengthEditScriptFitness fitness = getFitness();
+		ResponseBestParameter result = null;
+		if (scope.toLowerCase().equals(SCOPE.GLOBAL.toString().toLowerCase())) {
+
+			if (listpairs == null) {
+				throw new IllegalArgumentException("parameter -listpair must be passed");
+			}
+
+			File flistpairs = new File(listpairs);
+			if (!flistpairs.exists()) {
+				throw new IllegalArgumentException("parameters -flistpairs must have existing files");
+			}
+
+			result = method.computeBestGlobal(flistpairs, fitness, configuration);
+
+		} else if (scope.toLowerCase().equals(SCOPE.LOCAL.toString().toLowerCase())) {
+
+			if (left == null || right == null) {
+				throw new IllegalArgumentException("parameters -left and -right must be passed");
+			}
+
+			File fl = new File(left);
+			File fr = new File(right);
+
+			if (!fl.exists() || !fr.exists()) {
+				throw new IllegalArgumentException("parameters -left and -right must have existing files");
+			}
+
+			result = method.computeBestLocal(fl, fr, fitness, configuration);
+
+		}
+
+		if (result != null) {
+			System.out.println("End search, best found: ");
+			System.out.println(result.getBest());
+		}
+
+		return null;
+	}
+
+	private ASTMODE getMetamodel() {
+		ASTMODE model = ASTMODE.valueOf(this.astmodel);
+		return model;
+	}
 
 	public static void main(String[] args) {
 		System.out.println("Arguments received: " + Arrays.toString(args));
@@ -73,38 +184,6 @@ public class Main implements Callable<Integer> {
 		this.out = out;
 	}
 
-	public File getPath() {
-		return pathMegadiff;
-	}
-
-	public void setPath(File path) {
-		this.pathMegadiff = path;
-	}
-
-	public String[] getSubsets() {
-		return subsets;
-	}
-
-	public void setSubsets(String[] subsets) {
-		this.subsets = subsets;
-	}
-
-	public int getBegin() {
-		return begin;
-	}
-
-	public void setBegin(int begin) {
-		this.begin = begin;
-	}
-
-	public int getStop() {
-		return stop;
-	}
-
-	public void setStop(int stop) {
-		this.stop = stop;
-	}
-
 	public String getAstmodel() {
 		return astmodel;
 	}
@@ -119,48 +198,6 @@ public class Main implements Callable<Integer> {
 
 	public void setParallel(String parallel) {
 		this.paralleltype = parallel;
-	}
-
-	@Override
-	public Integer call() throws Exception {
-
-		System.out.println("Command:  " + toString());
-
-		ExhaustiveEngine engine = new ExhaustiveEngine();
-
-		StructuredFolderfRunner runner = new StructuredFolderfRunner(engine);
-
-		PARALLEL_EXECUTION execution = PARALLEL_EXECUTION.valueOf(this.paralleltype.toUpperCase());
-		ASTMODE model = ASTMODE.valueOf(this.astmodel);
-		// TODO
-		ExecutionExhaustiveConfiguration configuration = new ExecutionExhaustiveConfiguration(METRIC.MEAN, model,
-				new LengthEditScriptFitness());
-		configuration.setNumberOfThreads(nrthreads);
-		configuration.setTimeOut(timeout);
-		configuration.setParalelisationMode(execution);
-		configuration.setOverwriteResults(overwriteresults);
-
-		ITreeBuilder treebuilder = null;
-		if (ASTMODE.GTSPOON.equals(model)) {
-			treebuilder = new SpoonTreeBuilder();
-		} else if (ASTMODE.JDT.equals(model)) {
-			treebuilder = new JDTTreeBuilder();
-		} else {
-			System.err.println("Mode not configured " + model);
-		}
-
-		runner.navigateFolder(treebuilder, out, pathMegadiff, subsets, begin, stop, configuration, this.matchers);
-
-		System.out.println("-END-");
-		return null;
-	}
-
-	@Override
-	public String toString() {
-		return "Main [out=" + out + ", pathMegadiff=" + pathMegadiff + ", subsets=" + Arrays.toString(subsets)
-				+ ", begin=" + begin + ", stop=" + stop + ", astmodel=" + astmodel + ", parallel=" + paralleltype
-				+ ", timeout=" + timeout + ", matchers=" + Arrays.toString(this.matchers) + ", overwriteresults="
-				+ this.overwriteresults + ", nrThreads=" + this.nrthreads + "]";
 	}
 
 	public long getTimeout() {

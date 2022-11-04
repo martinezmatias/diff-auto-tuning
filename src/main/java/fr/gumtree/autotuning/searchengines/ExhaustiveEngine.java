@@ -1105,7 +1105,7 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 		String outDiffId = configuration.getDirDiffTreeSerialOutput().getAbsolutePath() + File.separator + diffId;
 
-		if (new File(outDiffId).exists()) {
+		if (!configuration.isOverwriteResults() && new File(outDiffId).exists()) {
 			System.out.println("Existing " + outDiffId);
 			return null;
 		}

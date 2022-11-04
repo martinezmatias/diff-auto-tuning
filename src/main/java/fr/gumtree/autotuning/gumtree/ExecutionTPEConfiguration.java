@@ -1,5 +1,9 @@
 package fr.gumtree.autotuning.gumtree;
 
+import java.io.File;
+import java.net.URISyntaxException;
+import java.net.URL;
+
 import fr.gumtree.autotuning.fitness.Fitness;
 
 /**
@@ -9,24 +13,44 @@ import fr.gumtree.autotuning.fitness.Fitness;
  */
 public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 
-	String pythonpath = "/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python";
-	String scriptpath = "/Users/matias/develop/gt-tuning/git-dat-experiment-runner/src/runners/TPEBridge.py";
+	String pythonpath = getPythonDir();
+
+	private String getPythonDir() {
+
+		String pythonRoot = System.getProperty("python.home");
+		if (pythonRoot != null) {
+			return pythonRoot;
+		}
+
+		return "Python";
+	}
 
 	String classpath = System.getProperty("java.class.path");
 	String javahome = System.getProperty("java.home");
+	String TPEScriptPath;
 
 	int numberOfAttempts = 100;
 	int randomseed = 0;
-
-	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) {
-		super(metric, astmode, fitnessFunction);
-	}
 
 	public enum TPESearch {
 		TPE, RANDOM
 	}
 
 	TPESearch searchType = TPESearch.TPE;
+
+	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) throws Exception {
+		super(metric, astmode, fitnessFunction);
+
+		File fbrige = getFileFromResource("TPEBridge.py");
+		TPEScriptPath = fbrige.getAbsolutePath();
+	}
+
+	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction, String pythonpath,
+			String scriptpath) {
+		super(metric, astmode, fitnessFunction);
+		this.pythonpath = pythonpath;
+		this.TPEScriptPath = scriptpath;
+	}
 
 	public String getPythonpath() {
 		return pythonpath;
@@ -37,11 +61,11 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 	}
 
 	public String getScriptpath() {
-		return scriptpath;
+		return TPEScriptPath;
 	}
 
 	public void setScriptpath(String scriptpath) {
-		this.scriptpath = scriptpath;
+		this.TPEScriptPath = scriptpath;
 	}
 
 	public String getClasspath() {
@@ -82,6 +106,18 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 
 	public void setRandomseed(int randomseed) {
 		this.randomseed = randomseed;
+	}
+
+	private File getFileFromResource(String fileName) throws URISyntaxException {
+
+		ClassLoader classLoader = getClass().getClassLoader();
+		URL resource = classLoader.getResource(fileName);
+		if (resource == null) {
+			throw new IllegalArgumentException("file not found! " + fileName);
+		} else {
+			return new File(resource.toURI());
+		}
+
 	}
 
 }

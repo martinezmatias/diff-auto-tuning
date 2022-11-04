@@ -76,7 +76,7 @@ public class NewVisTest {
 		// The classic, using
 		// ClassicGumtree-bu_minsim-0.5-bu_minsize-1000-st_minprio-1-st_priocalc-height,
 		// does not arrive to match in ST and it does not enter to the last phase
-		String bestConfig = "HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-height";
+		String bestConfig = "HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-size";
 
 		// "ClassicGumtree-bu_minsim-0.2-bu_minsize-600-st_minprio-1-st_priocalc-size";
 		// String defaultConfig =
