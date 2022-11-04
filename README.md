@@ -21,38 +21,102 @@ Repository of tool DAT presented in the following paper:
 
 ```
 
-## Usage
+## Goal of DAT
 
+The goal of DAT to find a new configuration i.e., a particular value for each hyper-parameter of an AST differencing algorithm.
 
-UNDER PROGRESS
+## How DAT works? 
 
-### Optimization scope
+DAT provides two types of optimization: `global` and `local`.
 
-
-The interface `OptimizationMethod` defines two main optimizations scopes: `global` and `local` optimization.
+ 
 
 #### Global
 In `global` optimization, the search of the best hyperparameters is done globally i.e., from a set of file-pairs.
-It finds the hyperparameter that produce the best edit scripts according to a fitness function.
-The input of this mode is a file with a list of file pairs.
+DAT finds the values for the hyper-parameter(s) that produces the best edit scripts according to a fitness function.
+The input of this optimization mode is a file containing a list of file pairs.
 ```
-path to file A1, path to  file A2
+path to file A1, path to file A2
 path to file B1, path to file B2
 path to file C1, path to file C2
 path to file D1, path to file D2
 ... 
 ```
 
+In this mode, for each configuration `C` of the diff algorithm, DAT computes the fitness function on each file pair, then it computes a function (e.g., mean, median) to obtain the performance of `C` accross all the data.
+Finally, it selects the configuration according with an objective goal (e.g., min, max).
+
 
 #### Local 
 
-On the contrary, the `local` optimization is done on a single file pair and has as goal to search the hyperparameter that produces the best edit script according to a fitness function (by default shortest edit scripts)
+The `local` optimization is done on a single file pair. 
+DAT has as goal to search the hyperparameter that produces the best edit script according to a fitness function (by default shortest edit scripts)
 
 
-### Optimization Method
+## Usage
 
-The interface `OptimizationMethod` should be implemented by particular optimization methods.
-The current version of DAT provides two optimization methods:
+
+### Pre-requisites
+
+To use TPE, it's requited to:
+1) Install Python 3.x
+2) Include Python in the path or create the environment variable `python.home` which value corresponds to the path to Python.
+3) Install [hyperopt](http://hyperopt.github.io/hyperopt/) e.g., `pip install hyperopt`
+
+
+### Commands
+
+
+##### Mode Exhaustive and Local search  
+
+
+```
+fr.gumtree.autotuning.Main -left <path_to_file> -right <path_to_file> -mode exhaustive -scope local
+```
+
+
+##### Mode TPE and Local search 
+
+```
+fr.gumtree.autotuning.Main -left <path_to_file> -right <path_to_file> -mode tpe -scope local
+```
+
+
+##### Mode Exhaustive and Global search  
+
+```
+fr.gumtree.autotuning.Main -listpairs<path_to_file> -mode exhaustive -scope global
+```
+
+
+##### Mode TPE and Global search  
+
+```
+fr.gumtree.autotuning.Main -listpairs <path_to_file> -mode tpe -scope global
+```
+
+
+
+## Architecture
+
+
+The interface `OptimizationMethod` provides the methods that define the two optimization types.
+
+```
+	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception;
+
+
+	public ResponseBestParameter computeBestLocal(File left, File right, Fitness fitnessFunction,
+			ExecutionConfiguration configuration) throws Exception;
+```
+
+As mentioned before, `computeBestGlobal` receives a file which stores a list of file-pairs, `computeBestLocal` two files, which corresponds to the file-pair to analyze.
+Both methods has other two arguments: the fitness function, and the configuration of DAT for this execution (the type and number of configuration entries depend on the interface implementation). 
+
+
+The current version of DAT provides two optimization methods, which implement the interface `OptimizationMethod`:
+
 1) Exhaustive search
 2) TPE 
 
@@ -61,8 +125,8 @@ Other optimization methods, not included in the current version of DAT, can be i
 
 ### Representation of configuration
 
-It's important to remark how DAT represents a particular configuration of a diff algorithm.
-A configuration is a point in the hyperparameter space: for each hyperparameter, the configuration has exactly one value.
+
+For DAT, a configuration is a single point in the hyper-parameter space: for each hyper-parameter, a configuration has exactly one value.
 
 The next listing shows the template for representing a particular configuration i.e., a point in the hyperparameter space:
 
@@ -74,32 +138,28 @@ For example, the following configuration:
 ```
 ClassicGumtree-bu_minsim-0.1-bu_minsize-100-st_minprio-1-st_priocalc-size
 ```
-concerns `ClassicGumtree` matching algorithm and assigns values 0.1 to hyperparameter `bu_minsim`, 100 to `bu_minsize`, 1 to `bu_minsize` and  `size` value to `st_priocalc`. 
-We recall that all those 4 are hyperparameters of  ClassicGumtree matches.
+concerns `ClassicGumtree` matching algorithm and assigns values 0.1 to hyper-parameter `bu_minsim`, 100 to `bu_minsize`, 1 to `bu_minsize` and  `size` value to `st_priocalc`. 
+We recall that all those 4 are hyper-parameters of  ClassicGumtree matches.
 
 Another diff algorithm may have different parameters.
-For example `XY` has 3 hyperparameters (`st_minprio`, `st_priocalc` and `xy_minsim`) and one configuration is:
+For example `XY` has 3 hyper-parameters (`st_minprio`, `st_priocalc` and `xy_minsim`) and one configuration is:
 ```
 XyMatcher-st_minprio-1-st_priocalc-size-xy_minsim-0.1
 ```
 
 
+### DAT Output
 
 
-### Output
+All methods from `OptimizationMethod` returns a `ResponseBestParameter`  which contains:
+1) a list of best hyper-parameters (DAT can find several sets of hyper-parameters that produces the same output).
+2) the value of fitness function corresponding to the best configuration found.
 
 
 
+# Contact:
 
-All methods from `OptimizationMethod` returns a `ResponseBestParameter`  which contains a list of best hyperparameters: DAT can find several sets of hyperparameters that produces the same output.
-
-
-For each file-pair analyzed P, DAT gives the possibility to save on disk files with different information.
-First, it saves a give `summary_cases_<pair_identifier>`, which is a CSV file were each row is a particular configuration C and there is a row that indicates the size of the edit script  by running a diff algorithm on P configured by C.
-Similarly, the file `result_size_per_config__<pair_identifier>` stores the edit script size for each configuration executed on P.
-
-Second, it saves the edit script generated for each particular hyperparameter optimization (i.e., each point in the space of hyperconfigurations).
-DAT saves only distinct edit scripts to save storage space.
+Matias Martinez <matias.sebastian.martinez@gmail.com>
 
 
 
