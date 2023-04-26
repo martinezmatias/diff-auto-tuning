@@ -16,13 +16,13 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 	String pythonpath = getPythonDir();
 
 	private String getPythonDir() {
-
+		System.out.println("va r" +System.getenv("path"));
 		String pythonRoot = System.getProperty("python.home");
 		if (pythonRoot != null) {
 			return pythonRoot;
 		}
 
-		return "Python";
+		return "/Users/matias/miniconda3/envs/torch-gpu/bin/python";
 	}
 
 	String classpath = System.getProperty("java.class.path");
@@ -31,26 +31,52 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 
 	int numberOfAttempts = 100;
 	int randomseed = 0;
-
-	public enum TPESearch {
-		TPE, RANDOM
+	
+	public enum HPOFramework{
+		
+		HYPEROPT, OPTUNA;
+		
 	}
 
-	TPESearch searchType = TPESearch.TPE;
+	public enum HPOSearchType {
+		// Modes from Hyperopt
+		TPE_HYPEROPT(HPOFramework.HYPEROPT), RANDOM_HYPEROPT(HPOFramework.HYPEROPT), ADAPTIVE(HPOFramework.HYPEROPT),
+		Annealing(HPOFramework.HYPEROPT),
+		
+		//Modes from Optuna
+		GRID(HPOFramework.OPTUNA), RANDOM_OPTUNA(HPOFramework.OPTUNA), TPE_OPTUNA(HPOFramework.OPTUNA), CMAES(HPOFramework.OPTUNA), PARTIALFIXED(HPOFramework.OPTUNA), NSGAII(HPOFramework.OPTUNA), QMC(HPOFramework.OPTUNA);
+		
+		private final HPOFramework framework;
+		
+		HPOSearchType(HPOFramework fm){
+			this.framework=fm;
+		}
+
+		public HPOFramework getFramework() {
+			return framework;
+		}
+
+	}
+	
+	
+
+	HPOSearchType searchType; // = HyperoptSearch.TPE;
 
 	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) throws Exception {
-		super(metric, astmode, fitnessFunction);
+		this(metric, astmode, fitnessFunction, HPOSearchType.TPE_HYPEROPT);
 
-		File fbrige = getFileFromResource("TPEBridge.py");
+
+		
+	}
+	
+	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction, HPOSearchType searchType) throws Exception {
+		super(metric, astmode, fitnessFunction);
+		this.searchType = searchType;
+		
+		File fbrige = getFileFromResource( searchType.getFramework() == HPOFramework.HYPEROPT?  "HyperOptBridge.py" : "OptunaBridge.py");
 		TPEScriptPath = fbrige.getAbsolutePath();
 	}
-
-	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction, String pythonpath,
-			String scriptpath) {
-		super(metric, astmode, fitnessFunction);
-		this.pythonpath = pythonpath;
-		this.TPEScriptPath = scriptpath;
-	}
+	
 
 	public String getPythonpath() {
 		return pythonpath;
@@ -92,11 +118,11 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 		this.numberOfAttempts = numberOfAttempts;
 	}
 
-	public TPESearch getSearchType() {
+	public HPOSearchType getSearchType() {
 		return searchType;
 	}
 
-	public void setSearchType(TPESearch searchType) {
+	public void setSearchType(HPOSearchType searchType) {
 		this.searchType = searchType;
 	}
 

@@ -29,7 +29,7 @@ import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
-import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TPESearch;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
@@ -358,7 +358,7 @@ public class OfflineResultProcessor {
 		//
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, null, fitness);
 		configuration.setNumberOfAttempts(25);
-		configuration.setSearchType(TPESearch.TPE);
+		configuration.setSearchType(HPOSearchType.TPE_HYPEROPT); //TODO: change
 
 		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler(fitness, configuration.getMetric());
 		DiffServerLauncher launcher = new DiffServerLauncher(
@@ -1274,7 +1274,7 @@ public class OfflineResultProcessor {
 	}
 
 	public void runSeededCrossValidationExahustiveVsTPE(File fileResults, List<File> original, METRIC metric,
-			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, TPESearch searchType)
+			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType)
 			throws Exception {
 
 		List<ResultComparisonTwoConfigurations> allBestGlobalComparison = new ArrayList<>();

@@ -6,6 +6,7 @@ import java.util.concurrent.TimeUnit;
 
 import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 
 /**

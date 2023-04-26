@@ -152,10 +152,14 @@ public class TPEEngine implements OptimizationMethod {
 		if ("created".equals(status)) {
 
 			// TPE always returns only one
-			String best = queryBestConfigOnServer(handlerP, configuration);
+			String[] response = queryBestConfigOnServer(handlerP, configuration);
+			
+					
+			if (response != null) {
 
-			if (best != null) {
-
+				String best = response[0];
+				String environment = response[1];
+				
 				System.out.println("Checking obtaining Best: ");
 				JsonObject responseBest = launcher.callRunWithHandle(best, handlerP);
 				System.out.println(responseBest);
@@ -174,6 +178,9 @@ public class TPEEngine implements OptimizationMethod {
 				// result.setNumberOfEvaluatedPairs(nrActions);
 				result.setMetricValue(fitness);
 				result.setNumberOfEvaluatedPairs(values);
+				
+				//
+				result.setEnvironment(environment);
 
 				resultGeneral = result;
 
@@ -192,7 +199,7 @@ public class TPEEngine implements OptimizationMethod {
 	 * @param configuration
 	 * @return
 	 */
-	public String queryBestConfigOnServer(GumtreeAbstractHttpHandler handler, ExecutionTPEConfiguration configuration) {
+	public String[] queryBestConfigOnServer(GumtreeAbstractHttpHandler handler, ExecutionTPEConfiguration configuration) {
 		// Call TPE
 
 		Runtime rt = Runtime.getRuntime();
@@ -206,19 +213,40 @@ public class TPEEngine implements OptimizationMethod {
 				Integer.toString(configuration.getRandomseed()) };
 		try {
 			Process p = rt.exec(commandAndArguments);
-			String response = readProcessOutput(p);
+			
+			//String response = readProcessOutput(p, HEADER_RESPONSE_PYTHON);
 
-			String error = readProcessError(p);
+			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+			String line;
 			String bestConfig = null;
-			if (response.startsWith(HEADER_RESPONSE_PYTHON)) {
+			String configLine = null;
+			while ((line = reader.readLine()) != null && bestConfig == null) {
+				// response += line + "\r\n";
 
-				bestConfig = response.replace(HEADER_RESPONSE_PYTHON, "");
+				if (line.startsWith("Famework_Setup")) {
+			
+					configLine = line;
+				} 
+
+				if (line.startsWith(HEADER_RESPONSE_PYTHON)) {
+
+					bestConfig = line.replace(HEADER_RESPONSE_PYTHON, "");
+
+				}
+
 			}
-
-			System.err.println(error);
+			
+			reader.close();
+			if (bestConfig!= null)
+					bestConfig = bestConfig.replace(HEADER_RESPONSE_PYTHON, "");
+			
 			System.out.println("best: " + bestConfig);
+			
+			String error = readProcessError(p);
+			System.err.println(error);
+		
 
-			return bestConfig;
+			return new String[] {bestConfig, configLine} ;
 
 		} catch (Exception ex) {
 			ex.printStackTrace();
@@ -238,6 +266,32 @@ public class TPEEngine implements OptimizationMethod {
 		reader.close();
 		// System.out.println(response);
 		return last;
+	}
+
+	private String readProcessOutput(Process p, String toFind) throws Exception {
+		BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
+		String line;
+		String response = null;
+		String configLine = null;
+		while ((line = reader.readLine()) != null && response == null) {
+			// response += line + "\r\n";
+
+			if (line.startsWith("Famework_Setup")) {
+		
+				configLine = line;
+			} 
+
+			if (line.startsWith(HEADER_RESPONSE_PYTHON)) {
+
+				response = line.replace(HEADER_RESPONSE_PYTHON, "");
+
+			}
+
+		}
+		reader.close();
+		
+		System.out.println("-Config->"+ configLine);
+		return response;
 	}
 
 	private String readProcessError(Process p) throws Exception {

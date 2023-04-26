@@ -11,7 +11,7 @@ import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionExhaustiveConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
-import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TPESearch;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.PARALLEL_EXECUTION;
 import fr.gumtree.autotuning.searchengines.OptimizationMethod;
@@ -103,7 +103,7 @@ public class Main implements Callable<Integer> {
 
 			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(mean, getMetamodel(), getFitness());
 			configuration.setNumberOfAttempts(nrAttempts);
-			configuration.setSearchType(TPESearch.TPE);
+			configuration.setSearchType(HPOSearchType.TPE);
 
 			return configuration;
 		}

@@ -27,6 +27,16 @@ public class ResponseBestParameter {
 	METRIC metricUnit;
 
 	JsonArray infoEvaluations;
+	
+	String environment = null;
+
+	public String getEnvironment() {
+		return environment;
+	}
+
+	public void setEnvironment(String environment) {
+		this.environment = environment;
+	}
 
 	public String getBest() {
 		if (bests.size() > 0)
