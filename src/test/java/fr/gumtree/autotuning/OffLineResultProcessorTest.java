@@ -22,7 +22,7 @@ import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
-import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.TPESearch;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
 import smile.validation.Bag;
 import smile.validation.CrossValidation;
@@ -83,7 +83,7 @@ public class OffLineResultProcessorTest {
 		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		int maxPerProject = 100;
 		METRIC metric = METRIC.MEDIAN;
-		int k = 10;
+		int k = 2;
 		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
 				"ExaSpoon_" + maxPerProject + "_", k);
 
@@ -100,7 +100,7 @@ public class OffLineResultProcessorTest {
 	@Test
 	public void testSeedCrossValidationGlobalJDTTPE() throws Exception {
 
-		TPESearch search = TPESearch.TPE;
+		HPOSearchType search = HPOSearchType.TPE_HYPEROPT;
 
 		OfflineResultProcessor processor = new OfflineResultProcessor("RQ2new_" + search + "_analysis_jdt_1000");
 		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
@@ -139,7 +139,7 @@ public class OffLineResultProcessorTest {
 	@Test
 	public void testSeedSingleCrossValidationGlobalJDTTPE() throws Exception {
 
-		TPESearch search = TPESearch.TPE;
+		HPOSearchType search = HPOSearchType.TPE_HYPEROPT;
 
 		System.out.println("Search " + search);
 
@@ -255,7 +255,7 @@ public class OffLineResultProcessorTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
 				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(98);
-		configuration.setSearchType(TPESearch.TPE);
+		configuration.setSearchType(HPOSearchType.TPE_HYPEROPT);
 
 		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
 		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);
@@ -281,7 +281,7 @@ public class OffLineResultProcessorTest {
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
 				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(98);
-		configuration.setSearchType(TPESearch.RANDOM);
+		configuration.setSearchType(HPOSearchType.TPE_HYPEROPT);
 		configuration.setRandomseed(12);
 		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
 		ResponseBestParameter bestRandomTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);

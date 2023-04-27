@@ -264,6 +264,7 @@ public class ResultVisualizer {
 
 		saveDiffInfo(parentDiff, actionsAll, configId);
 
+		/*
 		VanillaDiffHtmlBuilder builder = new VanillaDiffHtmlBuilder(fileLeftt, fileRight,
 				(com.github.gumtreediff.actions.Diff) diffgtt);
 		builder.produce();
@@ -282,7 +283,7 @@ public class ResultVisualizer {
 
 		// Unified
 		saveUnified(configId, diffgtt, parentDiff);
-
+*/
 	}
 
 	public void saveDiffInfo(File parentDiff, List<Action> actionsAll, String configId) throws IOException {

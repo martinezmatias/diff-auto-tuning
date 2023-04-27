@@ -103,7 +103,7 @@ public class Main implements Callable<Integer> {
 
 			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(mean, getMetamodel(), getFitness());
 			configuration.setNumberOfAttempts(nrAttempts);
-			configuration.setSearchType(HPOSearchType.TPE);
+			configuration.setSearchType(HPOSearchType.TPE_HYPEROPT);
 
 			return configuration;
 		}
