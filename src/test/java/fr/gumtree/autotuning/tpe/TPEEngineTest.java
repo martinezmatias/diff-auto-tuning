@@ -19,6 +19,7 @@ import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
+import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.searchengines.TPEEngine;
@@ -46,7 +47,9 @@ public class TPEEngineTest {
 				new LengthEditScriptFitness());
 		configuration.setNumberOfAttempts(50);
 		configuration.setPythonpath(
-				"/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python");
+				//"/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python"
+				"/Users/matias/miniconda3/envs/torch-gpu/bin/python"
+				);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
 
@@ -65,7 +68,7 @@ public class TPEEngineTest {
 
 		TPEEngine rp = new TPEEngine();
 
-		ExecutionConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
 				new LengthEditScriptFitness());
 
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
@@ -238,5 +241,151 @@ public class TPEEngineTest {
 		// assertTrue(existMin);
 
 	}
+	
+	@Test
+	public void testTPEBridge_TPE_HYPEROPT() throws Exception {
+		long t1  = System.currentTimeMillis();
+		File fs = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
+		File ft = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
+
+		TPEEngine rp = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
+
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
+
+		//JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+		assertEquals(5d, bestConfig.getMetricValue(), 0.01);
+
+		System.out.println(bestConfig.getEnvironment());
+
+		
+		System.out.println(System.currentTimeMillis() - t1);
+	}
+	
+	@Test
+	public void testTPEBridge_RANDOM_HYPEROPT() throws Exception {
+		long t1  = System.currentTimeMillis();
+		File fs = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
+		File ft = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
+
+		TPEEngine rp = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness(), HPOSearchType.RANDOM_HYPEROPT);
+
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
+
+		//JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+		assertEquals(5d, bestConfig.getMetricValue(), 0.01);
+
+		System.out.println(bestConfig.getEnvironment());
+
+		System.out.println(System.currentTimeMillis() - t1);
+		
+	}
+	
+	@Test
+	public void testTPEBridge_ADAPTIVE_HYPEROPT() throws Exception {
+		long t1  = System.currentTimeMillis();
+		File fs = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
+		File ft = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
+
+		TPEEngine rp = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness(), HPOSearchType.ADAPTIVE);
+
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
+
+		//JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+		assertEquals(5d, bestConfig.getMetricValue(), 0.01);
+
+		System.out.println(bestConfig.getEnvironment());
+
+		System.out.println(System.currentTimeMillis() - t1);
+		
+	}
+	
+	@Test
+	public void testTPEBridge_TPE_OPTUNA() throws Exception {
+		long t1  = System.currentTimeMillis();
+		File fs = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
+		File ft = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
+
+		TPEEngine rp = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness(), HPOSearchType.TPE_OPTUNA);
+		
+		configuration.setNumberOfAttempts(100);
+
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
+
+		//JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+		assertEquals(5d, bestConfig.getMetricValue(), 0.01);
+
+		System.out.println(bestConfig.getEnvironment());
+
+		System.out.println(System.currentTimeMillis() - t1);
+		
+	}
+	
+	@Test
+	public void testTPEBridge_RANDOM_OPTUNA() throws Exception {
+		long t1  = System.currentTimeMillis();
+		File fs = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_s.java");
+		File ft = new File(
+				"./examples/3_04f0e8f7a3545cf877c10967396b06595d57c34a/JavaExtensions/3_04f0e8f7a3545cf877c10967396b06595d57c34a_JavaExtensions_t.java");
+
+		TPEEngine rp = new TPEEngine();
+
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
+				new LengthEditScriptFitness(), HPOSearchType.RANDOM_OPTUNA);
+		
+		configuration.setNumberOfAttempts(100);
+
+		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
+		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);
+
+		//JsonArray infoEvaluations = bestConfig.getInfoEvaluations();
+
+		assertEquals(1, bestConfig.getNumberOfEvaluatedPairs());
+
+		assertEquals(5d, bestConfig.getMetricValue(), 0.01);
+
+		System.out.println(bestConfig.getEnvironment());
+
+		System.out.println(System.currentTimeMillis() - t1);
+		
+	}
+	
+	
 
 }
