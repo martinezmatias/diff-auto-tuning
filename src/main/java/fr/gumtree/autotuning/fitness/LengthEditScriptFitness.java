@@ -33,23 +33,19 @@ public class LengthEditScriptFitness implements Fitness {
 	}
 
 	@Override
-	public List<String> getBests(List<ResultByConfig> all, METRIC metric) {
-		// TODO Auto-generated method stub
-		return null;
-	}
-
-	@Override
 	public Double computeFitness(List<Double> values, METRIC metric) {
 		DescriptiveStatistics stats = new DescriptiveStatistics();
 		for (double aValue : values) {
 			stats.addValue(aValue);
 		}
+		
 		if (metric.equals(METRIC.MEAN))
 			return stats.getMean();
-
 		else if (metric.equals(METRIC.MEDIAN))
-			return median(values);// stats.getPercentile(50);
-
+			return stats.getPercentile(50); //median(values);// stats.getPercentile(50);
+		else if (metric.equals(METRIC.PERCENTILE75))
+			return stats.getPercentile(75); 
+	
 		System.err.println("Unknown metric: " + metric);
 		return Double.MAX_VALUE;
 	}

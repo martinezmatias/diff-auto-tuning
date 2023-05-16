@@ -62,12 +62,10 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 
 	HPOSearchType searchType; // = HyperoptSearch.TPE;
 
-	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) throws Exception {
-		this(metric, astmode, fitnessFunction, HPOSearchType.TPE_HYPEROPT);
-
-
-		
-	}
+//	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction) throws Exception {
+//		this(metric, astmode, fitnessFunction, HPOSearchType.TPE_HYPEROPT);
+//		
+//	}
 	
 	public ExecutionTPEConfiguration(METRIC metric, ASTMODE astmode, Fitness fitnessFunction, HPOSearchType searchType) throws Exception {
 		super(metric, astmode, fitnessFunction);

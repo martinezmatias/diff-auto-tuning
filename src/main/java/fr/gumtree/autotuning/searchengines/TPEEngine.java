@@ -68,21 +68,32 @@ public class TPEEngine implements OptimizationMethod {
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
 			ExecutionConfiguration configuration) throws Exception {
 
-		System.out.println("Starting server");
-		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
+//		System.out.println("Starting server");
+//		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
+//		launcher.start();
+//		ResponseBestParameter resultGeneral = null;
+//
+//		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
+		
+		//new 2023
+		ResponseBestParameter resultGeneral = new ResponseBestParameter();
+		
+		GumtreeMultipleHttpHandler handler = new GumtreeMultipleHttpHandler(fitnessFunction, configuration.getMetric());
+		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(fitnessFunction, configuration.getMetric()),
+				handler);
 		launcher.start();
-		ResponseBestParameter resultGeneral = null;
-
-		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
-
+		
+		//end new 2023
+		
+	
 		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
 
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
-		JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
-		if (resultGeneral != null)
-			resultGeneral.setInfoEvaluations(infoEvaluations);
+	//	JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
+	//	if (resultGeneral != null)
+	//		resultGeneral.setInfoEvaluations(infoEvaluations);
 
 		launcher.stop();
 		System.out.println("End Multiple");
@@ -142,7 +153,7 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	public ResponseBestParameter computeBestCallingTPE(ResponseBestParameter resultGeneral,
+	protected ResponseBestParameter computeBestCallingTPE(ResponseBestParameter resultGeneral,
 			GumtreeAbstractHttpHandler handlerP, JsonObject responseJSon, ExecutionTPEConfiguration configuration)
 			throws IOException, InterruptedException {
 		String status = responseJSon.get("status").getAsString();
@@ -159,6 +170,7 @@ public class TPEEngine implements OptimizationMethod {
 
 				String best = response[0];
 				String environment = response[1];
+				String log =  response[2];
 				
 				System.out.println("Checking obtaining Best: ");
 				JsonObject responseBest = launcher.callRunWithHandle(best, handlerP);
@@ -180,6 +192,7 @@ public class TPEEngine implements OptimizationMethod {
 				result.setNumberOfEvaluatedPairs(values);
 				
 				//
+				result.setLog(log);
 				result.setEnvironment(environment);
 
 				resultGeneral = result;
@@ -199,9 +212,8 @@ public class TPEEngine implements OptimizationMethod {
 	 * @param configuration
 	 * @return
 	 */
-	public String[] queryBestConfigOnServer(GumtreeAbstractHttpHandler handler, ExecutionTPEConfiguration configuration) {
-		// Call TPE
-
+	protected String[] queryBestConfigOnServer(GumtreeAbstractHttpHandler handler, ExecutionTPEConfiguration configuration) {
+		
 		Runtime rt = Runtime.getRuntime();
 
 		// Create command
@@ -215,14 +227,14 @@ public class TPEEngine implements OptimizationMethod {
 			Process p = rt.exec(commandAndArguments);
 			
 			//String response = readProcessOutput(p, HEADER_RESPONSE_PYTHON);
-
+			String response = "";
 			BufferedReader reader = new BufferedReader(new InputStreamReader(p.getInputStream()));
 			String line;
 			String bestConfig = null;
 			String configLine = null;
 			while ((line = reader.readLine()) != null && bestConfig == null) {
-				// response += line + "\r\n";
-
+				response += line + "\r\n";
+				
 				if (line.startsWith("Famework_Setup")) {
 			
 					configLine = line;
@@ -246,7 +258,7 @@ public class TPEEngine implements OptimizationMethod {
 			System.err.println(error);
 		
 
-			return new String[] {bestConfig, configLine} ;
+			return new String[] {bestConfig, configLine, response} ;
 
 		} catch (Exception ex) {
 			ex.printStackTrace();

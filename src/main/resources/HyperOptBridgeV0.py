@@ -20,30 +20,36 @@ sizeSearchSpace["ChangeDistiller"] = 375
 sizeSearchSpace["XyMatcher"] = 50
 
 AVG_CONSTANT = 'av'
-
-rangeST_MIN_PRIO = [round(x, 2) for x in np.arange(1, 6, 1)]
+rangeSBUP = [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
+rangeMH = [ round(x,2) for x in np.arange(1,6,1)]
 rangeGT_BUM_SMT = [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
 rangeGT_BUM_SZT = [ x for x in range(100,2001,100)]
+
+rangeLSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.2)]
+rangeML = [ x for x in range(2,7,2)]
+rangeSSIM1= [ round(x,2) for x in np.arange(0.2,1.1,0.2)]
+rangeSSIM2= [ round(x,2) for x in np.arange(0.2,1.1,0.2)]
+
+rangeXYSIM= [ round(x,2) for x in np.arange(0.1,1.1,0.1)]
+
 rangePriority= ["size", "height"]
 
-def computeHyperOpt(algoToRun, max_evals=100, cp = "", algorithm = None, xseed = 0):
+
+def computeHyperOpt(runTpe = True, max_evals=100, cp = "", algorithm = None, xseed = 0):
 
 	##elapsed_time_setup = time.time() - start_time_setup
-	rstate = np.random.default_rng(xseed) #numpy.random.RandomState(seed=xseed)
-	print("Running Hyperopt algo to rub {} max eval {} seed {}".format(algoToRun.__name__, max_evals, xseed))
+	rstate = np.random.default_rng(xseed)
+	print("Running DatTPE runtpe {} max eval {} seed {}".format(runTpe, max_evals, xseed))
 	spaceAlgorithms = createSpace(algorithm=algorithm)
 	search_space = { "space": hp.choice('algorithm_type', spaceAlgorithms),
 					 ## A hack to pass the fitness of each configuration to the object function
 					 #'data' :  (X_train, train)
 					 }
 	trials = Trials()
-
-
-
 	best = fmin(
 		fn=objectiveFunctionDAT,
 		space=search_space,
-		algo= algoToRun,  #tpe.suggest if runTpe else rand.suggest,
+		algo=tpe.suggest if runTpe else rand.suggest,
 		max_evals=max_evals,
 		trials=trials,
 		rstate=rstate
@@ -61,22 +67,22 @@ propertiesPerMatcher["HybridGumtree"] = ["bu_minsize", "st_minprio", "st_priocal
 
 def createSpace(algorithm = None):
 	spaceAlgorithms = [
-		{ 
+		{
 			'algorithm': 'SimpleGumtree',
-			"SimpleGumtree_st_minprio": hp.choice("SimpleGumtree_st_minprio", rangeST_MIN_PRIO),
+			"SimpleGumtree_st_minprio": hp.choice("SimpleGumtree_st_minprio", rangeMH),
 			"SimpleGumtree_st_priocalc": hp.choice("SimpleGumtree_st_priocalc", rangePriority),
 		},
-		{  
+		{
 			'algorithm': 'ClassicGumtree',
 			"ClassicGumtree_bu_minsim": hp.choice("ClassicGumtree_bu_minsim", rangeGT_BUM_SMT),
 			"ClassicGumtree_bu_minsize": hp.choice("ClassicGumtree_bu_minsize", rangeGT_BUM_SZT),
-			"ClassicGumtree_st_minprio": hp.choice("ClassicGumtree_st_minprio", rangeST_MIN_PRIO),
+			"ClassicGumtree_st_minprio": hp.choice("ClassicGumtree_st_minprio", rangeMH),
 			"ClassicGumtree_st_priocalc": hp.choice("ClassicGumtree_st_priocalc", rangePriority),
 		},
-		{ 
+		{
 			'algorithm': 'HybridGumtree',
 			"HybridGumtree_bu_minsize": hp.choice("HybridGumtree_bu_minsize", rangeGT_BUM_SZT),
-			"HybridGumtree_st_minprio": hp.choice("HybridGumtree_st_minprio", rangeST_MIN_PRIO),
+			"HybridGumtree_st_minprio": hp.choice("HybridGumtree_st_minprio", rangeMH),
 			"HybridGumtree_st_priocalc": hp.choice("HybridGumtree_st_priocalc", rangePriority),
 		},
 	]
@@ -127,8 +133,6 @@ def recreateConfigurationKey(params):
 	algo = params['space']['algorithm']
 	key = [algo]
 	for iParameter in propertiesPerMatcher[algo]:
-		if str(iParameter).isnumeric():
-			iParameter = "{:.2f}".format(iParameter)
 		key.append(str(params['space']["{}_{}".format(algo, iParameter)]))
 	keyConfig = ("_".join(key)).replace("_1.0", "_1")
 	return keyConfig
@@ -152,28 +156,7 @@ header_res = sys.argv[6]
 tpeparam = sys.argv[7].lower()
 numberEval = sys.argv[8]
 seed = sys.argv[9]
+print("Running TPEBridge: host {} port {} path {} cp {} javahome {} header {} tpe? {} nr eval {} seed{}".format(host, port, path, cp, javahome, header_res, tpeparam, numberEval,seed))
+print("Famework_Setup (vOriginal): Hyperopt TPEBridge: host {} port {} cp {} javahome {} header {} tpe {}  nr eval {} seed{}".format(host, port, path, javahome, header_res, tpeparam,  numberEval,seed))
 
-#print("Famework_Setup: Hyperopt TPEBridge: host {} port {} path {} cp {} javahome {} header {} tpe? {} nr eval {} seed{}".format(host, port, path, cp, javahome, header_res, tpeparam, numberEval,seed))
-
-
-algoToRun = None
-classToRun = None
-if tpeparam.lower() == "TPE_HYPEROPT".lower():
-		algoToRun = tpe.suggest
-		classToRun = tpe
-elif tpeparam.lower() == "RANDOM_HYPEROPT".lower():
-		algoToRun = rand.suggest
-		classToRun = rand
-elif tpeparam.lower() == "ADAPTIVE".lower():
-		algoToRun = hyperopt.atpe.suggest
-		classToRun =  hyperopt.atpe
-elif tpeparam.lower() == "Annealing".lower():
-		algoToRun = hyperopt.anneal.suggest
-		classToRun = hyperopt.anneal
-else:
-	print("Unknown {}".format(tpeparam))
-	exit()
-print("Famework_Setup: Hyperopt TPEBridge: host {} port {} cp {} javahome {} header {} tpe {} algo_to_run {}/{} nr eval {} seed{}".format(host, port, path, javahome, header_res, tpeparam, classToRun.__name__,  algoToRun.__name__,  numberEval,seed))
-
-#print("running {} {}".format( tpeparam,  algoToRun.__name__))
-computeHyperOpt(algoToRun, max_evals=int(numberEval), xseed=int(seed))
+computeHyperOpt(runTpe= True, max_evals=int(numberEval), xseed=int(seed))

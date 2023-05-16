@@ -27,7 +27,7 @@ public abstract class ExecutionConfiguration extends HashMap<Object, Object> {
 	private File dirDiffTreeSerialOutput = new File("./out/");
 
 	public enum METRIC {
-		MEDIAN, MEAN
+		MEDIAN, MEAN , PERCENTILE75
 	}
 
 	private METRIC metric;

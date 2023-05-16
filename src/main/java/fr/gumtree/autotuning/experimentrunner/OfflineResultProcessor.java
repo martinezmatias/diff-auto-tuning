@@ -9,6 +9,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -27,6 +28,7 @@ import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
 import fr.gumtree.autotuning.entity.ResponseLocalBestParameter;
 import fr.gumtree.autotuning.fitness.Fitness;
 import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
+import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
@@ -72,9 +74,8 @@ public class OfflineResultProcessor {
 
 	public OfflineResultProcessor(String name) {
 		super();
-		outDir = "./out/" + name +
-		// "_" + Long.toString((new Date()).getTime()) +
-				File.separator;
+		outDir = "./out/" + name // +
+				+ "_" + Long.toString((new Date()).getTime()) + File.separator;
 		if (!new File(outDir).exists())
 			new File(outDir).mkdirs();
 		this.tuningEngine = new ExhaustiveEngine();
@@ -84,7 +85,7 @@ public class OfflineResultProcessor {
 		return retrievePairsToAnalyze(rootFolder, maxPerProject, true);
 	}
 
-	public List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject, boolean checkSize) throws IOException {
+	public static List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject, boolean checkSize) throws IOException {
 
 		System.out.println("Inspecting " + rootFolder.getAbsolutePath());
 		List<File> collected = new ArrayList<File>();
@@ -92,7 +93,7 @@ public class OfflineResultProcessor {
 		DatOutputEngine outputengine = new DatOutputEngine(null);
 
 		for (File subset : rootFolder.listFiles()) {
-			if (subset.getName().equals(".DS_Store")) {
+			if (subset.getName().equals(".DS_Store") || subset.isFile()) {
 				continue;
 			}
 			int countFilesPerProject = 0;
@@ -138,6 +139,7 @@ public class OfflineResultProcessor {
 		return collected;
 	}
 
+	@Deprecated
 	public ResponseGlobalBestParameter summarizeBestGlobal(File rootFolder, Fitness fitnessFunction, METRIC metric,
 			Boolean ignoreTimeout) throws IOException {
 
@@ -334,7 +336,7 @@ public class OfflineResultProcessor {
 
 	// UNder analysis
 	public List<ResponseLocalBestParameter> summarizeTPEBestLocal(List<File> toProcess, METRIC metric,
-			List<String> targets) throws Exception {
+			List<String> targets,  ASTMODE astmode, HPOSearchType searchType) throws Exception {
 
 		DatOutputEngine outputengine = new DatOutputEngine(null);
 
@@ -356,9 +358,9 @@ public class OfflineResultProcessor {
 		int totalFilesAnalyzed = 0;
 
 		//
-		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, null, fitness);
+		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, astmode, fitness, searchType);
 		configuration.setNumberOfAttempts(25);
-		configuration.setSearchType(HPOSearchType.TPE_HYPEROPT); //TODO: change
+		//configuration.setSearchType(HPOSearchType.TPE_HYPEROPT); // TODO: change
 
 		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler(fitness, configuration.getMetric());
 		DiffServerLauncher launcher = new DiffServerLauncher(
@@ -483,7 +485,7 @@ public class OfflineResultProcessor {
 
 	public Path createFileWithDataToAnalyze(List<File> collected) throws IOException {
 		Path fileWithData = Files.createTempFile("files", ".txt");
-		System.out.println(fileWithData);
+		//System.out.println(fileWithData);
 
 		FileWriter fr = new FileWriter(fileWithData.toFile());
 
@@ -494,77 +496,10 @@ public class OfflineResultProcessor {
 		fr.close();
 		return fileWithData;
 	}
-
-	public void runCrossValidationTPE(File fileResults, int maxPerFile, METRIC metric, Fitness fitnessFunction)
-			throws Exception {
-
-		// OfflineResultProcessor runner = new OfflineResultProcessor();
-		List<File> collected = this.retrievePairsToAnalyze(fileResults, maxPerFile, true);
-		System.out.println("Collected " + collected.size());
-		int n = collected.size();
-		int k = 10;
-
-		File[] array = new File[collected.size()];
-		collected.toArray(array);
-
-		smile.validation.Bag[] cvresult = CrossValidation.of(n, k);
-
-		List<ResultComparisonTwoConfigurations> allBestComparison = new ArrayList<>();
-
-		System.out.println(cvresult);
-
-		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, null, fitnessFunction);
-
-		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
-
-		for (int i = 0; i < cvresult.length; i++) {
-
-			System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
-			Bag bag = cvresult[i];
-
-			File[] training = MathEx.slice(array, bag.samples);
-			File[] testing = MathEx.slice(array, bag.oob);
-
-			List<File> listTraining = Arrays.asList(training);
-			List<File> listTesting = Arrays.asList(testing);
-
-			Path fileWithData = createFileWithDataToAnalyze(listTraining);
-
-			System.out.println("sample (" + listTraining.size() + ")");
-			System.out.println("test (" + listTesting.size() + ")");
-
-			System.out.println("--Global TPE TRANING: ");
-			TPEEngine tpe = new TPEEngine();
-
-			ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
-					configuration);
-
-			// Get best global exhaustive
-			ResponseGlobalBestParameter bestGlobalFromTesting = this.summarizeBestGlobal(listTesting, fitness, metric,
-					false);
-
-			System.out.println("--Global TPE TESTING: best from training " + bestTPEfromTraining.getBests().size() + " "
-					+ bestTPEfromTraining.getBests());
-
-			List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(
-					bestTPEfromTraining.getBests(), bestGlobalFromTesting, ParametersResolvers.defaultConfiguration);
-			allBestComparison.addAll(foldBestComparison);
-
-		}
-		System.out.println("****Final results");
-		DescriptiveStatistics statsBest = new DescriptiveStatistics();
-		DescriptiveStatistics statsWorst = new DescriptiveStatistics();
-		DescriptiveStatistics statsEquals = new DescriptiveStatistics();
-
-		for (ResultComparisonTwoConfigurations resultComparisonTwoConfigurations : allBestComparison) {
-			statsBest.addValue(resultComparisonTwoConfigurations.getBetterBestPer());
-			statsWorst.addValue(resultComparisonTwoConfigurations.getWorstBestPer());
-			statsEquals.addValue(resultComparisonTwoConfigurations.getEqualsBestPer());
-		}
-
-		System.out.println(
-				"Best " + statsBest.getMean() + " Worst " + statsWorst.getMean() + " Equals" + statsEquals.getMean());
-	}
+	
+	
+	
+	
 
 	public void analyzeLocal(File fileResults, int maxPerProject, METRIC metric) throws IOException {
 		// OfflineResultProcessor runner = new OfflineResultProcessor();
@@ -735,14 +670,7 @@ public class OfflineResultProcessor {
 
 		List<Double> perBest = new ArrayList<>();
 		List<ResultComparisonTwoConfigurations> outBestComparison = new ArrayList<>();
-		int casesImprovement = 0;
-		int casesWorst = 0;
-		int casesAllEquals = 0;
 
-		int casesBalance = 0;
-
-		System.out.println(
-				"\nAnalyzing Improvement best from training (" + allBestTraining.size() + ") " + allBestTraining);
 		// We take the best from Training
 		for (String oneBestConfigFromTraining : allBestTraining) {
 
@@ -756,30 +684,12 @@ public class OfflineResultProcessor {
 
 				outBestComparison.add(result);
 
-				if (result.betterBest > result.worstBest)
-					casesImprovement++;
-
-				if (result.betterBest < result.worstBest)
-					casesWorst++;
-
-				if (result.worstBest > 0 && result.worstBest == result.betterBest) {
-					casesBalance++;
-				}
-
-				if (result.equalsB > 0 && result.worstBest == 0 && result.betterBest == 0) {
-					casesAllEquals++;
-				}
 			}
 
 		}
-		System.out.println("Percentage best " + perBest);
+		System.out.println("Percentage best per configuration: (" + perBest.size()  + ") "+ perBest);
 
-		System.out.println("Total from testing set: " + valuesTesting.getNumberOfEvaluatedPairs());
-
-		System.out.println("Cases a Best produces more improvement " + casesImprovement);
-		System.out.println("Cases a Best produces more worst " + casesWorst);
-		System.out.println("Cases all equals " + casesAllEquals);
-		System.out.println("Cases perfect balance " + casesBalance);
+		System.out.println("Size testing set: " + valuesTesting.getNumberOfEvaluatedPairs());
 
 		return outBestComparison;
 	}
@@ -896,7 +806,7 @@ public class OfflineResultProcessor {
 			"HybridGumtree-bu_minsize-200-st_minprio-1-st_priocalc-size" };
 
 	public void runCrossValidationExahustiveLocalGlobal(File fileResults, int maxPerProject, METRIC metric,
-			String outputKey, int k) throws Exception {
+			String outputKey, int k, HPOSearchType searchTechnique, ASTMODE ast) throws Exception {
 
 		// OfflineResultProcessor runner = new OfflineResultProcessor();
 
@@ -983,18 +893,7 @@ public class OfflineResultProcessor {
 
 			}
 
-			// For each of the best from Training, save data
-			int posInTraining = 0;
-
-			for (String oneBest : allBestFromTraining) {
-
-				String summary = createLineSummary(i, bestFromTraining, posInTraining, oneBest);
-				fwTraining.write(summary);
-
-				posInTraining++;
-
-			}
-			fwTraining.flush();
+			saveTrainingData(fwTraining, i, bestFromTraining, allBestFromTraining);
 
 			System.out.println("--Global TESTING: ");
 			ResponseGlobalBestParameter bestFromTesting = this.summarizeBestGlobal(listTesting, fitness, metric, false);
@@ -1011,19 +910,7 @@ public class OfflineResultProcessor {
 
 			updateGeneralResults(countBestGlobalByConfigurations, allBestFromTraining);
 
-			// For each of the best from Training, save data
-			int posInTrain = 0;
-			for (String oneBest : allBestFromTraining) {
-
-				String summary = createLineSummary(i, bestFromTraining, posInTrain, oneBest);
-				fwTesting.write(summary);
-
-				// We put the value from testing
-				bestAllFolds.add(oneBest, bestFromTesting.getMetricValueByConfiguration().get(oneBest));
-				posInTrain++;
-			}
-
-			fwTesting.flush();
+			saveTestingData(fwTesting, bestAllFolds, i, bestFromTraining, allBestFromTraining, bestFromTesting);
 
 			// We do not need any more
 			bestFromTraining.getResultPerFile().clear();
@@ -1039,27 +926,27 @@ public class OfflineResultProcessor {
 				allBestGlobalComparison.add(rc);
 			}
 			// commented in order to avoid memory ex
-			if (false) {
-				System.out.println("--Global TPE TRANING: ");
-				TPEEngine tpe = new TPEEngine();
 
-				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, null, fitness);
+			System.out.println("--Global TPE TRANING: ");
+			TPEEngine tpe = new TPEEngine();
 
-				Path fileWithData = createFileWithDataToAnalyze(listTraining);
-				ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
-						configuration);
+			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, ast, fitness, searchTechnique);
 
-				List<ResultComparisonTwoConfigurations> foldBestTPComparison = analyzeBestCrossValidation(
-						bestTPEfromTraining.getAllBest(), bestFromTesting, ParametersResolvers.defaultConfiguration);
-				for (ResultComparisonTwoConfigurations rc : foldBestTPComparison) {
-					rc.setDetailsRun("Fold_" + i);
-					allBestTPEGlobalComparison.add(rc);
-				}
+			Path fileWithData = createFileWithDataToAnalyze(listTraining);
+			ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
+					configuration);
 
-				// Forcing
-				bestTPEfromTraining.getResultPerFile().clear();
-				bestTPEfromTraining = null;
+			List<ResultComparisonTwoConfigurations> foldBestTPComparison = analyzeBestCrossValidation(
+					bestTPEfromTraining.getAllBest(), bestFromTesting, ParametersResolvers.defaultConfiguration);
+			for (ResultComparisonTwoConfigurations rc : foldBestTPComparison) {
+				rc.setDetailsRun("Fold_" + i);
+				allBestTPEGlobalComparison.add(rc);
 			}
+
+			// Forcing
+			bestTPEfromTraining.getResultPerFile().clear();
+			bestTPEfromTraining = null;
+
 			// Forcing
 			bestFromTesting.getResultPerFile().clear();
 			bestFromTesting.getMetricValueByConfiguration().clear();
@@ -1112,7 +999,7 @@ public class OfflineResultProcessor {
 
 			// Now
 			// We send the testing, not the training
-			List<ResponseLocalBestParameter> bestTPELocal = this.summarizeTPEBestLocal(listTesting, metric, allTarget);
+			List<ResponseLocalBestParameter> bestTPELocal = this.summarizeTPEBestLocal(listTesting, metric, allTarget, ast, searchTechnique);
 
 			ResponseLocalBestParameter bestLocalTPEDefault = bestTPELocal.remove(0);
 			if (!bestDefault.getTargetConfig().equals(ParametersResolvers.defaultConfiguration)) {
@@ -1191,7 +1078,6 @@ public class OfflineResultProcessor {
 		FileWriter fwSumld = new FileWriter(fsumld);
 
 		saveMeasuresOnFile(allLocalVsDefaultComparison, fwLocalVsDefault, fwSumld);
-
 		fwLocalVsDefault.close();
 		fwSumld.close();
 
@@ -1273,6 +1159,40 @@ public class OfflineResultProcessor {
 
 	}
 
+	private void saveTestingData(FileWriter fwTesting, MapList<String, Double> bestAllFolds, int i,
+			ResponseGlobalBestParameter bestFromTraining, List<String> allBestFromTraining,
+			ResponseGlobalBestParameter bestFromTesting) throws IOException {
+		// For each of the best from Training, save data
+		int posInTrain = 0;
+		for (String oneBest : allBestFromTraining) {
+
+			String summary = createLineSummary(i, bestFromTraining, posInTrain, oneBest);
+			fwTesting.write(summary);
+
+			// We put the value from testing
+			bestAllFolds.add(oneBest, bestFromTesting.getMetricValueByConfiguration().get(oneBest));
+			posInTrain++;
+		}
+
+		fwTesting.flush();
+	}
+
+	private void saveTrainingData(FileWriter fwTraining, int i, ResponseGlobalBestParameter bestFromTraining,
+			List<String> allBestFromTraining) throws IOException {
+		// For each of the best from Training, save data
+		int posInTraining = 0;
+
+		for (String oneBest : allBestFromTraining) {
+
+			String summary = createLineSummary(i, bestFromTraining, posInTraining, oneBest);
+			fwTraining.write(summary);
+
+			posInTraining++;
+
+		}
+		fwTraining.flush();
+	}
+	@Deprecated //Used in the first revision
 	public void runSeededCrossValidationExahustiveVsTPE(File fileResults, List<File> original, METRIC metric,
 			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType)
 			throws Exception {
@@ -1400,6 +1320,313 @@ public class OfflineResultProcessor {
 
 	}
 
+	/**
+	 * Version 2023 with the new approaches
+	 * 
+	 * @param fileResults
+	 * @param original
+	 * @param metric
+	 * @param outputKey
+	 * @param numberOfAttempts
+	 * @param k
+	 * @param nr_seeds
+	 * @param totalLimit
+	 * @param searchType
+	 * @throws Exception
+	 */
+	public void runSeededCrossValidationExahustiveVsOtherApproaches(File fileResults, List<File> original,
+			METRIC metric, String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit,
+			HPOSearchType searchType, boolean cache, ASTMODE astmode) throws Exception {
+
+		List<ResultComparisonTwoConfigurations> allBestGlobalComparison = new ArrayList<>();
+
+		List<ResultComparisonTwoConfigurations> allBestTPEGlobalComparison = new ArrayList<>();
+
+		//outputKey = outputKey + "_considered_" + totalLimit;
+
+		 outputKey = outputKey + "_" + numberOfAttempts;
+
+		 System.out.println("Cache mode"+ cache);
+		 
+		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
+
+			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
+
+			List<File> collected = new ArrayList<>(original);
+
+			Collections.shuffle(collected, new Random(iSeed));
+
+			if (collected.size() > totalLimit) {
+				System.out.println("totalLimit " + totalLimit);
+				collected = collected.subList(0, totalLimit);
+			}
+
+			int n = collected.size();
+
+			System.out.println("*** Data collected " + collected.size());
+			String outputKeySeed = outputKey + "_seed_" + iSeed + "_";
+
+			File[] array = new File[collected.size()];
+			collected.toArray(array);
+
+			smile.validation.Bag[] cvresult = CrossValidation.of(n, k, false);
+
+			LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+
+			// For each fold
+			for (int i = 0; i < cvresult.length; i++) {
+
+				System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+				Bag bag = cvresult[i];
+
+				File[] training = MathEx.slice(array, bag.samples);
+				File[] testing = MathEx.slice(array, bag.oob);
+
+				List<File> listTraining = Arrays.asList(training);
+
+				List<File> listTesting = Arrays.asList(testing);
+
+				storesFiles(listTraining, i, "training", outputKeySeed);
+				storesFiles(listTesting, i, "testing", outputKeySeed);
+
+				System.out.println("sample (" + listTraining.size() + ")");
+				System.out.println("test (" + listTesting.size() + ")");
+
+				System.out.println("*********\\n--Global GRID TRAINING: ");
+				ResponseGlobalBestParameter bestFromTraining = this.summarizeBestGlobal(listTraining, fitness, metric,
+						false);
+
+				List<String> allBestFromTraining = bestFromTraining.getAllBest();
+
+				System.out.println("*********\\n--Global GRID TESTING: ");
+				ResponseGlobalBestParameter bestFromTesting = this.summarizeBestGlobal(listTesting, fitness, metric,
+						false);
+
+				// Now, compute performance of Best Exhaustive on training
+
+				List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(
+						allBestFromTraining, bestFromTesting, ParametersResolvers.defaultConfiguration);
+
+				for (ResultComparisonTwoConfigurations rc : foldBestComparison) {
+					rc.setDetailsRun("Fold_" + i);
+					allBestGlobalComparison.add(rc);
+				}
+				///
+				System.out.println("*********\n--Global TPE TRAINING: ");
+				TPEEngine tpe = new TPEEngine();
+
+				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, astmode, fitness,
+						searchType);
+				configuration.setNumberOfAttempts(numberOfAttempts);
+
+				Path fileWithData = createFileWithDataToAnalyze(listTraining);
+				ResponseBestParameter bestTPEfromTraining = (cache)?tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
+						configuration) : tpe.computeBestGlobal(fileWithData.toFile(), fitness,
+								configuration);
+				
+				FileWriter fwcomp = new FileWriter(outDir + outputKey +  "_seed_" + iSeed + "_Fold_" + i +"_log_training.txt" );
+				fwcomp.write(bestTPEfromTraining.getLog());
+				fwcomp.close();
+				
+				System.out.println("*********\n--Global TPE TESTING: ");
+				
+				List<ResultComparisonTwoConfigurations> foldBestTPComparison = analyzeBestCrossValidation(
+						bestTPEfromTraining.getAllBest(), bestFromTesting, ParametersResolvers.defaultConfiguration);
+			
+				if(foldBestTPComparison.size() != 1) {
+					System.err.println("Error: we need 1 single results from "+searchType.name());
+					System.exit(0);
+				}else {
+					ResultComparisonTwoConfigurations rc =  foldBestTPComparison.get(0);
+					rc.setDetailsRun("Fold_" + i);
+					allBestTPEGlobalComparison.add(rc);
+					
+				}
+				
+				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
+			}
+		}
+
+		System.out.println("allBestGlobalComparison " + allBestGlobalComparison.size());
+		System.out.println("allBestTPEGlobalComparison " + allBestTPEGlobalComparison.size());
+
+		/// Saving locals
+		File fcomparison = new File(outDir + outputKey + "_comparison_global_best_default_testing.csv");
+		FileWriter fwcomp = new FileWriter(fcomparison);
+		//
+		System.out.println("Grid Results:");
+		File fsum = new File(outDir + outputKey + "_summary_global_best_default_testing.csv");
+		FileWriter fwSum = new FileWriter(fsum);
+
+		saveMeasuresOnFile(allBestGlobalComparison, fwcomp, fwSum);
+
+		fwSum.close();
+		fwcomp.close();
+
+		//
+
+		File ftpedef = new File(outDir + outputKey + "_comparison_tpe_default_testing.csv");
+		FileWriter fwtpedef = new FileWriter(ftpedef);
+
+		File fsumtpedef = new File(outDir + outputKey + "_summary_tpe_default_testing.csv");
+		FileWriter fsumwtpedef = new FileWriter(fsumtpedef);
+		System.out.println("TPE Results:");
+		saveMeasuresOnFile(allBestTPEGlobalComparison, fwtpedef, fsumwtpedef);
+		fsumwtpedef.close();
+		fwtpedef.close();
+
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+	}
+	
+	
+	public void runSeededCrossValidationExahustiveVsTPEFineGrain(File fileResults, List<File> original,
+			METRIC metric, String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit,
+			HPOSearchType searchType, boolean cache, ASTMODE astmode) throws Exception {
+
+		List<ResultComparisonTwoConfigurations> allBestGlobalComparison = new ArrayList<>();
+
+		List<ResultComparisonTwoConfigurations> allBestTPEGlobalComparison = new ArrayList<>();
+
+		//outputKey = outputKey + "_considered_" + totalLimit;
+
+		 outputKey = outputKey + "_" + numberOfAttempts;
+
+		 System.out.println("Cache mode"+ cache);
+		 
+		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
+
+			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
+
+			List<File> collected = new ArrayList<>(original);
+
+			Collections.shuffle(collected, new Random(iSeed));
+
+			if (collected.size() > totalLimit) {
+				System.out.println("totalLimit " + totalLimit);
+				collected = collected.subList(0, totalLimit);
+			}
+
+			int n = collected.size();
+
+			System.out.println("*** Data collected " + collected.size());
+			String outputKeySeed = outputKey + "_seed_" + iSeed + "_";
+
+			File[] array = new File[collected.size()];
+			collected.toArray(array);
+
+			smile.validation.Bag[] cvresult = CrossValidation.of(n, k, false);
+
+			LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+
+			// For each fold
+			for (int i = 0; i < cvresult.length; i++) {
+
+				System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+				Bag bag = cvresult[i];
+
+				File[] training = MathEx.slice(array, bag.samples);
+				File[] testing = MathEx.slice(array, bag.oob);
+
+				List<File> listTraining = Arrays.asList(training);
+
+				List<File> listTesting = Arrays.asList(testing);
+
+				storesFiles(listTraining, i, "training", outputKeySeed);
+				storesFiles(listTesting, i, "testing", outputKeySeed);
+
+				System.out.println("sample (" + listTraining.size() + ")");
+				System.out.println("test (" + listTesting.size() + ")");
+
+				System.out.println("*********\\n--Global GRID TRAINING: ");
+				ResponseGlobalBestParameter bestFromTraining = this.summarizeBestGlobal(listTraining, fitness, metric,
+						false);
+
+				List<String> allBestFromTraining = bestFromTraining.getAllBest();
+
+				System.out.println("*********\\n--Global GRID TESTING: ");
+				ResponseGlobalBestParameter bestFromTesting = this.summarizeBestGlobal(listTesting, fitness, metric,
+						false);
+
+				// Now, compute performance of Best Exhaustive on training
+
+				List<ResultComparisonTwoConfigurations> foldBestComparison = analyzeBestCrossValidation(
+						allBestFromTraining, bestFromTesting, ParametersResolvers.defaultConfiguration);
+
+				for (ResultComparisonTwoConfigurations rc : foldBestComparison) {
+					rc.setDetailsRun("Fold_" + i);
+					allBestGlobalComparison.add(rc);
+				}
+				///
+				System.out.println("*********\n--Global TPE TRAINING: ");
+				TPEEngine tpe = new TPEEngine();
+
+				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, astmode, fitness,
+						searchType);
+				configuration.setNumberOfAttempts(numberOfAttempts);
+
+				Path fileWithData = createFileWithDataToAnalyze(listTraining);
+				ResponseBestParameter bestTPEfromTraining = (cache)?tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
+						configuration) : tpe.computeBestGlobal(fileWithData.toFile(), fitness,
+								configuration);
+				
+				FileWriter fwcomp = new FileWriter(outDir + outputKey +  "_seed_" + iSeed + "_Fold_" + i +"_log_training.txt" );
+				fwcomp.write(bestTPEfromTraining.getLog());
+				fwcomp.close();
+				
+				System.out.println("*********\n--Global TPE TESTING: ");
+				
+				List<ResultComparisonTwoConfigurations> foldBestTPComparison = analyzeBestCrossValidation(
+						bestTPEfromTraining.getAllBest(), bestFromTesting, ParametersResolvers.defaultConfiguration);
+			
+				if(foldBestTPComparison.size() != 1) {
+					System.err.println("Error: we need 1 single results from "+searchType.name());
+					System.exit(0);
+				}else {
+					ResultComparisonTwoConfigurations rc =  foldBestTPComparison.get(0);
+					rc.setDetailsRun("Fold_" + i);
+					allBestTPEGlobalComparison.add(rc);
+					
+				}
+				
+				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
+			}
+		}
+
+		System.out.println("allBestGlobalComparison " + allBestGlobalComparison.size());
+		System.out.println("allBestTPEGlobalComparison " + allBestTPEGlobalComparison.size());
+
+		/// Saving locals
+		File fcomparison = new File(outDir + outputKey + "_comparison_global_best_default_testing.csv");
+		FileWriter fwcomp = new FileWriter(fcomparison);
+		//
+		System.out.println("Grid Results:");
+		File fsum = new File(outDir + outputKey + "_summary_global_best_default_testing.csv");
+		FileWriter fwSum = new FileWriter(fsum);
+
+		saveMeasuresOnFile(allBestGlobalComparison, fwcomp, fwSum);
+
+		fwSum.close();
+		fwcomp.close();
+
+		//
+
+		File ftpedef = new File(outDir + outputKey + "_comparison_tpe_default_testing.csv");
+		FileWriter fwtpedef = new FileWriter(ftpedef);
+
+		File fsumtpedef = new File(outDir + outputKey + "_summary_tpe_default_testing.csv");
+		FileWriter fsumwtpedef = new FileWriter(fsumtpedef);
+		System.out.println("TPE Results:");
+		saveMeasuresOnFile(allBestTPEGlobalComparison, fwtpedef, fsumwtpedef);
+		fsumwtpedef.close();
+		fwtpedef.close();
+
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+	}
+	
+	
+
 	private void saveMostFrequent(Map<String, Integer> countBestLocalByConfigurations, File fbestLocal)
 			throws IOException {
 		List<String> keys = new ArrayList<>(countBestLocalByConfigurations.keySet());
@@ -1487,7 +1714,6 @@ public class OfflineResultProcessor {
 	public ResultComparisonTwoConfigurations compareConfigs(ResultByConfig values, List<Double> perBest,
 			String oneBestConfig, String defaultConfig) {
 
-		System.out.println("Comparing: oneBestConfig " + oneBestConfig + " " + defaultConfig);
 
 		List<Double> valuesOneBest = values.get(oneBestConfig);
 		List<Double> valuesDefault = values.get(defaultConfig);
@@ -1496,7 +1722,7 @@ public class OfflineResultProcessor {
 		ResultComparisonTwoConfigurations result = null;
 		if (valuesDefault.size() == valuesOneBest.size()) {
 
-			System.out.println();
+		
 			for (int i = 0; i < valuesDefault.size(); i++) {
 				Double iVD = valuesDefault.get(i);
 				Double iVB = valuesOneBest.get(i);
@@ -1510,11 +1736,6 @@ public class OfflineResultProcessor {
 			long worstBest = resultsComparison.stream().filter(e -> e > 0).count();
 
 			perBest.add(((double) betterBest / (double) valuesOneBest.size()));
-
-			System.out.println("\n**Comparing best " + oneBestConfig + "with " + defaultConfig + "Samples to analyze "
-					+ valuesDefault.size());
-			System.out.println("#### Best " + betterBest + ", worst " + worstBest + ", equals " + equalsB);
-			System.out.println("-");
 
 			result = new ResultComparisonTwoConfigurations(oneBestConfig, defaultConfig, betterBest, worstBest, equalsB,
 					valuesOneBest.size());

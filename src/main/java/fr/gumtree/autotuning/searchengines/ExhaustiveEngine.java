@@ -918,12 +918,14 @@ public class ExhaustiveEngine implements OptimizationMethod {
 					timeoutsConfig++;
 				}
 			}
-
-			double median = 0;
-			if (metric.equals(METRIC.MEDIAN))
-				median = LengthEditScriptFitness.median(allSizesOfConfigs);// stats.getPercentile(50);
-			else if (metric.equals(METRIC.MEAN))
-				median = stats.getMean();
+			
+			double median  =fitnessFunction.computeFitness(allSizesOfConfigs, metric);
+			
+//			double median = 0;
+//			if (metric.equals(METRIC.MEDIAN))
+//				median = LengthEditScriptFitness.median(allSizesOfConfigs);// stats.getPercentile(50);
+//			else if (metric.equals(METRIC.MEAN))
+//				median = stats.getMean();
 
 			metricValueByConfiguration.put(aConfigresult, median);
 

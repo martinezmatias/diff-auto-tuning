@@ -56,38 +56,29 @@ public class OffLineResultProcessorTest {
 
 	}
 
-	/// USED IN PAPER RQ new Local-Global
+	/// USED IN PAPER RQ new Local-Global RQ 1 and 3
 	@Test
 	public void testLocalGlobalBoth() throws Exception {
 
-		int maxPerProject = 5000;
+		int maxPerProject = 1000; //5000; R0 was this number
 		int k = 10;
-		METRIC metric = METRIC.MEDIAN;
+		METRIC metric = METRIC.MEDIAN;// METRIC.PERCENTILE75;
 		OfflineResultProcessor processor = new OfflineResultProcessor("cross_validation_global_both_new");
-
+		HPOSearchType search = HPOSearchType.TPE_OPTUNA;
 		File fileResults = null;
-
+			
+		
 		fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
 		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
-				"ExaJDT_" + maxPerProject + "_", k);
+				"ExaJDT_" + maxPerProject + "_"+ search+ "_" , k, search, ASTMODE.JDT);
 
 		fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
 		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
-				"ExaSpoon_" + maxPerProject + "_", k);
+				"ExaSpoon_" + maxPerProject + "_"+ search+ "_", k, search, ASTMODE.GTSPOON);
 
 	}
 
-	@Test
-	public void testLocalGlobalSpoon() throws Exception {
-		OfflineResultProcessor processor = new OfflineResultProcessor();
-		File fileResults = new File(results_path + "/outDAT2_SPOON_onlyresult/");
-		int maxPerProject = 100;
-		METRIC metric = METRIC.MEDIAN;
-		int k = 2;
-		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric,
-				"ExaSpoon_" + maxPerProject + "_", k);
 
-	}
 
 	/**
 	 * This method should produce the RQ 2 e.g., comparison TPE Grid with budgets.
@@ -167,6 +158,167 @@ public class OffLineResultProcessorTest {
 
 	}
 
+	enum Granulity {
+		SPOON, JDT
+	}
+
+	/// MM 2023 ModifiedUSED IN PAPER for the new RQ2: TPE and Grid with multiples
+	/// size of data
+	@Test
+	public void testSeedSingleCrossValidationGlobalJDTTPE2023() throws Exception {
+
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		HPOSearchType search = HPOSearchType.GRID;
+
+		System.out.println("Search " + search);
+
+		METRIC metric = METRIC.MEDIAN;
+		// TO VARY
+		int totalLimit = 1000;
+		final int maxPerProject = 1000;/// 5000; in the original was like that// Do not change
+		// TO VARY
+		int numberOfAttemptsTPE = 10;
+		final int k = 10; // Was 10 Do not change
+		final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+		boolean cache = true;
+
+		List<File> collected = OfflineResultProcessor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+		// System.out.println("total Limit " + totalLimit);
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("RQ2new_" + search + "_" + "_jdt_" + metric.name()
+				+ "_sizeds_" + diffToConsider + "_attemps_" + numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+		processor.runSeededCrossValidationExahustiveVsOtherApproaches(fileResults, collected, metric, "eval",
+				numberOfAttemptsTPE, k, nrseeds, totalLimit, search, cache, ASTMODE.JDT);
+
+	}
+	
+	@Test
+	public void testSeedSingleCrossValidationGlobalJDTTPE2023CacheFalse() throws Exception {
+
+		File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
+		HPOSearchType search = HPOSearchType.TPE_HYPEROPT;
+
+		System.out.println("Search " + search);
+
+		METRIC metric = METRIC.MEDIAN;
+		ASTMODE astmode = ASTMODE.JDT;
+		// TO VARY
+		int totalLimit = 1000;
+		final int maxPerProject = 1000;/// 5000; in the original was like that// Do not change
+		// TO VARY
+		int numberOfAttemptsTPE = 10;
+		final int k = 10; // Was 10 Do not change
+		final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+		boolean cache = false;
+
+		List<File> collected = OfflineResultProcessor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+		// System.out.println("total Limit " + totalLimit);
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("RQ2new_" + search + "_" + "_jdt_" + metric.name()
+				+ "_sizeds_" + diffToConsider + "_attemps_" + numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+		processor.runSeededCrossValidationExahustiveVsOtherApproaches(fileResults, collected, metric, "eval",
+				numberOfAttemptsTPE, k, nrseeds, totalLimit, search, cache, astmode);
+
+	}
+
+	@Test
+	public void testSeedSingleCrossValidationGlobalJDTTPE2023All() throws Exception {
+
+		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
+		HPOSearchType[] searches = { HPOSearchType.TPE_HYPEROPT, HPOSearchType.TPE_OPTUNA,
+				HPOSearchType.RANDOM_HYPEROPT, HPOSearchType.RANDOM_OPTUNA };
+		
+		METRIC[] metrics = { METRIC.MEDIAN, METRIC.PERCENTILE75 };
+		boolean cache = true;
+		for (METRIC metric : metrics) {
+			for (int i = 0; i < searches.length; i++) {
+				HPOSearchType search = searches[i];
+				System.out.println("Search " + search);
+
+				//METRIC metric = METRIC.MEDIAN;
+				// TO VARY
+				int totalLimit = 100000;
+				final int maxPerProject = 1000;/// 5000; in the original was like that// Do not change
+				// TO VARY
+				int numberOfAttemptsTPE = 100;
+				final int k = 10; // Was 10 Do not change
+				final int nrseeds = 5; // only one as we try all //nrseeds = 10; // Do not change
+
+				List<File> collected = OfflineResultProcessor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+				System.out.println("Collected " + collected.size());
+
+				int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+				// System.out.println("total Limit " + totalLimit);
+
+				OfflineResultProcessor processor = new OfflineResultProcessor(
+						"RQ2new_" + search + "_" + "_jdt_" + metric.name() + "_sizeds_" + diffToConsider + "_attemps_"
+								+ numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+				processor.runSeededCrossValidationExahustiveVsOtherApproaches(fileResults, collected, metric, "eval",
+						numberOfAttemptsTPE, k, nrseeds, totalLimit, search, cache, ASTMODE.JDT);
+
+			}
+		}
+
+	}
+	
+	@Test
+	public void testSeedSingleCrossValidationGlobalSpoonTPE2023All() throws Exception {
+		boolean cache = true;
+		String granularity = "SPOON";
+		File fileResults = new File(results_path + "/outDAT2_"+granularity
+				+ "_onlyresult/");
+		HPOSearchType[] searches = { HPOSearchType.TPE_HYPEROPT, HPOSearchType.TPE_OPTUNA,
+				HPOSearchType.RANDOM_HYPEROPT, HPOSearchType.RANDOM_OPTUNA };
+		
+		METRIC[] metrics = { METRIC.MEDIAN, METRIC.PERCENTILE75 };
+		int[] limits = {100 };//{100000, 1000, 100 };
+		for (int totalLimit :limits ){
+		for (METRIC metric : metrics) {
+			for (int i = 0; i < searches.length; i++) {
+				HPOSearchType search = searches[i];
+				System.out.println("Search " + search);
+
+				//METRIC metric = METRIC.MEDIAN;
+				// TO VARY
+				//int totalLimit = 100000;
+				final int maxPerProject = 1000;/// 5000; in the original was like that// Do not change
+				// TO VARY
+				int numberOfAttemptsTPE = 100;
+				final int k = 10; // Was 10 Do not change
+				final int nrseeds = 5; // only one as we try all //nrseeds = 10; // Do not change
+
+				List<File> collected = OfflineResultProcessor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+				System.out.println("Collected " + collected.size());
+
+				int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+				// System.out.println("total Limit " + totalLimit);
+
+				OfflineResultProcessor processor = new OfflineResultProcessor(
+						"RQ2new_" + search + "_" + granularity + "_" + metric.name() + "_sizeds_" + diffToConsider + "_attemps_"
+								+ numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+				processor.runSeededCrossValidationExahustiveVsOtherApproaches(fileResults, collected, metric, "eval",
+						numberOfAttemptsTPE, k, nrseeds, totalLimit, search, cache, ASTMODE.GTSPOON);
+
+			}
+		}
+		}
+	}
+	
+
 	@Test
 	public void testRetrieveTimes() throws Exception {
 
@@ -203,66 +355,8 @@ public class OffLineResultProcessorTest {
 
 	}
 
-	@Test
-	public void testCrossValidationGlobalJDT() throws Exception {
 
-		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		OfflineResultProcessor processor = new OfflineResultProcessor();
 
-		int maxPerProject = 1000000;
-		METRIC metric = METRIC.MEDIAN;
-		int k = 10;
-		processor.runCrossValidationExahustiveLocalGlobal(fileResults, maxPerProject, metric, "ExaJDT", k);
-
-	}
-
-	@Test
-	public void testTPECrossValidationGlobalJDT() throws Exception {
-
-		OfflineResultProcessor processor = new OfflineResultProcessor();
-
-		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		int maxPerProject = 100;
-		METRIC metric = METRIC.MEDIAN;
-		processor.runCrossValidationTPE(fileResults, maxPerProject, metric, new LengthEditScriptFitness());
-
-	}
-
-	@Test
-	public void testTPECrossValidationGlobalSpoon() throws Exception {
-		OfflineResultProcessor processor = new OfflineResultProcessor();
-
-		File fileResults = new File(results_path + "/outDAT2_Spoon_onlyresult/");
-		int maxPerProject = 100;
-		METRIC metric = METRIC.MEDIAN;
-		processor.runCrossValidationTPE(fileResults, maxPerProject, metric, new LengthEditScriptFitness());
-
-	}
-
-	@Test
-	public void testTPEJDTGlobal() throws Exception {
-
-		File fileResults = new File(results_path + "/outDAT2_JDT_onlyresult/");
-		OfflineResultProcessor processor = new OfflineResultProcessor();
-
-		OfflineResultProcessor runner = new OfflineResultProcessor();
-		List<File> collected = runner.retrievePairsToAnalyze(fileResults, 100, true);
-
-		Path fileWithData = processor.createFileWithDataToAnalyze(collected);
-
-		TPEEngine tpe = new TPEEngine();
-
-		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
-				new LengthEditScriptFitness());
-		configuration.setNumberOfAttempts(98);
-		configuration.setSearchType(HPOSearchType.TPE_HYPEROPT);
-
-		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
-		ResponseBestParameter bestTPE = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration);
-
-		assertEquals(147.80, bestTPE.getMetricValue(), 0.1);
-		System.out.println("Best TPE " + bestTPE);
-	}
 
 	@Test
 	public void testRandomTPEJDTGlobal() throws Exception {

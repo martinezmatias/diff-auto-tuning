@@ -85,7 +85,7 @@ public class GumtreeCacheHttpHandler extends GumtreeMultipleHttpHandler {
 		String parameters = queryParams.get("parameters").get(0);
 		root.addProperty("parameters", parameters);
 
-		System.out.println("\run Cache Mode  with params " + parameters);
+		System.out.println("run Cache Mode  with params " + parameters);
 		// System.out.println("--current analyzed in cache: " +
 		// this.cacheResults.size());
 
