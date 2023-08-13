@@ -93,12 +93,13 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 		System.out.println("--current analyzed in cache: " + this.cacheResults.size());
 
 		List<Double> values = new ArrayList<>();
-
+		JsonArray valuessArray = new JsonArray();
+		
 		JsonArray timesArray = new JsonArray();
 
 		// Collect values
 		for (int i = 0; i < this.files.size(); i++) {
-			// System.out.println("running " + (i + 1) + "/" + this.files.size());
+			System.out.println("running " + (i + 1) + "/" + this.files.size());
 			Pair<Tree, Tree> pair = files.get(i);
 
 			GTProxy proxy = new GTProxy();
@@ -106,12 +107,14 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			long start = System.currentTimeMillis();
 			Diff diff = proxy.run(pair.first, pair.second, parameters, null); // we dont want to save here, so we pass
 			// null to the out
-
+			
 			long end = System.currentTimeMillis();
 
 			Double fitnessOfDiff = fitnessFunction.getFitnessValue(diff, this.metric);
+			System.out.println("fitness "+fitnessOfDiff);
 			values.add(fitnessOfDiff);
-
+			valuessArray.add(fitnessOfDiff);
+			
 			timesArray.add((end - start));
 
 			if (this.getOutDirectory() != null) {
@@ -127,6 +130,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 		double fitness = fitnessFunction.computeFitness(values, this.metric);
 		root.addProperty("fitness", fitness);
 		root.addProperty("values", values.size());
+		root.add("allvalues", valuessArray);
 		root.add("times", timesArray);
 
 		if (values.size() > 0)
@@ -180,10 +184,7 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			reader = new BufferedReader(new FileReader(path));
 			String line = reader.readLine();
 			while (line != null) {
-				System.out.println(line);
-
-				System.out.println("Line " + line);
-
+	
 				String[] sp = line.split(" ");
 
 				Tree tl = treebuilder.build(new File(sp[0]));

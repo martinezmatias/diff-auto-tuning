@@ -918,9 +918,9 @@ public class ExhaustiveEngine implements OptimizationMethod {
 					timeoutsConfig++;
 				}
 			}
-			
-			double median  =fitnessFunction.computeFitness(allSizesOfConfigs, metric);
-			
+
+			double median = fitnessFunction.computeFitness(allSizesOfConfigs, metric);
+
 //			double median = 0;
 //			if (metric.equals(METRIC.MEDIAN))
 //				median = LengthEditScriptFitness.median(allSizesOfConfigs);// stats.getPercentile(50);
@@ -1166,8 +1166,10 @@ public class ExhaustiveEngine implements OptimizationMethod {
 			bestResult.getAllBest().add(oneBest);
 		}
 
-		saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
-		saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
+		if (configuration.isSaveScript()) {
+			saver.saveSummarization(configuration.getDirDiffTreeSerialOutput(), results);
+			saver.saveRelations(configuration.getDirDiffTreeSerialOutput());
+		}
 		return bestResult;
 	}
 

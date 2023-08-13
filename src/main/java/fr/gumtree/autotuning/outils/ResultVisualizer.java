@@ -239,7 +239,18 @@ public class ResultVisualizer {
 		System.out.println(properies);
 		return properies;
 	}
+	
+	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, String config, File fout, String diffId, String configId) throws IOException {
 
+			
+		 GumtreeProperties properies = createProperties(config);
+		 Matcher  matcher = createMatcher(config);
+		this.saveVisualization(fileLeftt, tl, fileRight, tr, properies, matcher, fout, diffId, configId);
+
+	}
+	
+	
+	
 	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, GumtreeProperties properies,
 			Matcher matcher, File fout, String diffId, String configId) throws IOException {
 
@@ -264,7 +275,7 @@ public class ResultVisualizer {
 
 		saveDiffInfo(parentDiff, actionsAll, configId);
 
-		/*
+	
 		VanillaDiffHtmlBuilder builder = new VanillaDiffHtmlBuilder(fileLeftt, fileRight,
 				(com.github.gumtreediff.actions.Diff) diffgtt);
 		builder.produce();
@@ -283,7 +294,7 @@ public class ResultVisualizer {
 
 		// Unified
 		saveUnified(configId, diffgtt, parentDiff);
-*/
+
 	}
 
 	public void saveDiffInfo(File parentDiff, List<Action> actionsAll, String configId) throws IOException {

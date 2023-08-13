@@ -34,14 +34,14 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 	
 	public enum HPOFramework{
 		
-		HYPEROPT, OPTUNA;
+		HYPEROPT, OPTUNA, HYPEROPTFG;
 		
 	}
 
 	public enum HPOSearchType {
 		// Modes from Hyperopt
 		TPE_HYPEROPT(HPOFramework.HYPEROPT), RANDOM_HYPEROPT(HPOFramework.HYPEROPT), ADAPTIVE(HPOFramework.HYPEROPT),
-		Annealing(HPOFramework.HYPEROPT),
+		Annealing(HPOFramework.HYPEROPT), TPE_HYPEROPTFG(HPOFramework.HYPEROPTFG),
 		
 		//Modes from Optuna
 		GRID(HPOFramework.OPTUNA), RANDOM_OPTUNA(HPOFramework.OPTUNA), TPE_OPTUNA(HPOFramework.OPTUNA), CMAES(HPOFramework.OPTUNA), PARTIALFIXED(HPOFramework.OPTUNA), NSGAII(HPOFramework.OPTUNA), QMC(HPOFramework.OPTUNA);
@@ -71,7 +71,19 @@ public class ExecutionTPEConfiguration extends ExecutionConfiguration {
 		super(metric, astmode, fitnessFunction);
 		this.searchType = searchType;
 		
-		File fbrige = getFileFromResource( searchType.getFramework() == HPOFramework.HYPEROPT?  "HyperOptBridge.py" : "OptunaBridge.py");
+		String frameworkname = searchType.getFramework() == HPOFramework.HYPEROPT?  "HyperOptBridge.py" : "OptunaBridge.py";
+		
+		if (searchType.getFramework() == HPOFramework.HYPEROPT) {
+			frameworkname  =   "HyperOptBridge.py";
+		}else
+			if (searchType.getFramework() == HPOFramework.OPTUNA) {
+				frameworkname =  "OptunaBridge.py";
+			}else
+				if (searchType.getFramework() == HPOFramework.HYPEROPTFG) {
+					frameworkname  =   "HyperOptBridgeFineGrain.py";
+			}
+		
+		File fbrige = getFileFromResource( frameworkname);
 		TPEScriptPath = fbrige.getAbsolutePath();
 	}
 	

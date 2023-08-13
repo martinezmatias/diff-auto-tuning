@@ -120,7 +120,7 @@ public class TPEEngineTest {
 		TPEEngine rp = new TPEEngine();
 
 		ExecutionTPEConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
 		config.setNumberOfAttempts(50);
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);
@@ -142,7 +142,7 @@ public class TPEEngineTest {
 
 		assertTrue(outDirTemp.list().length == 0);
 		ExecutionConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
 
@@ -179,7 +179,7 @@ public class TPEEngineTest {
 		assertTrue(outDirTemp.list().length == 0);
 
 		ExecutionConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(),  HPOSearchType.TPE_HYPEROPT);
 		config.setSaveScript(true);
 		config.setDirDiffTreeSerialOutput(outDirTemp);
 
@@ -202,7 +202,7 @@ public class TPEEngineTest {
 		TPEEngine rp = new TPEEngine();
 
 		ExecutionConfiguration config = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
 
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestGlobal(fs, fitnessLength, config);

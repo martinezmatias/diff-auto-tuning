@@ -11,6 +11,7 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -18,6 +19,11 @@ import java.util.stream.Collectors;
 
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
+import com.github.gumtreediff.actions.Diff;
+import com.github.gumtreediff.matchers.heuristic.gt.GreedyBottomUpMatcher;
+import com.github.gumtreediff.tree.Tree;
+import com.github.gumtreediff.utils.Pair;
+import com.google.common.math.Stats;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -31,9 +37,11 @@ import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
+import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
+import fr.gumtree.autotuning.outils.ResultVisualizer;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine.ResultLocal;
 import fr.gumtree.autotuning.searchengines.MapList;
@@ -42,6 +50,9 @@ import fr.gumtree.autotuning.searchengines.TPEEngine;
 import fr.gumtree.autotuning.server.DiffServerLauncher;
 import fr.gumtree.autotuning.server.GumtreeCacheHttpHandler;
 import fr.gumtree.autotuning.server.GumtreeSingleHttpHandler;
+import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
+import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
+import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
 import smile.math.MathEx;
 import smile.validation.Bag;
 import smile.validation.CrossValidation;
@@ -85,7 +96,62 @@ public class OfflineResultProcessor {
 		return retrievePairsToAnalyze(rootFolder, maxPerProject, true);
 	}
 
-	public static List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject, boolean checkSize) throws IOException {
+	public static List<Pair<File, File>> retrievePairsToAnalyzePairs(File rootFolder, int maxPerProject,
+			boolean checkSize) throws IOException {
+
+		// System.out.println("Inspecting " + rootFolder.getAbsolutePath());
+		List<Pair<File, File>> collected = new ArrayList<Pair<File, File>>();
+		int filesWithZeroES = 0;
+
+		for (File subset : rootFolder.listFiles()) {
+			if (subset.getName().equals(".DS_Store") || subset.isFile()) {
+				continue;
+			}
+			int countFilesPerProject = 0;
+
+			for (File diffFolder : subset.listFiles()) {
+
+				if (countFilesPerProject == maxPerProject) {
+					break;
+				}
+				// System.out.println(subset.getName() + " "+countFilesPerProject );
+
+				if (diffFolder.getName().equals(".DS_Store")
+						|| (diffFolder.list() == null || diffFolder.list().length == 0)) {
+					continue;
+				}
+
+				for (File filesFromDiff : diffFolder.listFiles()) {
+
+					if (filesFromDiff.getName().equals(".DS_Store")) {
+						continue;
+					}
+
+					String name = filesFromDiff.getAbsoluteFile() + File.separator + diffFolder.getName() + "_"
+							+ filesFromDiff.getName();
+					File left = new File(name + "_s.java");
+					File right = new File(name + "_t.java");
+
+					if (left.exists() && right.exists() && left.length() > 0 && right.length() > 0) {
+
+						collected.add(new Pair<File, File>(left, right));
+						countFilesPerProject++;
+
+						if (countFilesPerProject == maxPerProject) {
+							break;
+						}
+
+					}
+				}
+
+			}
+		}
+		System.out.println("Files with zero ES: " + filesWithZeroES);
+		return collected;
+	}
+
+	public static List<File> retrievePairsToAnalyze(File rootFolder, int maxPerProject, boolean checkSize)
+			throws IOException {
 
 		System.out.println("Inspecting " + rootFolder.getAbsolutePath());
 		List<File> collected = new ArrayList<File>();
@@ -336,7 +402,7 @@ public class OfflineResultProcessor {
 
 	// UNder analysis
 	public List<ResponseLocalBestParameter> summarizeTPEBestLocal(List<File> toProcess, METRIC metric,
-			List<String> targets,  ASTMODE astmode, HPOSearchType searchType) throws Exception {
+			List<String> targets, ASTMODE astmode, HPOSearchType searchType) throws Exception {
 
 		DatOutputEngine outputengine = new DatOutputEngine(null);
 
@@ -360,7 +426,7 @@ public class OfflineResultProcessor {
 		//
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, astmode, fitness, searchType);
 		configuration.setNumberOfAttempts(25);
-		//configuration.setSearchType(HPOSearchType.TPE_HYPEROPT); // TODO: change
+		// configuration.setSearchType(HPOSearchType.TPE_HYPEROPT); // TODO: change
 
 		GumtreeCacheHttpHandler handler = new GumtreeCacheHttpHandler(fitness, configuration.getMetric());
 		DiffServerLauncher launcher = new DiffServerLauncher(
@@ -483,9 +549,26 @@ public class OfflineResultProcessor {
 		return resultAllFiles;
 	}
 
+	public Path createFileWithDataToAnalyzePairs(List<Pair<File, File>> collected) throws IOException {
+		Path fileWithData = Files.createTempFile("files", ".txt");
+		// System.out.println(fileWithData);
+
+		FileWriter fw = new FileWriter(fileWithData.toFile());
+		for (Pair<File, File> v : collected) {
+			fw.write(v.first.getAbsolutePath() + " " + v.second.getAbsolutePath());
+			fw.write("\n");
+		}
+
+		fw.flush();
+		fw.close();
+		// System.out.println("Store " + f.getAbsolutePath());
+
+		return fileWithData;
+	}
+
 	public Path createFileWithDataToAnalyze(List<File> collected) throws IOException {
 		Path fileWithData = Files.createTempFile("files", ".txt");
-		//System.out.println(fileWithData);
+		// System.out.println(fileWithData);
 
 		FileWriter fr = new FileWriter(fileWithData.toFile());
 
@@ -496,10 +579,6 @@ public class OfflineResultProcessor {
 		fr.close();
 		return fileWithData;
 	}
-	
-	
-	
-	
 
 	public void analyzeLocal(File fileResults, int maxPerProject, METRIC metric) throws IOException {
 		// OfflineResultProcessor runner = new OfflineResultProcessor();
@@ -687,7 +766,7 @@ public class OfflineResultProcessor {
 			}
 
 		}
-		System.out.println("Percentage best per configuration: (" + perBest.size()  + ") "+ perBest);
+		System.out.println("Percentage best per configuration: (" + perBest.size() + ") " + perBest);
 
 		System.out.println("Size testing set: " + valuesTesting.getNumberOfEvaluatedPairs());
 
@@ -930,7 +1009,8 @@ public class OfflineResultProcessor {
 			System.out.println("--Global TPE TRANING: ");
 			TPEEngine tpe = new TPEEngine();
 
-			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, ast, fitness, searchTechnique);
+			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, ast, fitness,
+					searchTechnique);
 
 			Path fileWithData = createFileWithDataToAnalyze(listTraining);
 			ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
@@ -999,7 +1079,8 @@ public class OfflineResultProcessor {
 
 			// Now
 			// We send the testing, not the training
-			List<ResponseLocalBestParameter> bestTPELocal = this.summarizeTPEBestLocal(listTesting, metric, allTarget, ast, searchTechnique);
+			List<ResponseLocalBestParameter> bestTPELocal = this.summarizeTPEBestLocal(listTesting, metric, allTarget,
+					ast, searchTechnique);
 
 			ResponseLocalBestParameter bestLocalTPEDefault = bestTPELocal.remove(0);
 			if (!bestDefault.getTargetConfig().equals(ParametersResolvers.defaultConfiguration)) {
@@ -1192,7 +1273,8 @@ public class OfflineResultProcessor {
 		}
 		fwTraining.flush();
 	}
-	@Deprecated //Used in the first revision
+
+	@Deprecated // Used in the first revision
 	public void runSeededCrossValidationExahustiveVsTPE(File fileResults, List<File> original, METRIC metric,
 			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType)
 			throws Exception {
@@ -1273,7 +1355,7 @@ public class OfflineResultProcessor {
 				System.out.println("--Global TPE TRANING: ");
 				TPEEngine tpe = new TPEEngine();
 
-				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, null, fitness);
+				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, ASTMODE.JDT, fitness);
 				configuration.setNumberOfAttempts(numberOfAttempts);
 				configuration.setSearchType(searchType);
 
@@ -1342,12 +1424,12 @@ public class OfflineResultProcessor {
 
 		List<ResultComparisonTwoConfigurations> allBestTPEGlobalComparison = new ArrayList<>();
 
-		//outputKey = outputKey + "_considered_" + totalLimit;
+		// outputKey = outputKey + "_considered_" + totalLimit;
 
-		 outputKey = outputKey + "_" + numberOfAttempts;
+		outputKey = outputKey + "_" + numberOfAttempts;
 
-		 System.out.println("Cache mode"+ cache);
-		 
+		System.out.println("Cache mode" + cache);
+
 		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
 
 			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
@@ -1420,29 +1502,30 @@ public class OfflineResultProcessor {
 				configuration.setNumberOfAttempts(numberOfAttempts);
 
 				Path fileWithData = createFileWithDataToAnalyze(listTraining);
-				ResponseBestParameter bestTPEfromTraining = (cache)?tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
-						configuration) : tpe.computeBestGlobal(fileWithData.toFile(), fitness,
-								configuration);
-				
-				FileWriter fwcomp = new FileWriter(outDir + outputKey +  "_seed_" + iSeed + "_Fold_" + i +"_log_training.txt" );
+				ResponseBestParameter bestTPEfromTraining = (cache)
+						? tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration)
+						: tpe.computeBestGlobal(fileWithData.toFile(), fitness, configuration);
+
+				FileWriter fwcomp = new FileWriter(
+						outDir + outputKey + "_seed_" + iSeed + "_Fold_" + i + "_log_training.txt");
 				fwcomp.write(bestTPEfromTraining.getLog());
 				fwcomp.close();
-				
+
 				System.out.println("*********\n--Global TPE TESTING: ");
-				
+
 				List<ResultComparisonTwoConfigurations> foldBestTPComparison = analyzeBestCrossValidation(
 						bestTPEfromTraining.getAllBest(), bestFromTesting, ParametersResolvers.defaultConfiguration);
-			
-				if(foldBestTPComparison.size() != 1) {
-					System.err.println("Error: we need 1 single results from "+searchType.name());
+
+				if (foldBestTPComparison.size() != 1) {
+					System.err.println("Error: we need 1 single results from " + searchType.name());
 					System.exit(0);
-				}else {
-					ResultComparisonTwoConfigurations rc =  foldBestTPComparison.get(0);
+				} else {
+					ResultComparisonTwoConfigurations rc = foldBestTPComparison.get(0);
 					rc.setDetailsRun("Fold_" + i);
 					allBestTPEGlobalComparison.add(rc);
-					
+
 				}
-				
+
 				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
 			}
 		}
@@ -1478,22 +1561,868 @@ public class OfflineResultProcessor {
 		System.out.println("Saving files in " + (outDir + outputKey));
 
 	}
-	
-	
-	public void runSeededCrossValidationExahustiveVsTPEFineGrain(File fileResults, List<File> original,
-			METRIC metric, String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit,
-			HPOSearchType searchType, boolean cache, ASTMODE astmode) throws Exception {
+
+	public void runSeededCrossValidationOnline(File fileResults, List<Pair<File, File>> original, METRIC metric,
+			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType,
+			ASTMODE astmode) throws Exception {
 
 		List<ResultComparisonTwoConfigurations> allBestGlobalComparison = new ArrayList<>();
 
 		List<ResultComparisonTwoConfigurations> allBestTPEGlobalComparison = new ArrayList<>();
 
-		//outputKey = outputKey + "_considered_" + totalLimit;
+		List<Long> trainingTime = new ArrayList<>();
 
-		 outputKey = outputKey + "_" + numberOfAttempts;
+		// outputKey = outputKey + "_considered_" + totalLimit;
 
-		 System.out.println("Cache mode"+ cache);
-		 
+		outputKey = outputKey + "_" + numberOfAttempts;
+
+		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
+
+			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
+
+			List<Pair> collected = new ArrayList<>(original);
+
+			Collections.shuffle(collected, new Random(iSeed));
+
+			if (collected.size() > totalLimit) {
+				System.out.println("totalLimit " + totalLimit);
+				collected = collected.subList(0, totalLimit);
+			}
+
+			int n = collected.size();
+
+			System.out.println("*** Data collected " + collected.size());
+			String outputKeySeed = outputKey + "_seed_" + iSeed + "_";
+
+			Pair[] array = new Pair[collected.size()];
+			collected.toArray(array);
+
+			smile.validation.Bag[] cvresult = CrossValidation.of(n, k, false);
+
+			LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+
+			// For each fold
+			for (int i = 0; i < cvresult.length; i++) {
+
+				System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+				Bag bag = cvresult[i];
+
+				Pair[] training = MathEx.slice(array, bag.samples);
+				Pair[] testing = MathEx.slice(array, bag.oob);
+
+				List<Pair<File, File>> listTraining = Arrays.asList(training);
+
+				List<Pair<File, File>> listTesting = Arrays.asList(testing);
+
+				storesFilesPair(listTraining, i, "training", outputKeySeed);
+				storesFilesPair(listTesting, i, "testing", outputKeySeed);
+
+				System.out.println("sample (" + listTraining.size() + ")");
+				System.out.println("test (" + listTesting.size() + ")");
+
+				///
+				System.out.println("*********\n--Global TPE TRAINING: ");
+				TPEEngine tpe = new TPEEngine();
+
+				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, astmode, fitness,
+						searchType);
+				configuration.setNumberOfAttempts(numberOfAttempts);
+
+				Path fileWithData = createFileWithDataToAnalyzePairs(listTraining);
+
+				long start = System.currentTimeMillis();
+				ResponseBestParameter bestTPEfromTraining = tpe.computeBestGlobal(fileWithData.toFile(), fitness,
+						configuration);
+				long end = System.currentTimeMillis();
+				FileWriter fwcomp = new FileWriter(
+						outDir + outputKey + "_seed_" + iSeed + "_Fold_" + i + "_log_training.txt");
+				fwcomp.write(bestTPEfromTraining.getLog());
+				fwcomp.close();
+
+				trainingTime.add(end - start);
+				// Reload testing set
+				// Call with best
+
+				Path testingData = createFileWithDataToAnalyzePairs(listTesting);
+				System.out.println("*********\n--Global TPE TESTING: ");
+				// Testing
+				ResponseBestParameter performanceBestOnTesting = tpe.evalBestGlobal(testingData.toFile(), fitness,
+						configuration, bestTPEfromTraining.getBest());
+
+				System.out.println("-performanceBestOnTesting-->" + performanceBestOnTesting);
+
+				ResponseBestParameter performanceDefaultOnTesting = tpe.evalBestGlobal(testingData.toFile(), fitness,
+						configuration, ParametersResolvers.defaultConfiguration);
+
+				System.out.println("-performanceDefaultOnTesting-->" + performanceDefaultOnTesting);
+
+				ResultComparisonTwoConfigurations rc = comparePerformaces(performanceBestOnTesting,
+						performanceDefaultOnTesting);
+				rc.setDetailsRun("Fold_" + i);
+				allBestTPEGlobalComparison.add(rc);
+
+				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
+			}
+		}
+
+		System.out.println("allBestGlobalComparison " + allBestGlobalComparison.size());
+		System.out.println("allBestTPEGlobalComparison " + allBestTPEGlobalComparison.size());
+
+		/// Saving locals
+		File fcomparison = new File(outDir + outputKey + "_comparison_global_best_default_testing.csv");
+		FileWriter fwcomp = new FileWriter(fcomparison);
+		//
+		System.out.println("Grid Results:");
+		File fsum = new File(outDir + outputKey + "_summary_global_best_default_testing.csv");
+		FileWriter fwSum = new FileWriter(fsum);
+
+		saveMeasuresOnFile(allBestGlobalComparison, fwcomp, fwSum);
+
+		fwSum.close();
+		fwcomp.close();
+
+		//
+
+		File ftpedef = new File(outDir + outputKey + "_comparison_tpe_default_testing.csv");
+		FileWriter fwtpedef = new FileWriter(ftpedef);
+
+		File fsumtpedef = new File(outDir + outputKey + "_summary_tpe_default_testing.csv");
+		FileWriter fsumwtpedef = new FileWriter(fsumtpedef);
+		System.out.println("TPE Results:");
+		saveMeasuresOnFile(allBestTPEGlobalComparison, fwtpedef, fsumwtpedef);
+		fsumwtpedef.close();
+		fwtpedef.close();
+
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+		DescriptiveStatistics stats = new DescriptiveStatistics();
+
+		for (Long l : trainingTime) {
+			stats.addValue(l / 1000);
+		}
+
+		File times = new File(outDir + outputKey + "_times_training" + ".csv");
+		FileWriter fwtimes = new FileWriter(times);
+		fwtimes.write("total," + stats.getSum() + "\n");
+		fwtimes.write("mean," + stats.getMean() + "\n");
+		fwtimes.write("median," + stats.getPercentile(50) + "\n");
+		fwtimes.write("stdev," + stats.getStandardDeviation() + "\n");
+
+		fwtimes.close();
+
+	}
+
+	public void runTreeSizeCalculator(File fileResults, List<Pair<File, File>> original, METRIC metric,
+			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType,
+			ASTMODE astmode) throws Exception {
+
+		List<Integer> sizes = new ArrayList<>();
+
+		ITreeBuilder builder = getTreeBuilder(astmode);
+
+		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
+
+			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
+
+			List<Pair> collected = new ArrayList<>(original);
+
+			Collections.shuffle(collected, new Random(iSeed));
+
+			if (collected.size() > totalLimit) {
+				System.out.println("totalLimit " + totalLimit);
+				collected = collected.subList(0, totalLimit);
+			}
+
+			int n = collected.size();
+
+			System.out.println("*** Data collected " + collected.size());
+			String outputKeySeed = outputKey + "_seed_" + iSeed + "_";
+
+			Pair[] array = new Pair[collected.size()];
+			collected.toArray(array);
+
+			smile.validation.Bag[] cvresult = CrossValidation.of(n, k, false);
+			int total = 0;
+			// For each fold
+			for (int i = 0; i < cvresult.length; i++) {
+
+				System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+				Bag bag = cvresult[i];
+
+				Pair<File, File>[] training = MathEx.slice(array, bag.samples);
+
+				List<Pair<File, File>> listTraining = Arrays.asList(training);
+
+				// List<Pair<File, File>> listTesting = Arrays.asList(testing);
+
+				storesFilesPair(listTraining, i, "training", outputKeySeed);
+				// storesFilesPair(listTesting, i, "testing", outputKeySeed);
+
+				System.out.println("sample (" + listTraining.size() + ")");
+				// System.out.println("test (" + listTesting.size() + ")");
+
+				///
+
+				for (Pair<File, File> xPair : training) {
+
+					System.out.println("-----Starting TPE");
+
+					try {
+						Tree l1 = builder.build(xPair.first);
+						// Tree l2 = builder.build(xPair.second);
+
+						int size = l1.getMetrics().size;
+						sizes.add(size);
+
+						// Reload testing set
+						// Call with best
+
+						System.out.println("\n**END*********Fold :" + total++);
+
+					} catch (Exception e) {
+						System.err.println("Error " + e.getMessage());
+					}
+				}
+			}
+
+		}
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+		File timesAll = new File(outDir + outputKey + "_sizes" + ".csv");
+		FileWriter fwtimesAll = new FileWriter(timesAll);
+		for (Integer l : sizes) {
+			fwtimesAll.write((l) + "\n");
+		}
+
+		fwtimesAll.close();
+
+	}
+
+	public void runTimesICSE2024(File fileResults, List<Pair<File, File>> original, METRIC metric, String outputKey,
+			int k, int nr_seeds, int totalLimit, ASTMODE astmode, String defaultConfiguration) throws Exception {
+
+		List<Integer> sizes = new ArrayList<>();
+
+		ITreeBuilder builder = getTreeBuilder(astmode);
+
+		int tCountLastMatch = 0;
+		int tCountNotLastMatch = 0;
+
+		DescriptiveStatistics statsDiff = new DescriptiveStatistics();
+		DescriptiveStatistics times = new DescriptiveStatistics();
+
+		List<Integer> diffSize = new ArrayList<>();
+
+		List<Pair> collected = new ArrayList<>(original);
+
+		Collections.shuffle(collected, new Random(0));
+
+	
+
+		FileWriter frFileWriter = new FileWriter(new File("out"+defaultConfiguration+".csv" ));
+		
+		int numberPair = 0;
+		int totaltime = 0;
+		int i=0;
+		frFileWriter.write(i +"number,name,nr_lastMatch,nr_no_lastMatch,size,time(milliseconds)" +"\n");
+		for (Pair<File, File> xPair : collected) {
+			
+			if (i> totalLimit)
+				break;
+
+			GTProxy proxy = new GTProxy();
+
+			Tree l1 = builder.build(xPair.first);
+			Tree l2 = builder.build(xPair.second);
+
+			System.out.println(numberPair++ + "_" + xPair.first.getAbsolutePath());
+
+			
+
+			long start = System.currentTimeMillis();
+			Diff diff = proxy.run(l1, l2, defaultConfiguration, null);
+			long end = System.currentTimeMillis();
+
+			int sizeDefault = diff.editScript.size();
+
+			if (sizeDefault == 0)
+				continue;
+
+			System.out.println("size: " + sizeDefault);
+			i++;
+			int iCountLastMatch = GreedyBottomUpMatcher.countLastMatch;
+			int iCountNotLastMatch = GreedyBottomUpMatcher.countNotLastMatch;
+			tCountLastMatch += iCountLastMatch;
+			tCountNotLastMatch += iCountNotLastMatch;
+			long duration = (end - start);
+			
+			String key = xPair.first.getParentFile().getParentFile().getName() + "_"+xPair.first.getParentFile().getName()+ "_"+xPair.first.getName();
+			
+			frFileWriter.write(i +","+key+","+  iCountLastMatch + "," + iCountNotLastMatch+ "," +  sizeDefault + "," + duration + "\n");
+			frFileWriter.flush();
+			System.out.println(iCountLastMatch + " " + iCountNotLastMatch);
+
+		
+
+			GreedyBottomUpMatcher.countLastMatch = 0;
+			GreedyBottomUpMatcher.countNotLastMatch = 0;
+
+			diffSize.add(sizeDefault);
+			statsDiff.addValue(sizeDefault);
+			times.addValue(duration);
+			totaltime+=duration;
+
+
+		}
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+		File timesAll = new File(outDir + outputKey + "_sizes" + ".csv");
+		FileWriter fwtimesAll = new FileWriter(timesAll);
+		for (Integer l : sizes) {
+			fwtimesAll.write((l) + "\n");
+		}
+
+		fwtimesAll.close();
+		frFileWriter.close();
+		System.out.println(defaultConfiguration+ " Recovery "+ tCountLastMatch + " NoRecovery " + tCountNotLastMatch + " ed_size " + statsDiff.getPercentile(50)
+				+ " time (median) " + times.getPercentile(50) + " time (total) "+ totaltime);
+	}
+	
+	
+	public void runTimesICSE2024Seed(File fileResults, List<Pair<File, File>> original, METRIC metric, String outputKey,
+			int k, int nr_seeds, int totalLimit, ASTMODE astmode, String defaultConfiguration) throws Exception {
+
+		List<Integer> sizes = new ArrayList<>();
+
+		ITreeBuilder builder = getTreeBuilder(astmode);
+
+		int tCountLastMatch = 0;
+		int tCountNotLastMatch = 0;
+
+		DescriptiveStatistics statsDiff = new DescriptiveStatistics();
+		DescriptiveStatistics times = new DescriptiveStatistics();
+
+		List<Integer> diffSize = new ArrayList<>();
+
+		List<Pair> collected = new ArrayList<>(original);
+
+		Collections.shuffle(collected, new Random(0));
+
+	
+
+		FileWriter frFileWriter = new FileWriter(new File("out"+defaultConfiguration+".csv" ));
+		
+		int numberPair = 0;
+		int totaltime = 0;
+		int i=0;
+		frFileWriter.write(i +"number,name,nr_lastMatch,nr_no_lastMatch,size,time(milliseconds)" +"\n");
+		for (Pair<File, File> xPair : collected) {
+			
+			if (i> totalLimit)
+				break;
+
+			GTProxy proxy = new GTProxy();
+
+			Tree l1 = builder.build(xPair.first);
+			Tree l2 = builder.build(xPair.second);
+
+			System.out.println(numberPair++ + "_" + xPair.first.getAbsolutePath());
+
+			
+			Diff diff  = null;
+			DescriptiveStatistics localTimes = new DescriptiveStatistics();
+			for (int seed : new int[]{1,2,3,4,5}) {
+				long start = System.currentTimeMillis();
+				
+				diff = proxy.run(l1, l2, defaultConfiguration, null);
+				long end = System.currentTimeMillis();
+				
+				long duration = (end - start);
+				localTimes.addValue(duration);
+			}
+			
+			int sizeDefault = diff.editScript.size();
+
+			if (sizeDefault == 0)
+				continue;
+			
+			double duration = localTimes.getPercentile(50);
+			
+			System.out.println("size: " + sizeDefault);
+			i++;
+			int iCountLastMatch = GreedyBottomUpMatcher.countLastMatch;
+			int iCountNotLastMatch = GreedyBottomUpMatcher.countNotLastMatch;
+			tCountLastMatch += iCountLastMatch;
+			tCountNotLastMatch += iCountNotLastMatch;
+		
+			
+			String key = xPair.first.getParentFile().getParentFile().getName() + "_"+xPair.first.getParentFile().getName()+ "_"+xPair.first.getName();
+			
+			frFileWriter.write(i +","+key+","+  iCountLastMatch + "," + iCountNotLastMatch+ "," +  sizeDefault + "," + duration + "\n");
+			frFileWriter.flush();
+			System.out.println(iCountLastMatch + " " + iCountNotLastMatch);
+
+		
+
+			GreedyBottomUpMatcher.countLastMatch = 0;
+			GreedyBottomUpMatcher.countNotLastMatch = 0;
+
+			diffSize.add(sizeDefault);
+			statsDiff.addValue(sizeDefault);
+			times.addValue(duration);
+			totaltime+=duration;
+
+
+		}
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+		File timesAll = new File(outDir + outputKey + "_sizes" + ".csv");
+		FileWriter fwtimesAll = new FileWriter(timesAll);
+		for (Integer l : sizes) {
+			fwtimesAll.write((l) + "\n");
+		}
+
+		fwtimesAll.close();
+		frFileWriter.close();
+		System.out.println(defaultConfiguration+ " Recovery "+ tCountLastMatch + " NoRecovery " + tCountNotLastMatch + " ed_size " + statsDiff.getPercentile(50)
+				+ " time (median) " + times.getPercentile(50) + " time (total) "+ totaltime);
+	}
+	
+
+	public void runSeededCrossValidationLocalOnline(File fileResults, List<Pair<File, File>> original, METRIC metric,
+			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType,
+			ASTMODE astmode) throws Exception {
+
+		List<Long> trainingTimeLocalTPE = new ArrayList<>();
+		// List<Long> trainingTimeLocalExha = new ArrayList<>();
+
+		List<Long> trainingTimeDiff = new ArrayList<>();
+		List<Integer> diffSize = new ArrayList<>();
+
+		outputKey = outputKey + "_" + numberOfAttempts;
+
+		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+
+		ExecutionTPEConfiguration configurationTPE = new ExecutionTPEConfiguration(metric, astmode, fitness,
+				searchType);
+		configurationTPE.setNumberOfAttempts(numberOfAttempts);
+
+		ITreeBuilder builder = getTreeBuilder(astmode);
+		int equals = 0;
+		int improve = 0;
+		int worse = 0;
+
+		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
+
+			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
+
+			List<Pair> collected = new ArrayList<>(original);
+
+			Collections.shuffle(collected, new Random(iSeed));
+
+			if (collected.size() > totalLimit) {
+				System.out.println("totalLimit " + totalLimit);
+				collected = collected.subList(0, totalLimit);
+			}
+
+			int n = collected.size();
+
+			System.out.println("*** Data collected " + collected.size());
+			String outputKeySeed = outputKey + "_seed_" + iSeed + "_";
+
+			Pair[] array = new Pair[collected.size()];
+			collected.toArray(array);
+
+			smile.validation.Bag[] cvresult = CrossValidation.of(n, k, false);
+
+			// For each fold
+			for (int i = 0; i < cvresult.length; i++) {
+
+				System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+				Bag bag = cvresult[i];
+
+				Pair<File, File>[] training = MathEx.slice(array, bag.samples);
+
+				List<Pair<File, File>> listTraining = Arrays.asList(training);
+
+				// List<Pair<File, File>> listTesting = Arrays.asList(testing);
+
+				storesFilesPair(listTraining, i, "training", outputKeySeed);
+				// storesFilesPair(listTesting, i, "testing", outputKeySeed);
+
+				System.out.println("sample (" + listTraining.size() + ")");
+				// System.out.println("test (" + listTesting.size() + ")");
+
+				///
+				System.out.println("*********\n--Global TPE TRAINING: ");
+
+				for (Pair<File, File> xPair : training) {
+
+					System.out.println("-----Starting TPE");
+
+					long start, end;
+
+					start = System.currentTimeMillis();
+					TPEEngine tpe = new TPEEngine();
+					ResponseBestParameter bestTPEfromTraining = tpe.computeBestLocal(xPair.first, xPair.second, fitness,
+							configurationTPE);
+					end = System.currentTimeMillis();
+					trainingTimeLocalTPE.add((end - start));
+
+					double valueTPE = bestTPEfromTraining.getMetricValue();
+
+//					System.out.println("-----Starting EXA");
+//					start = System.currentTimeMillis();
+//					
+//					ResponseBestParameter bestExafromTraining = exhaEngine.computeBestLocal(xPair.first, xPair.second, fitness,
+//							configurationExha);
+//					end = System.currentTimeMillis();
+//					trainingTimeLocalExha.add((end - start));
+
+					// Add diff time
+					GTProxy proxy = new GTProxy();
+
+					Tree l1 = builder.build(xPair.first);
+					Tree l2 = builder.build(xPair.second);
+
+					start = System.currentTimeMillis();
+					Diff diff = proxy.run(l1, l2, ParametersResolvers.defaultConfiguration, null); // we dont want to
+																									// save here, so we
+																									// pass null to the
+																									// out
+					end = System.currentTimeMillis();
+
+					int sizeDefault = diff.editScript.size();
+					diffSize.add(sizeDefault);
+
+					trainingTimeDiff.add((end - start));
+
+					if (sizeDefault == valueTPE) {
+						equals++;
+						System.out.println("Comparison: Equals");
+					} else if (sizeDefault > valueTPE) {
+						improve++;
+						System.out.println("Comparison: Improve");
+					} else if (sizeDefault < valueTPE) {
+						worse++;
+						System.out.println("Comparison: Worse");
+					}
+				}
+
+				// Reload testing set
+				// Call with best
+
+				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
+			}
+		}
+
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+		File timesPer = new File(outDir + outputKey + "_performance" + ".csv");
+		int sum = improve + equals + worse;
+		FileWriter fwtPer = new FileWriter(timesPer);
+		fwtPer.write("improve,equals,worse\n");
+		fwtPer.write(improve + "," + equals + "," + worse + "\n");
+
+		fwtPer.write((double) improve / (double) sum + "," + (double) equals / (double) sum + ","
+				+ (double) worse / (double) sum + "\n");
+
+		fwtPer.close();
+
+		DescriptiveStatistics statsTPE = new DescriptiveStatistics();
+
+		File timesAll = new File(outDir + outputKey + "_times_training_all_tpe" + ".csv");
+		FileWriter fwtimesAll = new FileWriter(timesAll);
+		for (Long l : trainingTimeLocalTPE) {
+			statsTPE.addValue(l);
+			fwtimesAll.write((l) + "\n");
+		}
+		fwtimesAll.close();
+
+		DescriptiveStatistics statsExa = new DescriptiveStatistics();
+//
+//		 timesAll = new File(outDir + outputKey + "_times_training_all_exha" + ".csv");
+//		 fwtimesAll= new FileWriter(timesAll);
+//		for (Long l : trainingTimeLocalExha) {
+//			statsExa.addValue(l);
+//			fwtimesAll.write((l) + "\n");
+//		}
+//		fwtimesAll.close();
+
+		DescriptiveStatistics statsDiff = new DescriptiveStatistics();
+
+		timesAll = new File(outDir + outputKey + "_times_training_all_diff" + ".csv");
+		fwtimesAll = new FileWriter(timesAll);
+		for (Long l : trainingTimeDiff) {
+			statsDiff.addValue(l);
+			fwtimesAll.write((l) + "\n");
+		}
+		fwtimesAll.close();
+
+		timesAll = new File(outDir + outputKey + "_diff_default" + ".csv");
+		fwtimesAll = new FileWriter(timesAll);
+		for (Integer l : diffSize) {
+			fwtimesAll.write((l) + "\n");
+		}
+		fwtimesAll.close();
+
+		File times = new File(outDir + outputKey + "_times_training" + ".csv");
+		FileWriter fwtimes = new FileWriter(times);
+		fwtimes.write("-,DIFF, TPE, EXA\n");
+		fwtimes.write("total," + statsDiff.getSum() / 1000d + ", " + statsTPE.getSum() / 1000d + ", "
+				+ statsExa.getSum() / 1000d + "\n");
+		fwtimes.write("mean," + statsDiff.getMean() / 1000d + ", " + statsTPE.getMean() / 1000d + ", "
+				+ statsExa.getMean() / 1000d + "\n");
+		fwtimes.write("median," + statsDiff.getPercentile(50) / 1000d + ", " + statsTPE.getPercentile(50) / 1000d + ", "
+				+ statsExa.getPercentile(50) / 1000d + "\n");
+		fwtimes.write("median," + statsDiff.getStandardDeviation() + ", " + statsTPE.getStandardDeviation() / 1000d
+				+ ", " + statsExa.getStandardDeviation() / 1000d + "\n");
+
+		fwtimes.close();
+
+	}
+
+	public void runComparison(File fileResults, List<Pair<File, File>> original, METRIC metric, String outputKey,
+			int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType, ASTMODE astmode)
+			throws Exception {
+
+		List<Long> trainingTimeLocalTPE = new ArrayList<>();
+		// List<Long> trainingTimeLocalExha = new ArrayList<>();
+
+		List<Long> trainingTimeDiff = new ArrayList<>();
+		List<Integer> diffSize = new ArrayList<>();
+
+		outputKey = outputKey + "_" + numberOfAttempts;
+
+		LengthEditScriptFitness fitness = new LengthEditScriptFitness();
+
+		ExecutionTPEConfiguration configurationTPE = new ExecutionTPEConfiguration(metric, astmode, fitness,
+				searchType);
+		configurationTPE.setNumberOfAttempts(numberOfAttempts);
+
+		ITreeBuilder builder = getTreeBuilder(astmode);
+		int equals = 0;
+		int improve = 0;
+		int worse = 0;
+
+		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
+
+			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
+
+			List<Pair> collected = new ArrayList<>(original);
+
+			Collections.shuffle(collected, new Random(iSeed));
+
+			if (collected.size() > totalLimit) {
+				System.out.println("totalLimit " + totalLimit);
+				collected = collected.subList(0, totalLimit);
+			}
+
+			int n = collected.size();
+
+			System.out.println("*** Data collected " + collected.size());
+			String outputKeySeed = outputKey + "_seed_" + iSeed + "_";
+
+			Pair[] array = new Pair[collected.size()];
+			collected.toArray(array);
+
+			smile.validation.Bag[] cvresult = CrossValidation.of(n, k, false);
+
+			// For each fold
+			for (int i = 0; i < cvresult.length; i++) {
+
+				System.out.println("\n***********Fold :" + i + "/" + cvresult.length);
+				Bag bag = cvresult[i];
+
+				Pair<File, File>[] training = MathEx.slice(array, bag.samples);
+
+				List<Pair<File, File>> listTraining = Arrays.asList(training);
+
+				// List<Pair<File, File>> listTesting = Arrays.asList(testing);
+
+				storesFilesPair(listTraining, i, "training", outputKeySeed);
+				// storesFilesPair(listTesting, i, "testing", outputKeySeed);
+
+				System.out.println("sample (" + listTraining.size() + ")");
+				// System.out.println("test (" + listTesting.size() + ")");
+
+				///
+				System.out.println("*********\n--Global TPE TRAINING: ");
+
+				for (Pair<File, File> xPair : training) {
+
+					// System.out.println("-----Starting TPE");
+
+					GTProxy proxy = new GTProxy();
+
+					Tree l1 = builder.build(xPair.first);
+					Tree l2 = builder.build(xPair.second);
+
+					Diff diff = proxy.run(l1, l2, ParametersResolvers.defaultConfiguration, null); // we dont want to
+
+					String newConfig = (ASTMODE.GTSPOON == astmode)
+							? ("ClassicGumtree-bu_minsim-0.2-bu_minsize-600-st_minprio-1-st_priocalc-size")
+							: ("HybridGumtree-bu_minsize-400-st_minprio-1-st_priocalc-size");
+
+					Diff diffNew = proxy.run(l1, l2, newConfig, null);
+
+					File fout = new File("./outVis");
+					if (diff.editScript.size() < diffNew.editScript.size()) {
+
+						System.out.println("def " + diff.editScript.size() + " vs " + diffNew.editScript.size());
+
+						System.out.println("Found broken " + xPair.first);
+
+						ResultVisualizer rv = new ResultVisualizer();
+
+						rv.saveVisualization(xPair.first, l1, xPair.second, l2,
+								ParametersResolvers.defaultConfiguration, fout, xPair.first.getParentFile().getName(),
+								ParametersResolvers.defaultConfiguration);
+
+						rv.saveVisualization(xPair.first, l1, xPair.second, l2, newConfig, fout,
+								xPair.first.getParentFile().getName(), newConfig);
+
+					}
+
+				}
+
+				// Reload testing set
+				// Call with best
+
+				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
+			}
+		}
+
+		System.out.println("Saving files in " + (outDir + outputKey));
+
+		File timesPer = new File(outDir + outputKey + "_performance" + ".csv");
+		int sum = improve + equals + worse;
+		FileWriter fwtPer = new FileWriter(timesPer);
+		fwtPer.write("improve,equals,worse\n");
+		fwtPer.write(improve + "," + equals + "," + worse + "\n");
+
+		fwtPer.write((double) improve / (double) sum + "," + (double) equals / (double) sum + ","
+				+ (double) worse / (double) sum + "\n");
+
+		fwtPer.close();
+
+		DescriptiveStatistics statsTPE = new DescriptiveStatistics();
+
+		File timesAll = new File(outDir + outputKey + "_times_training_all_tpe" + ".csv");
+		FileWriter fwtimesAll = new FileWriter(timesAll);
+		for (Long l : trainingTimeLocalTPE) {
+			statsTPE.addValue(l);
+			fwtimesAll.write((l) + "\n");
+		}
+		fwtimesAll.close();
+
+		DescriptiveStatistics statsExa = new DescriptiveStatistics();
+//
+//		 timesAll = new File(outDir + outputKey + "_times_training_all_exha" + ".csv");
+//		 fwtimesAll= new FileWriter(timesAll);
+//		for (Long l : trainingTimeLocalExha) {
+//			statsExa.addValue(l);
+//			fwtimesAll.write((l) + "\n");
+//		}
+//		fwtimesAll.close();
+
+		DescriptiveStatistics statsDiff = new DescriptiveStatistics();
+
+		timesAll = new File(outDir + outputKey + "_times_training_all_diff" + ".csv");
+		fwtimesAll = new FileWriter(timesAll);
+		for (Long l : trainingTimeDiff) {
+			statsDiff.addValue(l);
+			fwtimesAll.write((l) + "\n");
+		}
+		fwtimesAll.close();
+
+		timesAll = new File(outDir + outputKey + "_diff_default" + ".csv");
+		fwtimesAll = new FileWriter(timesAll);
+		for (Integer l : diffSize) {
+			fwtimesAll.write((l) + "\n");
+		}
+		fwtimesAll.close();
+
+		File times = new File(outDir + outputKey + "_times_training" + ".csv");
+		FileWriter fwtimes = new FileWriter(times);
+		fwtimes.write("-,DIFF, TPE, EXA\n");
+		fwtimes.write("total," + statsDiff.getSum() / 1000d + ", " + statsTPE.getSum() / 1000d + ", "
+				+ statsExa.getSum() / 1000d + "\n");
+		fwtimes.write("mean," + statsDiff.getMean() / 1000d + ", " + statsTPE.getMean() / 1000d + ", "
+				+ statsExa.getMean() / 1000d + "\n");
+		fwtimes.write("median," + statsDiff.getPercentile(50) / 1000d + ", " + statsTPE.getPercentile(50) / 1000d + ", "
+				+ statsExa.getPercentile(50) / 1000d + "\n");
+		fwtimes.write("median," + statsDiff.getStandardDeviation() + ", " + statsTPE.getStandardDeviation() / 1000d
+				+ ", " + statsExa.getStandardDeviation() / 1000d + "\n");
+
+		fwtimes.close();
+
+	}
+
+	public ITreeBuilder getTreeBuilder(ASTMODE model) {
+
+		ITreeBuilder treebuilder = null;
+		if (ASTMODE.GTSPOON.equals(model)) {
+			treebuilder = new SpoonTreeBuilder();
+		} else if (ASTMODE.JDT.equals(model)) {
+			treebuilder = new JDTTreeBuilder();
+		} else {
+			System.err.println("Mode not configured " + model);
+		}
+		return treebuilder;
+	}
+
+	private ResultComparisonTwoConfigurations comparePerformaces(ResponseBestParameter performanceBestOnTesting,
+			ResponseBestParameter performanceDefaultOnTesting) {
+
+		List<Double> perBest = new ArrayList();
+
+		List<Double> resultsComparison = new ArrayList<>();
+
+		JsonArray valuesDefault = performanceDefaultOnTesting.getInfoEvaluations();
+		JsonArray valuesOneBest = performanceBestOnTesting.getInfoEvaluations();
+
+		ResultComparisonTwoConfigurations result = null;
+		if (valuesDefault.size() == valuesOneBest.size()) {
+
+			for (int i = 0; i < valuesDefault.size(); i++) {
+				Double iVD = valuesDefault.get(i).getAsDouble();
+				Double iVB = valuesOneBest.get(i).getAsDouble();
+
+				double diff = iVB - iVD;
+				resultsComparison.add(diff);
+			}
+
+			long equalsB = resultsComparison.stream().filter(e -> e == 0).count();
+			long betterBest = resultsComparison.stream().filter(e -> e < 0).count();
+			long worstBest = resultsComparison.stream().filter(e -> e > 0).count();
+
+			perBest.add(((double) betterBest / (double) valuesOneBest.size()));
+
+			result = new ResultComparisonTwoConfigurations(performanceBestOnTesting.getBest(),
+					performanceDefaultOnTesting.getBest(), betterBest, worstBest, equalsB, valuesOneBest.size());
+
+		} else {
+			System.err.println("Error different size");
+		}
+
+		return result;
+	}
+
+	public void runSeededCrossValidationExahustiveVsTPEFineGrain(File fileResults, List<File> original, METRIC metric,
+			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType,
+			boolean cache, ASTMODE astmode) throws Exception {
+
+		List<ResultComparisonTwoConfigurations> allBestGlobalComparison = new ArrayList<>();
+
+		List<ResultComparisonTwoConfigurations> allBestTPEGlobalComparison = new ArrayList<>();
+
+		// outputKey = outputKey + "_considered_" + totalLimit;
+
+		outputKey = outputKey + "_" + numberOfAttempts;
+
+		System.out.println("Cache mode" + cache);
+
 		for (int iSeed = 0; iSeed < nr_seeds; iSeed++) {
 
 			System.out.println("\n***********Seed :" + iSeed + "/" + nr_seeds);
@@ -1566,29 +2495,31 @@ public class OfflineResultProcessor {
 				configuration.setNumberOfAttempts(numberOfAttempts);
 
 				Path fileWithData = createFileWithDataToAnalyze(listTraining);
-				ResponseBestParameter bestTPEfromTraining = (cache)?tpe.computeBestGlobalCache(fileWithData.toFile(), fitness,
-						configuration) : tpe.computeBestGlobal(fileWithData.toFile(), fitness,
-								configuration);
-				
-				FileWriter fwcomp = new FileWriter(outDir + outputKey +  "_seed_" + iSeed + "_Fold_" + i +"_log_training.txt" );
+
+				ResponseBestParameter bestTPEfromTraining = (cache)
+						? tpe.computeBestGlobalCache(fileWithData.toFile(), fitness, configuration)
+						: tpe.computeBestGlobal(fileWithData.toFile(), fitness, configuration);
+
+				FileWriter fwcomp = new FileWriter(
+						outDir + outputKey + "_seed_" + iSeed + "_Fold_" + i + "_log_training.txt");
 				fwcomp.write(bestTPEfromTraining.getLog());
 				fwcomp.close();
-				
+
 				System.out.println("*********\n--Global TPE TESTING: ");
-				
+
 				List<ResultComparisonTwoConfigurations> foldBestTPComparison = analyzeBestCrossValidation(
 						bestTPEfromTraining.getAllBest(), bestFromTesting, ParametersResolvers.defaultConfiguration);
-			
-				if(foldBestTPComparison.size() != 1) {
-					System.err.println("Error: we need 1 single results from "+searchType.name());
+
+				if (foldBestTPComparison.size() != 1) {
+					System.err.println("Error: we need 1 single results from " + searchType.name());
 					System.exit(0);
-				}else {
-					ResultComparisonTwoConfigurations rc =  foldBestTPComparison.get(0);
+				} else {
+					ResultComparisonTwoConfigurations rc = foldBestTPComparison.get(0);
 					rc.setDetailsRun("Fold_" + i);
 					allBestTPEGlobalComparison.add(rc);
-					
+
 				}
-				
+
 				System.out.println("\n**END*********Fold :" + i + "/" + cvresult.length);
 			}
 		}
@@ -1624,8 +2555,6 @@ public class OfflineResultProcessor {
 		System.out.println("Saving files in " + (outDir + outputKey));
 
 	}
-	
-	
 
 	private void saveMostFrequent(Map<String, Integer> countBestLocalByConfigurations, File fbestLocal)
 			throws IOException {
@@ -1714,7 +2643,6 @@ public class OfflineResultProcessor {
 	public ResultComparisonTwoConfigurations compareConfigs(ResultByConfig values, List<Double> perBest,
 			String oneBestConfig, String defaultConfig) {
 
-
 		List<Double> valuesOneBest = values.get(oneBestConfig);
 		List<Double> valuesDefault = values.get(defaultConfig);
 
@@ -1722,7 +2650,6 @@ public class OfflineResultProcessor {
 		ResultComparisonTwoConfigurations result = null;
 		if (valuesDefault.size() == valuesOneBest.size()) {
 
-		
 			for (int i = 0; i < valuesDefault.size(); i++) {
 				Double iVD = valuesDefault.get(i);
 				Double iVB = valuesOneBest.get(i);
@@ -1777,6 +2704,21 @@ public class OfflineResultProcessor {
 		FileWriter fw = new FileWriter(f);
 		for (File v : listTraining) {
 			fw.write(v.getAbsolutePath());
+			fw.write("\n");
+		}
+
+		fw.flush();
+		fw.close();
+		System.out.println("Store  " + f.getAbsolutePath());
+
+	}
+
+	private void storesFilesPair(List<Pair<File, File>> listTraining, int i, String string, String outputKey)
+			throws IOException {
+		File f = new File(outDir + outputKey + "_files_" + string + i + ".txt");
+		FileWriter fw = new FileWriter(f);
+		for (Pair<File, File> v : listTraining) {
+			fw.write(v.first.getAbsolutePath() + " " + v.second.getAbsolutePath());
 			fw.write("\n");
 		}
 

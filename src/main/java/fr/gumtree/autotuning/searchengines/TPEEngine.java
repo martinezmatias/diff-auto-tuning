@@ -53,9 +53,9 @@ public class TPEEngine implements OptimizationMethod {
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
-		JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
-		if (resultGeneral != null)
-			resultGeneral.setInfoEvaluations(infoEvaluations);
+		//JsonArray infoEvaluations = this.launcher.retrieveInfoSimple();
+		//if (resultGeneral != null)
+		//	resultGeneral.setInfoEvaluations(infoEvaluations);
 
 		launcher.stop();
 		System.out.println("End Simple");
@@ -63,17 +63,10 @@ public class TPEEngine implements OptimizationMethod {
 		return resultGeneral;
 	}
 
-	@Deprecated // not used, only in test?
+
 	@Override
 	public ResponseBestParameter computeBestGlobal(File dataFilePairs, Fitness fitnessFunction,
 			ExecutionConfiguration configuration) throws Exception {
-
-//		System.out.println("Starting server");
-//		launcher = new DiffServerLauncher(fitnessFunction, configuration.getMetric());
-//		launcher.start();
-//		ResponseBestParameter resultGeneral = null;
-//
-//		GumtreeMultipleHttpHandler handler = launcher.getHandlerMultiple();
 		
 		//new 2023
 		ResponseBestParameter resultGeneral = new ResponseBestParameter();
@@ -91,15 +84,46 @@ public class TPEEngine implements OptimizationMethod {
 		resultGeneral = computeBestCallingTPE(resultGeneral, handler, responseJSon,
 				(ExecutionTPEConfiguration) configuration);
 
-	//	JsonArray infoEvaluations = this.launcher.retrieveInfoMultiple();
-	//	if (resultGeneral != null)
-	//		resultGeneral.setInfoEvaluations(infoEvaluations);
 
 		launcher.stop();
 		System.out.println("End Multiple");
 
 		return resultGeneral;
 	}
+	
+	
+	
+/**
+ * New MM 23
+ * @param dataFilePairs
+ * @param fitnessFunction
+ * @param configuration
+ * @param condig
+ * @return
+ * @throws Exception
+ */
+	public ResponseBestParameter evalBestGlobal(File dataFilePairs, Fitness fitnessFunction,
+			ExecutionConfiguration configuration, String condig) throws Exception {
+		
+		
+		ResponseBestParameter resultGeneral = new ResponseBestParameter();
+		
+		GumtreeMultipleHttpHandler handler = new GumtreeMultipleHttpHandler(fitnessFunction, configuration.getMetric());
+		launcher = new DiffServerLauncher(new GumtreeSingleHttpHandler(fitnessFunction, configuration.getMetric()),
+				handler);
+		launcher.start();
+		
+		JsonObject responseJSon = launcher.initMultiple(dataFilePairs, configuration.getAstmode());
+
+		resultGeneral = this.computeFitness(handler, condig);
+
+
+		launcher.stop();
+		System.out.println("End Multiple");
+
+		return resultGeneral;
+	}
+	
 
 	public ResponseBestParameter computeBestGlobalCache(File dataFilePairs, Fitness fitnessFunction,
 			ExecutionConfiguration configuration) throws Exception {
@@ -173,25 +197,8 @@ public class TPEEngine implements OptimizationMethod {
 				String log =  response[2];
 				
 				System.out.println("Checking obtaining Best: ");
-				JsonObject responseBest = launcher.callRunWithHandle(best, handlerP);
-				System.out.println(responseBest);
-
-				JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);
-
-				String checkedBestParameters = responseJSonFromBest.get("parameters").getAsString();
-
-				Double fitness = responseJSonFromBest.get("fitness").getAsDouble();
-				Integer values = responseJSonFromBest.get("values").getAsInt();
-
-				//
-				// Retrieve values for the default an create a ResultsByConfig
-				ResponseBestParameter result = new ResponseBestParameter();
-				result.setBest(checkedBestParameters);
-				// result.setNumberOfEvaluatedPairs(nrActions);
-				result.setMetricValue(fitness);
-				result.setNumberOfEvaluatedPairs(values);
+				ResponseBestParameter result = computeFitness(handlerP, best);
 				
-				//
 				result.setLog(log);
 				result.setEnvironment(environment);
 
@@ -204,6 +211,41 @@ public class TPEEngine implements OptimizationMethod {
 		}
 		// Stop server
 		return resultGeneral;
+	}
+
+	protected ResponseBestParameter computeFitness(GumtreeAbstractHttpHandler handlerP, String config)
+			throws IOException, InterruptedException {
+		JsonObject responseBest = launcher.callRunWithHandle(config, handlerP);
+		System.out.println(responseBest);
+
+		JsonObject responseJSonFromBest = new Gson().fromJson(responseBest, JsonObject.class);
+
+		if (responseJSonFromBest.get("parameters") == null) {
+			ResponseBestParameter result = new ResponseBestParameter();
+			result.setBest(null);
+			// result.setNumberOfEvaluatedPairs(nrActions);
+			//result.setInfoEvaluations(allValues);
+			result.setMetricValue(Double.MAX_VALUE);
+			//result.setNumberOfEvaluatedPairs(null);
+			return result;
+			
+		}
+		
+		String checkedBestParameters = responseJSonFromBest.get("parameters").getAsString();
+
+		Double fitness = responseJSonFromBest.get("fitness").getAsDouble();
+		Integer values = responseJSonFromBest.get("values").getAsInt();
+		JsonArray allValues = responseJSonFromBest.get("allvalues").getAsJsonArray();
+
+		//
+		// Retrieve values for the default an create a ResultsByConfig
+		ResponseBestParameter result = new ResponseBestParameter();
+		result.setBest(checkedBestParameters);
+		// result.setNumberOfEvaluatedPairs(nrActions);
+		result.setInfoEvaluations(allValues);
+		result.setMetricValue(fitness);
+		result.setNumberOfEvaluatedPairs(values);
+		return result;
 	}
 
 	/**
@@ -252,11 +294,13 @@ public class TPEEngine implements OptimizationMethod {
 			if (bestConfig!= null)
 					bestConfig = bestConfig.replace(HEADER_RESPONSE_PYTHON, "");
 			
-			System.out.println("best: " + bestConfig);
+			System.out.println("After calling TPE\nBest: " + bestConfig);
 			
 			String error = readProcessError(p);
 			System.err.println(error);
-		
+			if (configLine == null) {
+				System.err.println("Error "+ response);
+			}
 
 			return new String[] {bestConfig, configLine, response} ;
 

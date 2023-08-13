@@ -8,6 +8,12 @@ import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.Callable;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.Diff;
@@ -59,7 +65,7 @@ public class GTProxy implements DiffProxy {
 
 			cmatcher.configure(properties);
 
-			System.out.println(properties);
+			//System.out.println("Calling: "+ properties);
 
 			ChawatheScriptGenerator edGenerator = new ChawatheScriptGenerator();
 
@@ -70,7 +76,37 @@ public class GTProxy implements DiffProxy {
 			return null;
 		}
 	}
+	ExecutorService executor = Executors.newSingleThreadScheduledExecutor();
+	
+	public Diff runT(Tree tleft, Tree tright, String params, File out) {
 
+		Callable<Diff> task = new Callable<Diff>() {
+			public Diff call() throws InterruptedException {
+				return run(tleft,  tright,  params,  out);
+			}
+		};
+		
+	
+		Future<Diff> future = executor.submit(task);
+		try {
+			Diff resDiff = future.get(1, TimeUnit.SECONDS);
+			
+			return resDiff;
+		} catch (TimeoutException ex) {
+			System.out.println("Timeout");
+			
+			return null;
+
+
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		
+		
+		return null;
+	}
+
+	
 	public Diff run(Tree tleft, Tree tright, GumtreeProperties properties, ConfigurableMatcher cmatcher,
 			ChawatheScriptGenerator edGenerator, File out) {
 
@@ -109,11 +145,11 @@ public class GTProxy implements DiffProxy {
 			String si = paramSplit[i];
 			String siv = paramSplit[i + 1];
 
-			System.out.println(si + " " + siv);
+			// System.out.println(si + " " + siv);
 
 			properties.tryConfigure(ConfigurationOptions.valueOf(si), siv);
 		}
-		System.out.println("Fininsh config - ");
+		// System.out.println("Fininsh config - ");
 		return properties;
 	}
 
@@ -181,6 +217,7 @@ public class GTProxy implements DiffProxy {
 		}
 
 	}
+
 
 	public Diff computeDiff(Tree tl, Tree tr, Matcher matcher, GumtreeProperties properies) {
 

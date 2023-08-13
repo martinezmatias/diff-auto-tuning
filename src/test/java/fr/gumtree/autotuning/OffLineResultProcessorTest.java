@@ -7,11 +7,14 @@ import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
 import java.nio.file.Path;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 import org.apache.commons.io.FileUtils;
 import org.junit.Test;
+
+import com.github.gumtreediff.utils.Pair;
 
 import fr.gumtree.autotuning.entity.ResponseBestParameter;
 import fr.gumtree.autotuning.entity.ResponseGlobalBestParameter;
@@ -196,27 +199,26 @@ public class OffLineResultProcessorTest {
 				numberOfAttemptsTPE, k, nrseeds, totalLimit, search, cache, ASTMODE.JDT);
 
 	}
-	
+	//NEW MM
 	@Test
-	public void testSeedSingleCrossValidationGlobalJDTTPE2023CacheFalse() throws Exception {
+	public void testSeedSingleCrossValidationGlobalJDTTPE2023ONLINE() throws Exception {
 
 		File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
-		HPOSearchType search = HPOSearchType.TPE_HYPEROPT;
+		HPOSearchType search = HPOSearchType.TPE_HYPEROPT;//HPOSearchType.TPE_HYPEROPT;
 
 		System.out.println("Search " + search);
 
 		METRIC metric = METRIC.MEDIAN;
 		ASTMODE astmode = ASTMODE.JDT;
 		// TO VARY
-		int totalLimit = 1000;
-		final int maxPerProject = 1000;/// 5000; in the original was like that// Do not change
+		int totalLimit = 10;
+		final int maxPerProject = 10;/// 5000; in the original was like that// Do not change
 		// TO VARY
 		int numberOfAttemptsTPE = 10;
-		final int k = 10; // Was 10 Do not change
+		final int k = 5; // Was 10 Do not change
 		final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
-		boolean cache = false;
-
-		List<File> collected = OfflineResultProcessor.retrievePairsToAnalyze(fileResults, maxPerProject, true);
+		
+		List<Pair<File, File>> collected = OfflineResultProcessor.retrievePairsToAnalyzePairs(fileResults, maxPerProject, true);
 		System.out.println("Collected " + collected.size());
 
 		int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
@@ -226,11 +228,249 @@ public class OffLineResultProcessorTest {
 		OfflineResultProcessor processor = new OfflineResultProcessor("RQ2new_" + search + "_" + "_jdt_" + metric.name()
 				+ "_sizeds_" + diffToConsider + "_attemps_" + numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
 
-		processor.runSeededCrossValidationExahustiveVsOtherApproaches(fileResults, collected, metric, "eval",
-				numberOfAttemptsTPE, k, nrseeds, totalLimit, search, cache, astmode);
+		processor.runSeededCrossValidationOnline(fileResults, collected, metric, "eval",
+				numberOfAttemptsTPE, k, nrseeds, totalLimit, search,  astmode);
 
 	}
+	
+	
+	//NEW MM
+		@Test
+		public void testSizes2023ONLINE() throws Exception {
 
+			File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
+			HPOSearchType search = HPOSearchType.TPE_HYPEROPT;//HPOSearchType.TPE_HYPEROPT;
+
+			System.out.println("Search " + search);
+
+			METRIC metric = METRIC.MEDIAN;
+			ASTMODE astmode = ASTMODE.GTSPOON;
+			// TO VARY
+			int totalLimit = 100000;
+			final int maxPerProject = 1000;
+			// TO VARY
+			int numberOfAttemptsTPE = 10;
+			final int k = 2; // Was 10 Do not change
+			final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+			
+			List<Pair<File, File>> collected = OfflineResultProcessor.retrievePairsToAnalyzePairs(fileResults, maxPerProject, true);
+			System.out.println("Collected " + collected.size());
+
+			int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+			System.out.println("total Limit " + totalLimit);
+
+			OfflineResultProcessor processor = new OfflineResultProcessor("RQtimes_" + search + "_" + astmode.toString() +"_" + metric.name()
+					+ "_sizeds_" + diffToConsider + "_attemps_" + numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+			processor.runTreeSizeCalculator(fileResults, collected, metric, "eval",
+					numberOfAttemptsTPE, k, nrseeds, totalLimit, search,  astmode);
+
+		}
+		
+	
+		
+		//NEW MM
+		@Test
+		public void testSizes2023ICSE24() throws Exception {
+
+			File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
+		
+
+			METRIC metric = METRIC.MEDIAN;
+			ASTMODE astmode = ASTMODE.JDT;
+			// TO VARY
+			int totalLimit = 1000;
+			final int maxPerProject = 1000;
+			// TO VARY
+			
+			final int k = 2; // Was 10 Do not change
+			final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+			
+			List<Pair<File, File>> collected = OfflineResultProcessor.retrievePairsToAnalyzePairs(fileResults, maxPerProject, true);
+			System.out.println("Collected " + collected.size());
+
+			int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+			System.out.println("total Limit " + totalLimit);
+
+			OfflineResultProcessor processor = new OfflineResultProcessor("RQICSE_"  + astmode.toString() +"_" + metric.name()
+					+ "_sizeds_" + diffToConsider+ "_nrseeds_" + nrseeds);
+
+			String defaultConfiguration = "ClassicGumtree-bu_minsim-0.5-bu_minsize-500-st_minprio-1-st_priocalc-height";
+			processor.runTimesICSE2024(fileResults, collected, metric, "eval",k, nrseeds, totalLimit, astmode, defaultConfiguration);
+
+		}
+		
+		@Test
+		public void testtICSESimple() throws Exception {
+			File fileResults = new File("/Users/matias/Downloads/datasets-main/defects4j" );
+
+			METRIC metric = METRIC.MEDIAN;
+			ASTMODE astmode = ASTMODE.JDT;
+			// TO VARY
+			int totalLimit = 100000000;
+			final int maxPerProject = 1000000000;
+			// TO VARY
+			
+			final int k = 2; // Was 10 Do not change
+			final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+			
+			List<Pair<File, File>> collected = retrievePairsToAnalyzePairsD4J(fileResults);
+			System.out.println("Collected " + collected.size());
+
+			int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+			System.out.println("total Limit " + totalLimit);
+
+			OfflineResultProcessor processor = new OfflineResultProcessor("RQICSE_"  + astmode.toString() +"_" + metric.name()
+					+ "_sizeds_" + diffToConsider+ "_nrseeds_" + nrseeds);
+
+			String defaultConfiguration = "ClassicGumtree-bu_minsim-0.5-bu_minsize-100-st_minprio-1-st_priocalc-height";
+			processor.runTimesICSE2024Seed(fileResults, collected, metric, "eval",k, nrseeds, totalLimit, astmode, defaultConfiguration);
+			
+			
+		}
+		
+		
+		public static List<Pair<File, File>> retrievePairsToAnalyzePairsD4J(File rootFolder) throws IOException {
+
+			// System.out.println("Inspecting " + rootFolder.getAbsolutePath());
+			List<Pair<File, File>> collected = new ArrayList<Pair<File, File>>();
+
+			
+			File f = new File(rootFolder.getAbsoluteFile()+"/before/" );
+					
+					
+			for (File project : f.listFiles()) {
+				
+				System.out.println("Proyect "+ project.getAbsolutePath());
+				
+				if (project.getName().equals(".DS_Store"))
+					continue;
+				
+				for(File bugId : project.listFiles()) {
+					
+					if (bugId.getName().equals(".DS_Store"))
+						continue;
+					
+					
+					//System.out.println(bugId);
+					
+					File fbefore = bugId.listFiles()[0];
+					System.out.println(fbefore);
+					
+					File fafer = new File(bugId.listFiles()[0].getAbsoluteFile().toString().replace("before", "after"));
+					
+					System.out.println(fafer);
+					collected.add(new Pair(fbefore, fafer));
+				}
+				
+			}	
+			return collected;
+			
+		}
+	
+		
+	
+	@Test
+	public void testSeedSingleCrossValidationGlobalJDTTPE2023ONLINELOCAL() throws Exception {
+
+		File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
+			
+		
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.JDT);
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.GTSPOON);
+
+	//	runRQ4(fileResults,  HPOSearchType.TPE_OPTUNA, ASTMODE.JDT);
+		runRQ4(fileResults,  HPOSearchType.TPE_OPTUNA, ASTMODE.GTSPOON);
+		
+		
+	}
+	
+	@Test
+	public void testSeedSingleCrossValidationGlobalJDTTPE2023ONLINELOCALFineGrand() throws Exception {
+
+		File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
+			
+		
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPTFG, ASTMODE.JDT);
+		runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.JDT);
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.GTSPOON);	
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.GTSPOON);
+		
+	}
+	
+	
+	@Test
+	public void testComparison() throws Exception {
+
+		File fileResults = new File("/Users/matias/develop/gt-tuning/data-cvs-vintage/" );
+			
+		
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPTFG, ASTMODE.JDT);
+		runRQ5(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.JDT);
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.GTSPOON);	
+	//	runRQ4(fileResults,  HPOSearchType.TPE_HYPEROPT, ASTMODE.GTSPOON);
+		
+	}
+	
+	
+	private void runRQ4(File fileResults, HPOSearchType search, ASTMODE astmode) throws IOException, Exception {
+		System.out.println("Search " + search);
+
+		METRIC metric = METRIC.MEDIAN;
+	
+		// TO VARY
+		int totalLimit = 300;
+		final int maxPerProject = 100;/// 5000; in the original was like that// Do not change
+		// TO VARY
+		int numberOfAttemptsTPE = 100;
+		final int k = 2; 
+		final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+		
+		List<Pair<File, File>> collected = OfflineResultProcessor.retrievePairsToAnalyzePairs(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+		// System.out.println("total Limit " + totalLimit);
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("RQ4_" + search + "_" + astmode+ "_" + metric.name()
+				+ "_sizeds_" + diffToConsider + "_attemps_" + numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+		processor.runSeededCrossValidationLocalOnline(fileResults, collected, metric, "eval",
+				numberOfAttemptsTPE, k, nrseeds, totalLimit, search,  astmode);
+	}
+	
+	
+	private void runRQ5(File fileResults, HPOSearchType search, ASTMODE astmode) throws IOException, Exception {
+		System.out.println("Search " + search);
+
+		METRIC metric = METRIC.MEDIAN;
+	
+		// TO VARY
+		int totalLimit = 30000;
+		final int maxPerProject = 10000;/// 5000; in the original was like that// Do not change
+		// TO VARY
+		int numberOfAttemptsTPE = 100;
+		final int k = 2; 
+		final int nrseeds = 1; // only one as we try all //nrseeds = 10; // Do not change
+		
+		List<Pair<File, File>> collected = OfflineResultProcessor.retrievePairsToAnalyzePairs(fileResults, maxPerProject, true);
+		System.out.println("Collected " + collected.size());
+
+		int diffToConsider = collected.size() > totalLimit ? totalLimit : collected.size();
+
+		// System.out.println("total Limit " + totalLimit);
+
+		OfflineResultProcessor processor = new OfflineResultProcessor("RQ_Comparison_" + search + "_" + astmode+ "_" + metric.name()
+				+ "_sizeds_" + diffToConsider + "_attemps_" + numberOfAttemptsTPE + "_nrseeds_" + nrseeds);
+
+		processor.runComparison(fileResults, collected, metric, "eval",
+				numberOfAttemptsTPE, k, nrseeds, totalLimit, search,  astmode);
+	}
+	
 	@Test
 	public void testSeedSingleCrossValidationGlobalJDTTPE2023All() throws Exception {
 
@@ -373,7 +613,7 @@ public class OffLineResultProcessorTest {
 		TPEEngine tpe = new TPEEngine();
 
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.JDT,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
 		configuration.setNumberOfAttempts(98);
 		configuration.setSearchType(HPOSearchType.TPE_HYPEROPT);
 		configuration.setRandomseed(12);

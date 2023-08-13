@@ -32,7 +32,7 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 	public GumtreeSingleHttpHandler(Fitness fitnessFunction, METRIC metric) {
 		super(fitnessFunction, metric);
 	}
-
+	int counterPartialDiff = 0;
 	int a = 0;
 	String param = "";
 
@@ -73,9 +73,14 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 		}
 
 	}
-
+	
+	GTProxy proxy = new GTProxy();
+	
 	public void singleDiff(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
 		// http://localhost:8001/test?name=sam&action=load&model=jdt&left=l1&right=r1
+		
+		counterPartialDiff++;
+		
 		if (queryParams.get("action").contains("load")) {
 			loadTrees(httpExchange, queryParams);
 
@@ -88,10 +93,10 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 			String parameters = queryParams.get("parameters").get(0);
 
-			System.out.println("run with params " + parameters);
-			GTProxy proxy = new GTProxy();
+			System.out.println("Nr: "+ counterPartialDiff+" run with params " + parameters);
+			//GTProxy proxy = new GTProxy();
 			long start = System.currentTimeMillis();
-			Diff diff = proxy.run(tl, tr, parameters, null); // we dont want to save here, so we pass null to the out
+			Diff diff = proxy.runT(tl, tr, parameters, null); // we dont want to save here, so we pass null to the out
 			long end = System.currentTimeMillis();
 			/////////
 			JsonObject root = new JsonObject();
@@ -101,6 +106,10 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				root.addProperty("fitness", diff.editScript.asList().size());
 				root.addProperty("values", 1);
+				
+				JsonArray array = new JsonArray();
+				array.add(diff.editScript.asList().size());
+				root.add("allvalues", array);
 
 				root.addProperty("parameters", parameters);
 
@@ -112,18 +121,18 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 				if (outDirectory != null) {
 					//
-					try {
-						saver.saveUnified(nameLeft, parameters, diff, outDirectory);
-					} catch (NoSuchAlgorithmException | IOException e) {
-						e.printStackTrace();
-					}
+//					try {
+//						//saver.saveUnified(nameLeft, parameters, diff, outDirectory);
+//					} catch (NoSuchAlgorithmException | IOException e) {
+//						e.printStackTrace();
+//					}
 				}
 
 			} else {
 				root.addProperty("status", "error");
 			}
 
-			cacheResults.add(root);
+			//cacheResults.add(root);
 
 			System.out.println("Output " + root.toString());
 			handleResponse(httpExchange, root.toString());
@@ -138,6 +147,8 @@ public class GumtreeSingleHttpHandler extends GumtreeAbstractHttpHandler {
 
 	public void loadTrees(HttpExchange httpExchange, MultiValueMap<String, String> queryParams) throws IOException {
 		System.out.println("Load");
+		
+		counterPartialDiff = 0;
 
 		String model = queryParams.get("model").get(0);
 		String left = queryParams.get("left").get(0);
