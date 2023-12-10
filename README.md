@@ -3,7 +3,7 @@
 Repository of tool DAT presented in the following paper:
 
 ```bibtex
-@article{2011.10268,
+@article{martinez2023dat,
  title = {Hyperparameter Optimization for AST Differencing},
  journal = {IEEE Transactions on Software Engineering},
  year = {2023},
