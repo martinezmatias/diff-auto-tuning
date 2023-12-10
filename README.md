@@ -2,23 +2,15 @@
 
 Repository of tool DAT presented in the following paper:
 
-```
-@misc{dat,
-  author = {Martinez, Matias and Falleri, Jean-Rémy and Monperrus, Martin},
-  
-  title = {Hyperparameter Optimization for AST Differencing},
-  
-  publisher = {arXiv},
-  
-  year = {2020},
-  
-  doi = {10.48550/ARXIV.2011.10268},
-  
-  url = {https://arxiv.org/abs/2011.10268},
-   
-  keywords = {Software Engineering (cs.SE), FOS: Computer and information sciences, FOS: Computer and information sciences},
+```bibtex
+@article{2011.10268,
+ title = {Hyperparameter Optimization for AST Differencing},
+ journal = {IEEE Transactions on Software Engineering},
+ year = {2023},
+ doi = {10.1109/TSE.2023.3315935},
+ author = {Matias Martinez and Jean-Rémy Falleri and Martin Monperrus},
+ url = {http://arxiv.org/pdf/2011.10268},
 }
-
 ```
 
 ## Goal of DAT
