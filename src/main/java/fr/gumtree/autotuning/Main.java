@@ -64,7 +64,7 @@ public class Main implements Callable<Integer> {
 	String listpairs;
 
 	enum DAT_METHOD {
-		EXHAUSTIVE, TPE;
+		EXHAUSTIVE, TPE_HYPEROPT, TPE_OPTUNA;
 	}
 
 	enum SCOPE {
@@ -76,7 +76,7 @@ public class Main implements Callable<Integer> {
 		OptimizationMethod engine = null;
 		if (mode.toLowerCase().equals(DAT_METHOD.EXHAUSTIVE.toString().toLowerCase())) {
 			engine = new ExhaustiveEngine();
-		} else if (mode.toLowerCase().equals(DAT_METHOD.TPE.toString().toLowerCase())) {
+		} else if (mode.toLowerCase().equals(DAT_METHOD.TPE_HYPEROPT.toString().toLowerCase())) {
 			engine = new TPEEngine();
 		}
 		return engine;
@@ -99,11 +99,17 @@ public class Main implements Callable<Integer> {
 			configuration.setOverwriteResults(overwriteresults);
 			return configuration;
 
-		} else if (mode.toLowerCase().equals(DAT_METHOD.TPE.toString().toLowerCase())) {
+		} else if (mode.toLowerCase().equals(DAT_METHOD.TPE_HYPEROPT.toString().toLowerCase())) {
 
-			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(mean, getMetamodel(), getFitness());
+			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(mean, getMetamodel(), getFitness(),HPOSearchType.TPE_HYPEROPT );
 			configuration.setNumberOfAttempts(nrAttempts);
-			configuration.setSearchType(HPOSearchType.TPE_HYPEROPT);
+
+			return configuration;
+		}
+		else if (mode.toLowerCase().equals(DAT_METHOD.TPE_OPTUNA.toString().toLowerCase())) {
+
+			ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(mean, getMetamodel(), getFitness(),HPOSearchType.TPE_OPTUNA);
+			configuration.setNumberOfAttempts(nrAttempts);
 
 			return configuration;
 		}

@@ -44,7 +44,7 @@ public class TPEEngineTest {
 		TPEEngine rp = new TPEEngine();
 
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
 		configuration.setNumberOfAttempts(50);
 		configuration.setPythonpath(
 				//"/Library/Frameworks/Python.framework/Versions/3.6/Resources/Python.app/Contents/MacOS/Python"
@@ -69,7 +69,7 @@ public class TPEEngineTest {
 		TPEEngine rp = new TPEEngine();
 
 		ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(METRIC.MEAN, ASTMODE.GTSPOON,
-				new LengthEditScriptFitness());
+				new LengthEditScriptFitness(), HPOSearchType.TPE_HYPEROPT);
 
 		LengthEditScriptFitness fitnessLength = new LengthEditScriptFitness();
 		ResponseBestParameter bestConfig = rp.computeBestLocal(fs, ft, fitnessLength, configuration);

@@ -34,20 +34,13 @@ import com.github.gumtreediff.matchers.GumtreeProperties;
 import com.github.gumtreediff.matchers.MappingStore;
 import com.github.gumtreediff.matchers.Matcher;
 import com.github.gumtreediff.tree.Tree;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.outils.Constants;
-import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 public class GTProxy implements DiffProxy {
 
-//	protected ExhaustiveEngine engine = new ExhaustiveEngine();
-
-	TreeDiffFormatBuilder builder = new TreeDiffFormatBuilder(false, false);
 
 	public Diff run(Tree tleft, Tree tright, String params) {
 		return run(tleft, tright, params, null);
@@ -116,7 +109,7 @@ public class GTProxy implements DiffProxy {
 
 			if (out != null) {
 				JsonObject jso = new JsonObject();
-				save(builder, out, jso, diff, properties, cmatcher.getClass().getSimpleName(), "single");
+				//save(builder, out, jso, diff, properties, cmatcher.getClass().getSimpleName(), "single");
 				System.out.println("Saved");
 			}
 
@@ -247,37 +240,6 @@ public class GTProxy implements DiffProxy {
 		}
 	}
 
-	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
-			String maattcher) {
-
-		save(builder, outResults, jso, diff, gttp, maattcher, "exhaustive");
-	}
-
-	public void save(TreeDiffFormatBuilder builder, File outResults, JsonObject jso, Diff diff, GumtreeProperties gttp,
-			String maattcher, String key) {
-
-		String fileKey = plainProperties(maattcher, gttp);
-
-		plainProperties(jso, maattcher, gttp);
-
-		System.out.println(fileKey);
-
-		JsonElement js = builder.build(null, null, diff, jso);
-
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(js);
-
-		try {
-			FileWriter fwriter = new FileWriter(new File(outResults + File.separator + key + "_" + fileKey + ".json"));
-
-			fwriter.write(json);
-			fwriter.flush();
-			fwriter.close();
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-	}
 
 	public static String plainProperties(String matcher, GumtreeProperties gttp) {
 		return plainProperties(matcher, new ArrayList(), gttp);

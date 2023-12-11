@@ -26,7 +26,6 @@ import fr.gumtree.autotuning.outils.Constants;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.searchengines.ExhaustiveEngine;
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
-import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
  * 
@@ -291,7 +290,7 @@ public class MegadiffRunner {
 	}
 
 	private void executionResultToUnifiedDiff(File outResults, CaseResult fileResult) {
-		TreeDiffFormatBuilder builder = new TreeDiffFormatBuilder(false, false);
+		
 
 		for (MatcherResult mr : fileResult.getResultByMatcher().values()) {
 
@@ -314,7 +313,7 @@ public class MegadiffRunner {
 
 				GumtreeProperties gttp = (GumtreeProperties) sd.get(Constants.CONFIG);
 
-				// save(builder, outResults, jso, sd.getDiff(), gttp, mr.getMatcherName());
+			
 			}
 
 		}

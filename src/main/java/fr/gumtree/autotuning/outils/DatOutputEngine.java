@@ -36,7 +36,6 @@ import fr.gumtree.autotuning.entity.MatcherResult;
 import fr.gumtree.autotuning.entity.SingleDiffResult;
 import fr.gumtree.autotuning.searchengines.MapList;
 import fr.gumtree.autotuning.searchengines.ResultByConfig;
-import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 /**
  * 
@@ -70,98 +69,6 @@ public class DatOutputEngine {
 
 	public DatOutputEngine(String name) {
 		this.id = name;
-	}
-
-	// TODO add config on last parameter
-	public void saveUnifiedNotDuplicated(String diffId, String plainProperties,
-			com.github.gumtreediff.actions.Diff diffgtt, File parentDiff) throws IOException, NoSuchAlgorithmException {
-
-		String jsonContent = "";
-		String key = "";
-		if (diffgtt != null && diffgtt.editScript != null) {
-			key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + diffgtt.editScript.size();
-			TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
-			JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
-			Gson gson = new GsonBuilder().setPrettyPrinting().create();
-			jsonContent = gson.toJson(jsonunif);
-
-		} else {
-			key = diffId + CONFIG_CHAR + plainProperties + EDSIZE_CHAR + "no_ed";
-		}
-
-		String hashJson = toHexString(getSHA(jsonContent));
-
-		File caseFolder = new File(
-				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
-		caseFolder.mkdirs();
-
-		if (hashes.containsKey(hashJson)) {
-
-			// System.out.println("Existing Json");
-			equivalent.add(hashes.get(hashJson), key);
-
-		} else {
-			// System.out.println("New Json");
-			hashes.put(hashJson, key);
-			equivalent.add(key, key);
-
-			File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".json");
-			if (zipped) {
-				FileOutputStream fos = new FileOutputStream(
-						caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".zip");
-				ZipOutputStream zipOut = new ZipOutputStream(fos);
-				ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
-				zipOut.putNextEntry(zipEntry);
-				zipOut.write(jsonContent.getBytes());
-				zipOut.close();
-			} else {
-
-				FileWriter fw = new FileWriter(uniflFile);
-				fw.write(jsonContent);
-				fw.close();
-
-			}
-
-		}
-	}
-
-	/**
-	 * This is used by TPE
-	 */
-	public void saveUnified(String filename, String plainProperties, com.github.gumtreediff.actions.Diff diffgtt,
-			File parentDiff) throws IOException, NoSuchAlgorithmException {
-
-		filename = new File(filename).getName();
-
-		String key = filename.replace("/", "_") + CONFIG_CHAR + plainProperties;
-
-		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
-		JsonElement jsonunif = unifiedrep.build(new JsonObject(), new JsonObject(), diffgtt, new JsonObject());
-
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(jsonunif);
-
-		File caseFolder = new File(
-				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
-		caseFolder.mkdirs();
-
-		File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".json");
-		if (zipped) {
-			FileOutputStream fos = new FileOutputStream(
-					caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + key + ".zip");
-			ZipOutputStream zipOut = new ZipOutputStream(fos);
-			ZipEntry zipEntry = new ZipEntry(uniflFile.getName());
-			zipOut.putNextEntry(zipEntry);
-			zipOut.write(json.getBytes());
-			zipOut.close();
-		} else {
-
-			FileWriter fw = new FileWriter(uniflFile);
-			fw.write(json);
-			fw.close();
-		}
-
 	}
 
 	public void saveRelations(File parentDiff) throws IOException, NoSuchAlgorithmException {
@@ -235,25 +142,6 @@ public class DatOutputEngine {
 			fw.close();
 		}
 
-	}
-
-	public void saveUnifiedComplete(String configId, com.github.gumtreediff.actions.Diff diffgtt, File parentDiff)
-			throws IOException {
-		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
-		JsonElement jsonunif = unifiedrep.build(diffgtt);
-
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(jsonunif);
-
-		File caseFolder = new File(
-				parentDiff.getAbsolutePath() + File.separator + this.id + File.separator + PREFIX_TREEDIFF_FORMAT);
-		caseFolder.mkdirs();
-
-		File uniflFile = new File(caseFolder + File.separator + PREFIX_TREEDIFF_FORMAT + "_" + configId + ".json");
-		FileWriter fw = new FileWriter(uniflFile);
-		fw.write(json);
-		fw.close();
 	}
 
 	public static byte[] getSHA(String input) throws NoSuchAlgorithmException {

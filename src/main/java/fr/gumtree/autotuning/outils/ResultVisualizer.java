@@ -16,8 +16,8 @@ import com.github.difflib.patch.Patch;
 import com.github.gumtreediff.actions.ChawatheScriptGenerator;
 import com.github.gumtreediff.actions.Diff;
 import com.github.gumtreediff.actions.EditScript;
+import com.github.gumtreediff.actions.SimplifiedChawatheScriptGenerator;
 import com.github.gumtreediff.actions.model.Action;
-import com.github.gumtreediff.client.diff.webdiff.TextDiffView;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffHtmlBuilder;
 import com.github.gumtreediff.client.diff.webdiff.VanillaDiffView;
 import com.github.gumtreediff.matchers.CompositeMatchers;
@@ -33,13 +33,10 @@ import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.tree.TreeContext;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
-
 import fr.gumtree.autotuning.treebuilder.ITreeBuilder;
 import fr.gumtree.autotuning.treebuilder.JDTTreeBuilder;
 import fr.gumtree.autotuning.treebuilder.SpoonTreeBuilder;
-import fr.gumtree.treediff.jdt.TreeDiffFormatBuilder;
 
 public class ResultVisualizer {
 
@@ -81,9 +78,10 @@ public class ResultVisualizer {
 		String fl = filename + "_s.java";
 		String fr = filename + "_t.java";
 
-		File fileo = new File(pathOut);
-		if (!fileo.exists()) {
-			fileo.mkdirs();
+		String metamodel = isJDTModel ? "JDT" : "spoon";
+		File fout = new File(pathOut + File.separator + metamodel);
+		if (!fout.exists()) {
+			fout.mkdirs();
 		}
 
 		File fileLeftt = new File(fl);
@@ -105,8 +103,6 @@ public class ResultVisualizer {
 		}
 		Tree tl = builder.build(fileLeftt);
 		Tree tr = builder.build(fileRight);
-
-		File fout = new File(pathOut);
 
 		System.out.println("--Running for best: " + bestConfig);
 		GumtreeProperties propertiesBest = createProperties(bestConfig);
@@ -239,18 +235,16 @@ public class ResultVisualizer {
 		System.out.println(properies);
 		return properies;
 	}
-	
-	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, String config, File fout, String diffId, String configId) throws IOException {
 
-			
-		 GumtreeProperties properies = createProperties(config);
-		 Matcher  matcher = createMatcher(config);
+	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, String config, File fout,
+			String diffId, String configId) throws IOException {
+
+		GumtreeProperties properies = createProperties(config);
+		Matcher matcher = createMatcher(config);
 		this.saveVisualization(fileLeftt, tl, fileRight, tr, properies, matcher, fout, diffId, configId);
 
 	}
-	
-	
-	
+
 	public void saveVisualization(File fileLeftt, Tree tl, File fileRight, Tree tr, GumtreeProperties properies,
 			Matcher matcher, File fout, String diffId, String configId) throws IOException {
 
@@ -270,12 +264,13 @@ public class ResultVisualizer {
 
 		Diff diffgtt = new Diff(leftContext, rightContext, mappings, editScript);
 
-		File parentDiff = new File(fout.getAbsoluteFile() + File.separator + diffId + File.separator);
+		// File parentDiff = new File(fout.getAbsoluteFile() + File.separator + diffId +
+		// File.separator);
+		File parentDiff = new File(fout.getAbsoluteFile() + File.separator);
 		parentDiff.mkdirs();
 
-		saveDiffInfo(parentDiff, actionsAll, configId);
+		//saveDiffInfo(parentDiff, actionsAll, configId);
 
-	
 		VanillaDiffHtmlBuilder builder = new VanillaDiffHtmlBuilder(fileLeftt, fileRight,
 				(com.github.gumtreediff.actions.Diff) diffgtt);
 		builder.produce();
@@ -289,11 +284,34 @@ public class ResultVisualizer {
 		saveRenderable(parentDiff, diffId, configId, view, "vanillaDiffView");
 
 		// Text
-		Renderable viewText = new TextDiffView(fileLeftt, fileRight, (com.github.gumtreediff.actions.Diff) diffgtt);
-		saveRenderable(parentDiff, diffId, configId, viewText, "textDiffView");
+		// Renderable viewText = new TextDiffView(fileLeftt, fileRight,
+		// (com.github.gumtreediff.actions.Diff) diffgtt);
+		// saveRenderable(parentDiff, diffId, configId, viewText, "textDiffView");
 
 		// Unified
-		saveUnified(configId, diffgtt, parentDiff);
+		// saveUnified(configId, diffgtt, parentDiff);
+
+		File sizeFile = new File(parentDiff.getAbsolutePath() + File.separator + "sizeAll_" + configId + ".json");
+		FileWriter fw = new FileWriter(sizeFile);
+		fw.write((new Integer(diffgtt.editScript.size())).toString());
+		fw.close();
+
+		EditScript editScriptRoots = new SimplifiedChawatheScriptGenerator().computeActions(mappings);
+
+		File sizeFileRoots = new File(
+				parentDiff.getAbsolutePath() + File.separator + "sizeRoots_" + configId + ".json");
+		fw = new FileWriter(sizeFileRoots);
+		fw.write((new Integer(editScriptRoots.size())).toString());
+		fw.close();
+
+		File fileRoots = new File(parentDiff.getAbsolutePath() + File.separator + "edRoots_" + configId + ".json");
+		fw = new FileWriter(fileRoots);
+
+		for (Action anAction : editScriptRoots.asList()) {
+			fw.write(anAction.toString());
+			fw.write("\n");
+		}
+		fw.close();
 
 	}
 
@@ -314,21 +332,6 @@ public class ResultVisualizer {
 
 	}
 
-	public void saveUnified(String configId, com.github.gumtreediff.actions.Diff diffgtt, File parentDiff)
-			throws IOException {
-		TreeDiffFormatBuilder unifiedrep = new TreeDiffFormatBuilder();
-		JsonElement jsonunif = unifiedrep.build(diffgtt);
-
-		Gson gson = new GsonBuilder().setPrettyPrinting().create();
-
-		String json = gson.toJson(jsonunif);
-
-		File uniflFile = new File(
-				parentDiff.getAbsolutePath() + File.separator + "treeDiffSerialFormat_" + configId + ".json");
-		FileWriter fw = new FileWriter(uniflFile);
-		fw.write(json);
-		fw.close();
-	}
 
 	public File saveRenderable(File parentDiff, String diffId, String configId, Renderable view, String name)
 			throws IOException {

@@ -117,13 +117,6 @@ public class GumtreeMultipleHttpHandler extends GumtreeAbstractHttpHandler {
 			
 			timesArray.add((end - start));
 
-			if (this.getOutDirectory() != null) {
-				try {
-					saver.saveUnified(this.names.get(i), parameters, diff, this.getOutDirectory());
-				} catch (Exception e) {
-					e.printStackTrace();
-				}
-			}
 
 		}
 

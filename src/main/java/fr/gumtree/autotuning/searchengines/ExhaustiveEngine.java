@@ -848,12 +848,6 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 						results.add(plainProperties, fitnessValue);
 
-						if (configuration.isSaveScript()) {
-
-							saver.saveUnifiedNotDuplicated(getDiffId(previousVersion), plainProperties,
-									diffResult.getDiff(), configuration.getDirDiffTreeSerialOutput());
-
-						}
 
 					}
 
@@ -1148,11 +1142,6 @@ public class ExhaustiveEngine implements OptimizationMethod {
 
 				}
 
-				if (configuration.isSaveScript()) {
-					saver.saveUnifiedNotDuplicated(getDiffId(left), plainProperty, diffResult.getDiff(),
-							configuration.getDirDiffTreeSerialOutput());
-
-				}
 
 			}
 

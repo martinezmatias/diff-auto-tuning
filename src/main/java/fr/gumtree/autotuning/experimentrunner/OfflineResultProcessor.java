@@ -11,7 +11,6 @@ import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
@@ -20,10 +19,8 @@ import java.util.stream.Collectors;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 
 import com.github.gumtreediff.actions.Diff;
-import com.github.gumtreediff.matchers.heuristic.gt.GreedyBottomUpMatcher;
 import com.github.gumtreediff.tree.Tree;
 import com.github.gumtreediff.utils.Pair;
-import com.google.common.math.Stats;
 import com.google.gson.JsonArray;
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
@@ -37,8 +34,8 @@ import fr.gumtree.autotuning.fitness.LengthEditScriptFitness;
 import fr.gumtree.autotuning.gumtree.ASTMODE;
 import fr.gumtree.autotuning.gumtree.ExecutionConfiguration.METRIC;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration;
-import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ExecutionTPEConfiguration.HPOSearchType;
+import fr.gumtree.autotuning.gumtree.GTProxy;
 import fr.gumtree.autotuning.gumtree.ParametersResolvers;
 import fr.gumtree.autotuning.outils.DatOutputEngine;
 import fr.gumtree.autotuning.outils.ResultVisualizer;
@@ -1355,7 +1352,8 @@ public class OfflineResultProcessor {
 				System.out.println("--Global TPE TRANING: ");
 				TPEEngine tpe = new TPEEngine();
 
-				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, ASTMODE.JDT, fitness);
+				ExecutionTPEConfiguration configuration = new ExecutionTPEConfiguration(metric, ASTMODE.JDT, fitness,
+						HPOSearchType.TPE_HYPEROPT);
 				configuration.setNumberOfAttempts(numberOfAttempts);
 				configuration.setSearchType(searchType);
 
@@ -1817,17 +1815,15 @@ public class OfflineResultProcessor {
 
 		Collections.shuffle(collected, new Random(0));
 
-	
+		FileWriter frFileWriter = new FileWriter(new File("out" + defaultConfiguration + ".csv"));
 
-		FileWriter frFileWriter = new FileWriter(new File("out"+defaultConfiguration+".csv" ));
-		
 		int numberPair = 0;
 		int totaltime = 0;
-		int i=0;
-		frFileWriter.write(i +"number,name,nr_lastMatch,nr_no_lastMatch,size,time(milliseconds)" +"\n");
+		int i = 0;
+		frFileWriter.write(i + "number,name,nr_lastMatch,nr_no_lastMatch,size,time(milliseconds)" + "\n");
 		for (Pair<File, File> xPair : collected) {
-			
-			if (i> totalLimit)
+
+			if (i > totalLimit)
 				break;
 
 			GTProxy proxy = new GTProxy();
@@ -1836,8 +1832,6 @@ public class OfflineResultProcessor {
 			Tree l2 = builder.build(xPair.second);
 
 			System.out.println(numberPair++ + "_" + xPair.first.getAbsolutePath());
-
-			
 
 			long start = System.currentTimeMillis();
 			Diff diff = proxy.run(l1, l2, defaultConfiguration, null);
@@ -1850,28 +1844,27 @@ public class OfflineResultProcessor {
 
 			System.out.println("size: " + sizeDefault);
 			i++;
-			int iCountLastMatch = GreedyBottomUpMatcher.countLastMatch;
-			int iCountNotLastMatch = GreedyBottomUpMatcher.countNotLastMatch;
-			tCountLastMatch += iCountLastMatch;
-			tCountNotLastMatch += iCountNotLastMatch;
+			// int iCountLastMatch = GreedyBottomUpMatcher.countLastMatch;
+			// int iCountNotLastMatch = GreedyBottomUpMatcher.countNotLastMatch;
+			// tCountLastMatch += iCountLastMatch;
+			// tCountNotLastMatch += iCountNotLastMatch;
 			long duration = (end - start);
-			
-			String key = xPair.first.getParentFile().getParentFile().getName() + "_"+xPair.first.getParentFile().getName()+ "_"+xPair.first.getName();
-			
-			frFileWriter.write(i +","+key+","+  iCountLastMatch + "," + iCountNotLastMatch+ "," +  sizeDefault + "," + duration + "\n");
-			frFileWriter.flush();
-			System.out.println(iCountLastMatch + " " + iCountNotLastMatch);
 
-		
+			String key = xPair.first.getParentFile().getParentFile().getName() + "_"
+					+ xPair.first.getParentFile().getName() + "_" + xPair.first.getName();
 
-			GreedyBottomUpMatcher.countLastMatch = 0;
-			GreedyBottomUpMatcher.countNotLastMatch = 0;
+			// frFileWriter.write(i +","+key+","+ iCountLastMatch + "," +
+			// iCountNotLastMatch+ "," + sizeDefault + "," + duration + "\n");
+			// frFileWriter.flush();
+			// System.out.println(iCountLastMatch + " " + iCountNotLastMatch);
+
+			// GreedyBottomUpMatcher.countLastMatch = 0;
+			// GreedyBottomUpMatcher.countNotLastMatch = 0;
 
 			diffSize.add(sizeDefault);
 			statsDiff.addValue(sizeDefault);
 			times.addValue(duration);
-			totaltime+=duration;
-
+			totaltime += duration;
 
 		}
 		System.out.println("Saving files in " + (outDir + outputKey));
@@ -1884,110 +1877,10 @@ public class OfflineResultProcessor {
 
 		fwtimesAll.close();
 		frFileWriter.close();
-		System.out.println(defaultConfiguration+ " Recovery "+ tCountLastMatch + " NoRecovery " + tCountNotLastMatch + " ed_size " + statsDiff.getPercentile(50)
-				+ " time (median) " + times.getPercentile(50) + " time (total) "+ totaltime);
+		System.out.println(defaultConfiguration + " Recovery " + tCountLastMatch + " NoRecovery " + tCountNotLastMatch
+				+ " ed_size " + statsDiff.getPercentile(50) + " time (median) " + times.getPercentile(50)
+				+ " time (total) " + totaltime);
 	}
-	
-	
-	public void runTimesICSE2024Seed(File fileResults, List<Pair<File, File>> original, METRIC metric, String outputKey,
-			int k, int nr_seeds, int totalLimit, ASTMODE astmode, String defaultConfiguration) throws Exception {
-
-		List<Integer> sizes = new ArrayList<>();
-
-		ITreeBuilder builder = getTreeBuilder(astmode);
-
-		int tCountLastMatch = 0;
-		int tCountNotLastMatch = 0;
-
-		DescriptiveStatistics statsDiff = new DescriptiveStatistics();
-		DescriptiveStatistics times = new DescriptiveStatistics();
-
-		List<Integer> diffSize = new ArrayList<>();
-
-		List<Pair> collected = new ArrayList<>(original);
-
-		Collections.shuffle(collected, new Random(0));
-
-	
-
-		FileWriter frFileWriter = new FileWriter(new File("out"+defaultConfiguration+".csv" ));
-		
-		int numberPair = 0;
-		int totaltime = 0;
-		int i=0;
-		frFileWriter.write(i +"number,name,nr_lastMatch,nr_no_lastMatch,size,time(milliseconds)" +"\n");
-		for (Pair<File, File> xPair : collected) {
-			
-			if (i> totalLimit)
-				break;
-
-			GTProxy proxy = new GTProxy();
-
-			Tree l1 = builder.build(xPair.first);
-			Tree l2 = builder.build(xPair.second);
-
-			System.out.println(numberPair++ + "_" + xPair.first.getAbsolutePath());
-
-			
-			Diff diff  = null;
-			DescriptiveStatistics localTimes = new DescriptiveStatistics();
-			for (int seed : new int[]{1,2,3,4,5}) {
-				long start = System.currentTimeMillis();
-				
-				diff = proxy.run(l1, l2, defaultConfiguration, null);
-				long end = System.currentTimeMillis();
-				
-				long duration = (end - start);
-				localTimes.addValue(duration);
-			}
-			
-			int sizeDefault = diff.editScript.size();
-
-			if (sizeDefault == 0)
-				continue;
-			
-			double duration = localTimes.getPercentile(50);
-			
-			System.out.println("size: " + sizeDefault);
-			i++;
-			int iCountLastMatch = GreedyBottomUpMatcher.countLastMatch;
-			int iCountNotLastMatch = GreedyBottomUpMatcher.countNotLastMatch;
-			tCountLastMatch += iCountLastMatch;
-			tCountNotLastMatch += iCountNotLastMatch;
-		
-			
-			String key = xPair.first.getParentFile().getParentFile().getName() + "_"+xPair.first.getParentFile().getName()+ "_"+xPair.first.getName();
-			
-			frFileWriter.write(i +","+key+","+  iCountLastMatch + "," + iCountNotLastMatch+ "," +  sizeDefault + "," + duration + "\n");
-			frFileWriter.flush();
-			System.out.println(iCountLastMatch + " " + iCountNotLastMatch);
-
-		
-
-			GreedyBottomUpMatcher.countLastMatch = 0;
-			GreedyBottomUpMatcher.countNotLastMatch = 0;
-
-			diffSize.add(sizeDefault);
-			statsDiff.addValue(sizeDefault);
-			times.addValue(duration);
-			totaltime+=duration;
-
-
-		}
-		System.out.println("Saving files in " + (outDir + outputKey));
-
-		File timesAll = new File(outDir + outputKey + "_sizes" + ".csv");
-		FileWriter fwtimesAll = new FileWriter(timesAll);
-		for (Integer l : sizes) {
-			fwtimesAll.write((l) + "\n");
-		}
-
-		fwtimesAll.close();
-		frFileWriter.close();
-		System.out.println(defaultConfiguration+ " Recovery "+ tCountLastMatch + " NoRecovery " + tCountNotLastMatch + " ed_size " + statsDiff.getPercentile(50)
-				+ " time (median) " + times.getPercentile(50) + " time (total) "+ totaltime);
-	}
-	
 
 	public void runSeededCrossValidationLocalOnline(File fileResults, List<Pair<File, File>> original, METRIC metric,
 			String outputKey, int numberOfAttempts, int k, int nr_seeds, int totalLimit, HPOSearchType searchType,
@@ -2175,8 +2068,8 @@ public class OfflineResultProcessor {
 				+ statsExa.getMean() / 1000d + "\n");
 		fwtimes.write("median," + statsDiff.getPercentile(50) / 1000d + ", " + statsTPE.getPercentile(50) / 1000d + ", "
 				+ statsExa.getPercentile(50) / 1000d + "\n");
-		fwtimes.write("median," + statsDiff.getStandardDeviation() + ", " + statsTPE.getStandardDeviation() / 1000d
-				+ ", " + statsExa.getStandardDeviation() / 1000d + "\n");
+		fwtimes.write("std," + statsDiff.getStandardDeviation() + ", " + statsTPE.getStandardDeviation() / 1000d + ", "
+				+ statsExa.getStandardDeviation() / 1000d + "\n");
 
 		fwtimes.close();
 

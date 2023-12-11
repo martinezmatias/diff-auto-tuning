@@ -50,10 +50,13 @@ DAT has as goal to search the hyperparameter that produces the best edit script 
 
 ### Pre-requisites
 
+
+
 To use TPE, it's requited to:
 1) Install Python 3.x
 2) Include Python in the path or create the environment variable `python.home` which value corresponds to the path to Python.
-3) Install [hyperopt](http://hyperopt.github.io/hyperopt/) e.g., `pip install hyperopt`
+3) In case of using TPE from Hyperopt, install [hyperopt](http://hyperopt.github.io/hyperopt/) e.g., `pip install hyperopt`
+4) In case of using TPE from Optuna,  install [Optuna][https://optuna.org/) e.g., ` pip install optuna`
 
 
 ### Commands
@@ -70,8 +73,10 @@ fr.gumtree.autotuning.Main -left <path_to_file> -right <path_to_file> -mode exha
 ##### Mode TPE and Local search 
 
 ```
-fr.gumtree.autotuning.Main -left <path_to_file> -right <path_to_file> -mode tpe -scope local
+fr.gumtree.autotuning.Main -left <path_to_file> -right <path_to_file> -mode <tpe> -scope local
 ```
+
+DAT works with different implementations of TPE, including one from Hyperopt (replace `<tpe>` by `TPE_HYPEROPT`) and from Optuna (replace `<tpe>` by `TPE_OPTUNA`). 
 
 
 ##### Mode Exhaustive and Global search  
@@ -84,9 +89,10 @@ fr.gumtree.autotuning.Main -listpairs<path_to_file> -mode exhaustive -scope glob
 ##### Mode TPE and Global search  
 
 ```
-fr.gumtree.autotuning.Main -listpairs <path_to_file> -mode tpe -scope global
+fr.gumtree.autotuning.Main -listpairs <path_to_file> -mode <tpe> -scope global
 ```
 
+DAT works with different implementations of TPE, including one from Hyperopt (replace `<tpe>` by `TPE_HYPEROPT`) and from Optuna (replace `<tpe>` by `TPE_OPTUNA`). 
 
 
 ## Architecture
