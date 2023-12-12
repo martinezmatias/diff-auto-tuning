@@ -50,7 +50,11 @@ DAT has as goal to search the hyperparameter that produces the best edit script 
 
 ### Pre-requisites
 
+The Java code requires at least Java 17.
 
+```
+$ mvn install
+```
 
 To use TPE, it's requited to:
 1) Install Python 3.x
